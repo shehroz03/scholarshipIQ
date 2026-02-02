@@ -1,0 +1,1 @@
+id,name,city,country,latitude,longitude,website_url,phone,address,established_year,qs_ranking,min_cgpa,min_ielts,min_toefl,min_pte,admission_process,short_description,campus_type,official_contact_page,minimum_cgpa_or_grade,english_language_requirements,other_academic_requirements,required_documents,admission_notes
