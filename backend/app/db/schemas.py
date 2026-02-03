@@ -40,6 +40,7 @@ class UserBase(BaseModel):
     current_university: Optional[str] = None
     current_degree: Optional[str] = None
     major: Optional[str] = None
+    specialization: Optional[str] = None
     graduation_year: Optional[int] = None
     target_country: Optional[str] = None
     target_degree: Optional[str] = None

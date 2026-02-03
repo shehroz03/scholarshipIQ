@@ -32,6 +32,7 @@ def register(
         nationality=user_in.nationality,
         current_degree=user_in.current_degree,
         major=user_in.major,
+        specialization=user_in.specialization,
         target_country=user_in.target_country,
         target_degree=user_in.target_degree,
         # Default safety for legacy fields

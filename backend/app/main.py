@@ -11,8 +11,11 @@ async def test_email(to_email: str):
     await send_deadline_email(to_email, "Test Scholarship", 2)
     return {"message": "Email sent!"}
 
+from app.db.session import init_db
+
 @app.on_event("startup")
 async def startup_event():
+    init_db()  # Ensure database tables are created on startup
     start_scheduler()
 
 # CORS middleware configuration

@@ -3,8 +3,9 @@ from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
 from app.db import models, schemas
 from app.db.session import get_db
-from app.api.deps import get_current_user
+from app.api import deps
 from app.utils.scoring import calculate_match_score
+from app.services.fraud_detection import analyze_fraud_risk
 
 router = APIRouter()
 
@@ -24,7 +25,7 @@ def list_scholarships(
     field_category: Optional[str] = None,
     deadline_before: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: Optional[models.User] = Depends(get_current_user)
+    current_user: Optional[models.User] = Depends(deps.get_current_user_optional)
 ):
     """
     List scholarships with pagination support.
@@ -41,11 +42,24 @@ def list_scholarships(
     if city and city.lower() != "all" and city != "":
         query = query.filter(models.Scholarship.city.ilike(f"%{city}%"))
     if level and level.lower() != "all":
-        query = query.filter(models.Scholarship.degree_level.ilike(f"%{level}%"))
+        # Handle "Master's" vs "Masters" and "Bachelor's" vs "Bachelors"
+        normalized_level = level.replace("'", "")
+        if "Master" in normalized_level:
+            query = query.filter(models.Scholarship.degree_level.ilike("%Master%"))
+        elif "Bachelor" in normalized_level:
+            query = query.filter(models.Scholarship.degree_level.ilike("%Bachelor%"))
+        else:
+            query = query.filter(models.Scholarship.degree_level.ilike(f"%{level}%"))
+            
     if field and field.lower() != "all":
         query = query.filter(models.Scholarship.field_of_study.ilike(f"%{field}%"))
-    if funding_type:
-        query = query.filter(models.Scholarship.funding_type.ilike(f"%{funding_type}%"))
+        
+    if funding_type and funding_type.lower() != "all":
+        # Handle "Partially Funded" vs "Partial"
+        if "Partial" in funding_type:
+            query = query.filter(models.Scholarship.funding_type.ilike("%Partial%"))
+        else:
+            query = query.filter(models.Scholarship.funding_type.ilike(f"%{funding_type}%"))
     if keyword:
         query = query.join(models.Scholarship.university).filter(
             (models.Scholarship.title.ilike(f"%{keyword}%")) | 
@@ -267,6 +281,39 @@ def get_university_by_name(
         s.university_name = uni.name
         
     return uni
+
+@router.post("/", response_model=schemas.ScholarshipOut)
+def create_scholarship(
+    scholarship: schemas.ScholarshipBase,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    """
+    Creates a new scholarship and automatically checks for fraud risk.
+    """
+    # 1. Fraud Check Run karein
+    fraud_result = analyze_fraud_risk(scholarship.title, scholarship.description)
+    
+    # 2. Add to database
+    db_scholarship = models.Scholarship(**scholarship.dict())
+    
+    # 3. Agar suspicious hai, to auto-flag karein
+    if fraud_result["is_suspicious"]:
+        db_scholarship.is_suspicious = True
+        # Optional: Reason ko description mein add kiya ja sakta hai
+        if db_scholarship.description:
+            db_scholarship.description += f"\n\n[ADMIN ALERT]: {fraud_result['reason']}"
+            
+    db.add(db_scholarship)
+    db.commit()
+    db.refresh(db_scholarship)
+    
+    # Populate university_name for response
+    if db_scholarship.university:
+        db_scholarship.university_name = db_scholarship.university.name
+        
+    return db_scholarship
+
 
 @router.get("/{scholarship_id}", response_model=schemas.ScholarshipOut)
 def get_scholarship(

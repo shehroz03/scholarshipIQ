@@ -10,7 +10,12 @@ from PIL import Image        # Image processing ke liye
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+api_key = os.getenv("OPENAI_API_KEY")
+client = None
+if api_key:
+    client = OpenAI(api_key=api_key)
+else:
+    print("WARNING: OPENAI_API_KEY not found. Chatbot will return fallback responses.")
 
 def process_file(file_data, file_type):
     """
@@ -44,6 +49,8 @@ def process_file(file_data, file_type):
     return None
 
 def get_ai_response(user_message: str, file_data=None, file_type=None):
+    if not client:
+        return "Chatbot is currently offline (API key missing). Please contact admin."
     try:
         system_instruction = """
         You are the AI Assistant for 'ScholarIQ'.

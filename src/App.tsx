@@ -8,6 +8,7 @@ import { SearchPage } from "./components/SearchPage";
 import { DetailPage } from "./components/DetailPage";
 import { SavedPage } from "./components/SavedPage";
 import { MyApplicationsPage } from "./components/MyApplicationsPage";
+import { TravelGuidePage } from "./components/TravelGuidePage";
 import { SettingsPage } from "./components/SettingsPage";
 import { Chatbot } from "./components/Chatbot";
 import AdminDashboard from "./components/AdminDashboard";
@@ -24,16 +25,13 @@ export default function App() {
 
   const getInitialPage = () => {
     const hash = window.location.hash.replace("#", "").split("?")[0];
-    if (hash) {
+    if (hash && (publicPages.includes(hash) || protectedPages.includes(hash))) {
       if (protectedPages.includes(hash) && !isLoggedIn()) {
         return "auth-required";
       }
-      if (!publicPages.includes(hash) && !protectedPages.includes(hash)) {
-        return hash || "landing";
-      }
       return hash;
     }
-    return localStorage.getItem("currentPage") || "landing";
+    return "landing";
   };
 
   const [currentPage, setCurrentPage] = useState(getInitialPage());
@@ -46,8 +44,12 @@ export default function App() {
 
   // Sync state with URL hash and localStorage
   useEffect(() => {
-    window.location.hash = currentPage;
-    localStorage.setItem("currentPage", currentPage);
+    // Only update hash if it's different to avoid redundant history entries
+    const currentHash = window.location.hash.replace("#", "").split("?")[0];
+    if (currentPage !== currentHash) {
+      window.location.hash = currentPage;
+    }
+
     if (selectedScholarshipId) {
       localStorage.setItem("selectedScholarshipId", selectedScholarshipId.toString());
     } else {
@@ -59,11 +61,13 @@ export default function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "").split("?")[0];
-      if (hash && hash !== currentPage) {
-        if (protectedPages.includes(hash) && !isLoggedIn()) {
+      const pageToSet = hash || "landing"; // Support empty hash as landing
+
+      if (pageToSet !== currentPage) {
+        if (protectedPages.includes(pageToSet) && !isLoggedIn()) {
           setCurrentPage("auth-required");
         } else {
-          setCurrentPage(hash);
+          setCurrentPage(pageToSet);
         }
       }
     };
@@ -106,7 +110,7 @@ export default function App() {
       case "auth-required":
         return <AuthRequiredPage onNavigate={handleNavigate} />;
       case "dashboard":
-        return <DashboardPage onNavigate={handleNavigate} />;
+        return <DashboardPage onNavigate={handleNavigate} initialParams={searchParams} />;
       case "search":
         return <SearchPage onNavigate={handleNavigate} initialFilters={searchParams} />;
       case "detail":
@@ -121,6 +125,8 @@ export default function App() {
         return <AdminDashboard onNavigate={handleNavigate} />;
       case "matcher":
         return <UniversityMatcher onNavigate={handleNavigate} />;
+      case "travel-guide":
+        return <TravelGuidePage onNavigate={handleNavigate} />;
       default:
         return <LandingPage onNavigate={handleNavigate} />;
     }

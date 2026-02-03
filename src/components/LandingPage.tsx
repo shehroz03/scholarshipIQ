@@ -72,10 +72,10 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
   };
 
   const [popularFilters, setPopularFilters] = useState<any[]>([
-    { name: "Master's Degree", count: "Loading...", link: "master", params: { level: "Master's" } },
+    { name: "Master's Degree", count: "Loading...", link: "master", params: { level: "Masters" } },
     { name: "Fully Funded", count: "Loading...", link: "full", params: { funding_type: "Fully Funded" } },
     { name: "PhD / Research", count: "Loading...", link: "phd", params: { level: "PhD" } },
-    { name: "Bachelor's", count: "Loading...", link: "bachelor", params: { level: "Bachelor's" } }
+    { name: "Bachelor's", count: "Loading...", link: "bachelor", params: { level: "Bachelors" } }
   ]);
 
   useEffect(() => {
@@ -87,10 +87,10 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
         // Update popular filters with real data
         if (data.breakdown) {
           setPopularFilters([
-            { name: "Master's Degree", count: `${data.breakdown.masters}+`, link: "master", params: { level: "Master's" } },
+            { name: "Master's Degree", count: `${data.breakdown.masters}+`, link: "master", params: { level: "Masters" } },
             { name: "Fully Funded", count: `${data.breakdown.fully_funded}+`, link: "full", params: { funding_type: "Fully Funded" } },
             { name: "PhD / Research", count: `${data.breakdown.phd}+`, link: "phd", params: { level: "PhD" } },
-            { name: "Bachelor's", count: `${data.breakdown.bachelors}+`, link: "bachelor", params: { level: "Bachelor's" } }
+            { name: "Bachelor's", count: `${data.breakdown.bachelors}+`, link: "bachelor", params: { level: "Bachelors" } }
           ]);
         }
 

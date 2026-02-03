@@ -1,307 +1,372 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Check, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { GraduationCap, CheckCircle, AlertCircle, Loader2, Zap } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "./ui/select";
 import { api } from "../api";
 import { Alert, AlertDescription } from "./ui/alert";
 import { toast } from "sonner";
 
 export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    nationality: "",
-    currentDegree: "",
-    major: "",
-    targetCountry: "",
-    targetDegree: ""
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+    const [formData, setFormData] = useState({
+        fullName: "",
+        email: "",
+        password: "",
+        nationality: "",
+        currentDegree: "",
+        major: "",
+        specialization: "",
+        target_country: "",
+        target_degree: ""
+    });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [isMounted, setIsMounted] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
-    try {
-      await api.auth.register({
-        email: formData.email,
-        password: formData.password,
-        full_name: formData.fullName,
-        nationality: formData.nationality,
-        current_degree: formData.currentDegree,
-        major: formData.major,
-        target_country: formData.targetCountry,
-        target_degree: formData.targetDegree
-      });
+    const features = [
+        {
+            title: 'AI-Powered Matching',
+            description: 'Get personalized scholarship matches based on your background and target degree.',
+        },
+        {
+            title: 'Verified Opportunities',
+            description: 'Access only vetted, legitimate opportunities from trusted universities.',
+        },
+        {
+            title: 'Track Everything',
+            description: 'Save and track your applications and deadlines in one dashboard.',
+        },
+        {
+            title: '24/7 AI Assistant',
+            description: 'Get instant answers to your scholarship questions',
+        },
+    ];
 
-      // Show success toast and redirect to login
-      toast.success("Registration successful! Please login.");
-      onNavigate('login');
-    } catch (err: any) {
-      setError(err.message || "Registration failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError("");
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+        try {
+            // First, register the user
+            await api.auth.register({
+                email: formData.email,
+                password: formData.password,
+                full_name: formData.fullName,
+                nationality: formData.nationality,
+                current_degree: formData.currentDegree,
+                major: formData.major,
+                specialization: formData.specialization,
+                target_country: formData.target_country,
+                target_degree: formData.target_degree
+            });
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1e3a8a]/5 via-white to-[#10b981]/5">
-      {/* Header */}
-      <div className="border-b bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('landing')}>
-            <GraduationCap className="w-8 h-8 text-[#1e3a8a]" />
-            <span className="text-xl font-black text-[#1e3a8a] tracking-tight">ScholarIQ</span>
-          </div>
+            // Then, automatically log them in
+            const loginFormData = new FormData();
+            loginFormData.append('username', formData.email);
+            loginFormData.append('password', formData.password);
+            await api.auth.login(loginFormData);
+
+            toast.success("Account created successfully!");
+            // Pass the registration data to the dashboard to show personalized scholarships immediately
+            onNavigate('dashboard', {
+                autoSearch: true,
+                filters: {
+                    level: formData.target_degree,
+                    country: formData.target_country,
+                    field: formData.major
+                }
+            });
+        } catch (err: any) {
+            setError(err.message || "Registration failed");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleChange = (field: string, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    return (
+        <div className={`min-h-screen bg-white transition-opacity duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="container mx-auto px-4 py-8 lg:py-16">
+                <div className="grid lg:grid-cols-2 gap-16 max-w-7xl mx-auto">
+                    {/* Left Column */}
+                    <div className="space-y-8 pt-12 text-left">
+                        <div className="space-y-4">
+                            <h1 className="text-5xl font-bold text-gray-900 leading-tight">
+                                Create Your Account
+                            </h1>
+                            <p className="text-lg text-gray-600">
+                                Tell us about your current education so we can match you to the right scholarships.
+                            </p>
+                        </div>
+
+                        {/* Features List */}
+                        <div className="space-y-6 pt-4">
+                            {features.map((feature, index) => (
+                                <div key={index} className="flex gap-4 items-start">
+                                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                        <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-gray-900 text-lg mb-1">
+                                            {feature.title}
+                                        </h3>
+                                        <p className="text-gray-600 leading-relaxed">
+                                            {feature.description}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Info Box */}
+                        <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r">
+                            <p className="text-gray-700 leading-relaxed">
+                                <span className="font-semibold">Free Forever.</span> No credit card required. Start discovering scholarships in minutes.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Right Column - Form */}
+                    <div className="bg-gray-50 rounded-[2rem] p-8 lg:p-14 text-left shadow-sm border border-slate-100">
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                Registration Details
+                            </h2>
+                            <p className="text-gray-600">
+                                Please fill in your information to get started
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {error && (
+                                <Alert variant="destructive" className="rounded-xl bg-red-50 border-red-100">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription className="font-bold">{error}</AlertDescription>
+                                </Alert>
+                            )}
+
+                            {/* Full Name */}
+                            <div className="space-y-2">
+                                <Label htmlFor="fullName" className="text-gray-700 font-bold ml-1">
+                                    Full Name <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                    id="fullName"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    value={formData.fullName}
+                                    onChange={(e) => handleChange('fullName', e.target.value)}
+                                    className="bg-white border-gray-200 h-[52px] rounded-xl px-4 focus:ring-2 focus:ring-blue-100 transition-all font-medium"
+                                    required
+                                />
+                            </div>
+
+                            {/* Email & Password Row */}
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="text-gray-700 font-bold ml-1">
+                                        Email <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="your@email.com"
+                                        value={formData.email}
+                                        onChange={(e) => handleChange('email', e.target.value)}
+                                        className="bg-white border-gray-200 h-[52px] rounded-xl px-4 focus:ring-2 focus:ring-blue-100 transition-all font-medium"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="text-gray-700 font-bold ml-1">
+                                        Password <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={formData.password}
+                                        onChange={(e) => handleChange('password', e.target.value)}
+                                        className="bg-white border-gray-200 h-[52px] rounded-xl px-4 focus:ring-2 focus:ring-blue-100 transition-all font-medium"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Country & Degree Row */}
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="country" className="text-gray-700 font-bold ml-1">
+                                        Country <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Select value={formData.nationality} onValueChange={(value: string) => handleChange('nationality', value)} required>
+                                        <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                            <SelectValue placeholder="Select your country" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
+                                            {["Pakistan", "India", "USA", "UK", "Canada", "Germany", "Others"].map(c => (
+                                                <SelectItem key={c} value={c} className="rounded-lg py-2.5">{c}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="degree" className="text-gray-700 font-bold ml-1">
+                                        Highest completed degree <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Select value={formData.currentDegree} onValueChange={(value: string) => handleChange('currentDegree', value)} required>
+                                        <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                            <SelectValue placeholder="Select degree" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
+                                            <SelectItem value="High School" className="rounded-lg py-2.5">High School</SelectItem>
+                                            <SelectItem value="Bachelors" className="rounded-lg py-2.5">Bachelor's Degree</SelectItem>
+                                            <SelectItem value="Masters" className="rounded-lg py-2.5">Master's Degree</SelectItem>
+                                            <SelectItem value="PhD" className="rounded-lg py-2.5">PhD</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Helper Text */}
+                            <p className="text-sm text-gray-500 -mt-2 px-1">
+                                Example: If you finished a Bachelor's and want to study a Master's abroad, select "Bachelor's" here.
+                            </p>
+
+                            {/* Target Goals Row */}
+                            <div className="grid md:grid-cols-2 gap-4 border-t border-slate-100 pt-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="target_country" className="text-gray-700 font-bold ml-1">
+                                        Target Country <span className="text-blue-600">*</span>
+                                    </Label>
+                                    <Select value={formData.target_country} onValueChange={(value: string) => handleChange('target_country', value)} required>
+                                        <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                            <SelectValue placeholder="Where to study?" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
+                                            {["USA", "UK", "Canada", "Germany", "Australia", "Europe", "Others"].map(c => (
+                                                <SelectItem key={c} value={c} className="rounded-lg py-2.5">{c}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="target_degree" className="text-gray-700 font-bold ml-1">
+                                        Target Degree <span className="text-blue-600">*</span>
+                                    </Label>
+                                    <Select value={formData.target_degree} onValueChange={(value: string) => handleChange('target_degree', value)} required>
+                                        <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                            <SelectValue placeholder="What to study?" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
+                                            <SelectItem value="Bachelors" className="rounded-lg py-2.5">Bachelors (UG)</SelectItem>
+                                            <SelectItem value="Masters" className="rounded-lg py-2.5">Masters (PG)</SelectItem>
+                                            <SelectItem value="PhD" className="rounded-lg py-2.5">PhD (Doctorate)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Field of Study */}
+                            <div className="space-y-2">
+                                <Label htmlFor="fieldOfStudy" className="text-gray-700 font-bold ml-1">
+                                    Field of Study <span className="text-red-500">*</span>
+                                </Label>
+                                <Select value={formData.major} onValueChange={(value: string) => handleChange('major', value)} required>
+                                    <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                        <SelectValue placeholder="e.g. Computer Science, Business, Medicine" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
+                                        <SelectItem value="Computer Science" className="rounded-lg py-2.5">Computer Science</SelectItem>
+                                        <SelectItem value="Business" className="rounded-lg py-2.5">Business</SelectItem>
+                                        <SelectItem value="Medicine" className="rounded-lg py-2.5">Medicine</SelectItem>
+                                        <SelectItem value="Engineering" className="rounded-lg py-2.5">Engineering</SelectItem>
+                                        <SelectItem value="Arts & Humanities" className="rounded-lg py-2.5">Arts & Humanities</SelectItem>
+                                        <SelectItem value="Law" className="rounded-lg py-2.5">Law</SelectItem>
+                                        <SelectItem value="Social Sciences" className="rounded-lg py-2.5">Social Sciences</SelectItem>
+                                        <SelectItem value="Natural Sciences" className="rounded-lg py-2.5">Natural Sciences</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Specialization */}
+                            <div className="space-y-2">
+                                <Label htmlFor="specialization" className="text-gray-700 font-bold ml-1">
+                                    Specialization
+                                </Label>
+                                <Input
+                                    id="specialization"
+                                    type="text"
+                                    placeholder="e.g. AI, Mechanical, Finance"
+                                    value={formData.specialization}
+                                    onChange={(e) => handleChange('specialization', e.target.value)}
+                                    className="bg-white border-gray-200 h-[52px] rounded-xl px-4 focus:ring-2 focus:ring-blue-100 transition-all font-medium"
+                                />
+                            </div>
+
+                            {/* Terms */}
+                            <p className="text-sm text-gray-600 leading-relaxed px-1">
+                                By creating an account, you agree to our{' '}
+                                <button type="button" className="text-blue-600 font-bold hover:underline">
+                                    Terms of Service
+                                </button>{' '}
+                                and{' '}
+                                <button type="button" className="text-blue-600 font-bold hover:underline">
+                                    Privacy Policy
+                                </button>
+                                .
+                            </p>
+
+                            {/* Submit Button */}
+                            <Button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all"
+                            >
+                                {isLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span>Creating Account...</span>
+                                    </div>
+                                ) : (
+                                    "Create Account"
+                                )}
+                            </Button>
+
+                            <div className="text-center pt-2">
+                                <p className="font-bold text-slate-400">
+                                    Already part of the network? {" "}
+                                    <button
+                                        type="button"
+                                        onClick={() => onNavigate('login')}
+                                        className="text-blue-600 hover:underline underline-offset-4 decoration-2"
+                                    >
+                                        Log In
+                                    </button>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid lg:grid-cols-5 gap-8 items-start">
-          {/* Left side - Benefits */}
-          <div className="lg:col-span-2 space-y-8 pr-4">
-            <div>
-              <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight leading-tight">Join the Elite <span className="text-[#10b981]">1%</span> of Scholars</h1>
-              <p className="text-gray-600 text-lg font-medium leading-relaxed">Tell us about your background so our AI can match you to the highest-premium scholarships.</p>
-            </div>
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center shrink-0">
-                  <CheckCircle className="w-6 h-6 text-[#10b981]" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg">AI-Powered Precision</h3>
-                  <p className="text-sm text-gray-500 font-medium leading-relaxed">98% accuracy in matching your profile with global university requirements.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center shrink-0">
-                  <GraduationCap className="w-6 h-6 text-[#1e3a8a]" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg">Direct Admission</h3>
-                  <p className="text-sm text-gray-500 font-medium leading-relaxed">We connect you directly to university admission heads in UK, USA, and EU.</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-[#1e3a8a] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-              <p className="text-lg font-bold relative z-10 leading-tight">
-                "ScholarIQ helped me land a full-ride Masters in Oxford. The matching engine is pure magic."
-              </p>
-              <div className="mt-4 flex items-center gap-3 relative z-10">
-                <div className="w-10 h-10 rounded-full bg-emerald-400" />
-                <div>
-                  <p className="text-sm font-black">Sarah Ahmed</p>
-                  <p className="text-[10px] text-blue-200 uppercase tracking-widest font-bold">Oxford '25 Scholar</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right side - Form */}
-          <div className="lg:col-span-3">
-            <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-[#1e3a8a] to-[#10b981]" />
-              <CardHeader className="px-10 pt-10 pb-6 text-center lg:text-left">
-                <CardTitle className="text-3xl font-black text-gray-900 tracking-tight">Personal Details</CardTitle>
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs mt-1">Start your global journey</p>
-              </CardHeader>
-              <CardContent className="px-10 pb-10">
-                {error && (
-                  <Alert variant="destructive" className="mb-6 rounded-2xl bg-red-50 border-red-100 text-red-600">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="font-bold">{error}</AlertDescription>
-                  </Alert>
-                )}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Basic Info */}
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-xs font-black uppercase text-gray-400 tracking-widest">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      placeholder="John Doe"
-                      value={formData.fullName}
-                      onChange={(e) => handleChange('fullName', e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all font-bold px-6 shadow-sm"
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-xs font-black uppercase text-gray-400 tracking-widest">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={formData.email}
-                        onChange={(e) => handleChange('email', e.target.value)}
-                        required
-                        disabled={isLoading}
-                        className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all font-bold px-6 shadow-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-xs font-black uppercase text-gray-400 tracking-widest">Secret Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={formData.password}
-                        onChange={(e) => handleChange('password', e.target.value)}
-                        required
-                        disabled={isLoading}
-                        className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all font-bold px-6 shadow-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Academic Background */}
-                  <div className="pt-4 border-t border-gray-50">
-                    <Label className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block mb-4">Academic Background</Label>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="nationality" className="text-xs font-bold text-gray-500">Living In</Label>
-                        <Select
-                          value={formData.nationality}
-                          onValueChange={(value: string) => handleChange('nationality', value)}
-                          disabled={isLoading}
-                        >
-                          <SelectTrigger id="nationality" className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 font-bold px-6">
-                            <SelectValue placeholder="Select country" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-2xl">
-                            <SelectItem value="Pakistan">Pakistan 🇵🇰</SelectItem>
-                            <SelectItem value="India">India 🇮🇳</SelectItem>
-                            <SelectItem value="United States">United States 🇺🇸</SelectItem>
-                            <SelectItem value="United Kingdom">United Kingdom 🇬🇧</SelectItem>
-                            <SelectItem value="Canada">Canada 🇨🇦</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="currentDegree" className="text-xs font-bold text-gray-500">Latest Degree</Label>
-                        <Select
-                          value={formData.currentDegree}
-                          onValueChange={(value: string) => handleChange('currentDegree', value)}
-                          disabled={isLoading}
-                        >
-                          <SelectTrigger id="currentDegree" className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 font-bold px-6">
-                            <SelectValue placeholder="Latest completed degree" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-2xl">
-                            <SelectItem value="High School">High School</SelectItem>
-                            <SelectItem value="Bachelors">Bachelors (BS/BA)</SelectItem>
-                            <SelectItem value="Masters">Masters (MS/MA)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <Label htmlFor="major" className="text-xs font-bold text-gray-500">Major Field of Study</Label>
-                      <Input
-                        id="major"
-                        placeholder="e.g. Computer Science, Mechanical Eng."
-                        value={formData.major}
-                        onChange={(e) => handleChange('major', e.target.value)}
-                        required
-                        disabled={isLoading}
-                        className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all font-bold px-6 shadow-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Future Aspirations */}
-                  <div className="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100/50 space-y-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <Zap className="w-4 h-4 text-white fill-white" />
-                      </div>
-                      <Label className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Future Career Mapping</Label>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="targetCountry" className="text-xs font-bold text-gray-500">Destination Hub</Label>
-                        <Select
-                          value={formData.targetCountry}
-                          onValueChange={(value: string) => handleChange('targetCountry', value)}
-                          disabled={isLoading}
-                        >
-                          <SelectTrigger id="targetCountry" className="h-12 rounded-xl border-blue-100 bg-white font-bold px-4">
-                            <SelectValue placeholder="Where to study?" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            <SelectItem value="United Kingdom">United Kingdom 🇬🇧</SelectItem>
-                            <SelectItem value="USA">United States 🇺🇸</SelectItem>
-                            <SelectItem value="Germany">Germany 🇩🇪</SelectItem>
-                            <SelectItem value="Australia">Australia 🇦🇺</SelectItem>
-                            <SelectItem value="Any">Any Country 🌍</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="targetDegree" className="text-xs font-bold text-gray-500">Goal Degree</Label>
-                        <Select
-                          value={formData.targetDegree}
-                          onValueChange={(value: string) => handleChange('targetDegree', value)}
-                          disabled={isLoading}
-                        >
-                          <SelectTrigger id="targetDegree" className="h-12 rounded-xl border-blue-100 bg-white font-bold px-4">
-                            <SelectValue placeholder="Desired degree level" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            <SelectItem value="Bachelors">Bachelors</SelectItem>
-                            <SelectItem value="Masters">Masters</SelectItem>
-                            <SelectItem value="PhD">PhD / Doctorate</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-16 bg-[#1e3a8a] hover:bg-blue-800 rounded-[1.25rem] text-lg font-black shadow-xl shadow-blue-900/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                        Generating Profile...
-                      </>
-                    ) : (
-                      "Sign Up & Find Scholarships 🎯"
-                    )}
-                  </Button>
-
-                  <div className="text-center pt-2">
-                    <span className="text-sm text-gray-500 font-bold">Already part of the network? </span>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate('login')}
-                      className="text-sm text-[#1e3a8a] hover:underline font-black uppercase tracking-widest"
-                    >
-                      Login
-                    </button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

@@ -59,7 +59,7 @@ function Navbar({ onNavigate }: { onNavigate?: (path: string) => void }) {
     <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between shadow-sm">
       <div
         className="flex items-center gap-3 cursor-pointer group"
-        onClick={() => onNavigate?.('landing')}
+        onClick={() => onNavigate?.('dashboard')}
       >
         <div className="bg-[#1e3a8a] text-white p-2 rounded-lg shadow-sm group-hover:bg-blue-800 transition-colors">
           <GraduationCap className="h-5 w-5" />
@@ -176,8 +176,8 @@ function RefineSearchPanel({
             </SelectTrigger>
             <SelectContent className="rounded-xl border-gray-100 shadow-xl">
               <SelectItem value="all">All Levels</SelectItem>
-              <SelectItem value="Bachelor's">Bachelor's</SelectItem>
-              <SelectItem value="Master's">Master's</SelectItem>
+              <SelectItem value="Bachelors">Bachelor's</SelectItem>
+              <SelectItem value="Masters">Master's</SelectItem>
               <SelectItem value="PhD">PhD</SelectItem>
             </SelectContent>
           </Select>
@@ -198,7 +198,7 @@ function RefineSearchPanel({
             <SelectContent className="rounded-xl border-gray-100 shadow-xl">
               <SelectItem value="all">Any Funding</SelectItem>
               <SelectItem value="Fully Funded">Fully Funded</SelectItem>
-              <SelectItem value="Partially Funded">Partially Funded</SelectItem>
+              <SelectItem value="Partial">Partially Funded</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -421,21 +421,21 @@ export function SearchPage({ onNavigate = () => { }, initialFilters = {} }: { on
             setTotalPages(data.total_pages || 0);
             setCurrentPage(data.page || 1);
 
-            const sanitizedResults: Scholarship[] = results.map((item: any) => ({
+            const sanitizedResults: Scholarship[] = (results || []).map((item: any) => ({
               id: item.id,
               title: item.title || "Untitled Scholarship",
-              university_name: item.university_name || "Unknown University",
-              country: item.country || "Unknown",
+              university_name: item.university_name || (item.university ? item.university.name : "Unknown University"),
+              country: item.country || "Unknown Country",
               city: item.city || null,
               degree_level: item.degree_level || "Not Specified",
-              funding_type: item.funding_type || "Not Specified",
+              funding_type: item.funding_type || "Various",
               deadline: item.deadline || new Date().toISOString(),
-              funding_amount: item.funding_amount || null,
+              funding_amount: item.funding_amount || item.scholarship_amount_value || null,
               tuition_fee_per_year: item.tuition_fee_per_year,
               net_cost_per_year: item.net_cost_per_year,
               tuition_verified: item.tuition_verified,
               university: item.university,
-              scholarship_url: item.scholarship_url,
+              scholarship_url: item.scholarship_url || item.website_url,
               website_url: item.website_url
             }));
             setScholarships(sanitizedResults);
@@ -479,21 +479,21 @@ export function SearchPage({ onNavigate = () => { }, initialFilters = {} }: { on
       setTotalPages(data.total_pages || 0);
       setCurrentPage(data.page || 1);
 
-      const sanitizedResults: Scholarship[] = results.map((item: any) => ({
+      const sanitizedResults: Scholarship[] = (results || []).map((item: any) => ({
         id: item.id,
         title: item.title || "Untitled Scholarship",
-        university_name: item.university_name || "Unknown University",
+        university_name: item.university_name || (item.university ? item.university.name : "Unknown University"),
         country: item.country || "Unknown Country",
         city: item.city,
         degree_level: item.degree_level || "Any Degree",
         funding_type: item.funding_type || "Various",
         deadline: item.deadline || new Date().toISOString(),
-        funding_amount: item.funding_amount,
+        funding_amount: item.funding_amount || item.scholarship_amount_value || null,
         tuition_fee_per_year: item.tuition_fee_per_year,
         net_cost_per_year: item.net_cost_per_year,
         tuition_verified: item.tuition_verified,
         university: item.university,
-        scholarship_url: item.scholarship_url,
+        scholarship_url: item.scholarship_url || item.website_url,
         website_url: item.website_url
       }));
 
@@ -839,8 +839,8 @@ export function SearchPage({ onNavigate = () => { }, initialFilters = {} }: { on
                                     )}
                                     {typeof s.match_score === 'number' && s.match_score > 0 && (
                                       <Badge className={`border-none px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${s.match_score >= 80 ? "bg-green-500 text-white" :
-                                          s.match_score >= 50 ? "bg-amber-100 text-amber-700" :
-                                            "bg-red-50 text-red-700"
+                                        s.match_score >= 50 ? "bg-amber-100 text-amber-700" :
+                                          "bg-red-50 text-red-700"
                                         }`}>
                                         {s.match_score}% Match ⚡
                                       </Badge>

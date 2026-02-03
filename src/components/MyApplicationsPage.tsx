@@ -131,8 +131,8 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                                     key={statusKey}
                                     onClick={() => setFilter(statusKey)}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${isActive
-                                            ? "bg-[#1e3a8a] text-white shadow-lg shadow-blue-200"
-                                            : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                                        ? "bg-[#1e3a8a] text-white shadow-lg shadow-blue-200"
+                                        : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
                                         }`}
                                 >
                                     <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-300"}`} />
@@ -172,10 +172,10 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                         {filteredApps.map((app) => (
                             <Card key={app.id} className="group border-none bg-white rounded-[2.5rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2">
                                 <div className={`h-2 bg-gradient-to-r ${app.status === 'Accepted' ? 'from-green-400 to-emerald-600' :
-                                        app.status === 'Rejected' ? 'from-red-400 to-rose-600' :
-                                            app.status === 'Interview' ? 'from-orange-400 to-amber-600' :
-                                                app.status === 'Applied' ? 'from-blue-400 to-indigo-600' :
-                                                    'from-gray-300 to-gray-500'
+                                    app.status === 'Rejected' ? 'from-red-400 to-rose-600' :
+                                        app.status === 'Interview' ? 'from-orange-400 to-amber-600' :
+                                            app.status === 'Applied' ? 'from-blue-400 to-indigo-600' :
+                                                'from-gray-300 to-gray-500'
                                     }`} />
                                 <CardContent className="p-8">
                                     <div className="flex justify-between items-start mb-6">

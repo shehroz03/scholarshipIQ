@@ -25,7 +25,6 @@ import { CurrencySelector } from "./CurrencySelector";
 import { useCurrency } from "../context/CurrencyContext";
 import { Recommendations } from "./Recommendations";
 import { NotificationBell } from "./NotificationBell";
-import { downloadResume } from "../utils/downloadResume";
 
 function BookmarkCheckedIcon({ className }: { className?: string }) {
   return (
@@ -144,7 +143,7 @@ const ScholarshipDashboardCard = ({
   </Card>
 );
 
-export function DashboardPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
+export function DashboardPage({ onNavigate, initialParams = {} }: { onNavigate: (page: string, params?: any) => void; initialParams?: any }) {
   const { convertAndFormat } = useCurrency();
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [recommendations, setRecommendations] = useState<Scholarship[]>([]);
@@ -152,6 +151,7 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
   const [isLoading, setIsLoading] = useState(true);
   const [recPage, setRecPage] = useState(0);
   const [isRecLoading, setIsRecLoading] = useState(false);
+  const [hasAutoSearched, setHasAutoSearched] = useState(false);
   const PAGE_SIZE = 25;
 
   useEffect(() => {
@@ -176,20 +176,41 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
     const fetchRecs = async () => {
       setIsRecLoading(true);
       try {
-        const recData = await api.recommendations.list({
-          skip: recPage * PAGE_SIZE,
-          limit: PAGE_SIZE
-        });
-        setRecommendations(recData);
+        const params = (initialParams?.autoSearch && !hasAutoSearched)
+          ? { ...initialParams.filters, limit: PAGE_SIZE, skip: recPage * PAGE_SIZE }
+          : { limit: PAGE_SIZE, skip: recPage * PAGE_SIZE };
+
+        const recData = await api.recommendations.list(params);
+        // Extract the scholarships array from the response object
+        const scholarships = recData.top_scholarships || [];
+
+        // Map the API response to match the Scholarship interface
+        const mappedScholarships = scholarships.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          university_name: item.university_name || "Unknown University",
+          country: item.country || "Global",
+          funding_type: "Scholarship",
+          amount: "Varies",
+          deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // Default 90 days from now
+          description: item.short_reason || "Scholarship opportunity",
+          degree_level: item.degree_level || "Graduate",
+          is_suspicious: false,
+          match_score: item.fit_score || 0
+        }));
+
+        setRecommendations(mappedScholarships);
+        if (initialParams?.autoSearch) setHasAutoSearched(true);
       } catch (err) {
         console.error("Failed to fetch recommendations", err);
+        setRecommendations([]);
       } finally {
         setIsRecLoading(false);
       }
     };
     fetchRecs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [recPage]);
+  }, [recPage, initialParams]);
 
   const toggleSave = async (id: number) => {
     try {
@@ -240,8 +261,6 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
     { label: "Profile Score", value: `${summary?.profile_completion || 0}%`, icon: Zap, color: "text-amber-500", bg: "bg-amber-50" },
     { label: "Pipeline", value: savedScholarshipIds.length, icon: Clock, color: "text-emerald-600", bg: "bg-emerald-50" },
   ];
-
-  const [isDownloading, setIsDownloading] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex">
@@ -320,44 +339,6 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
         {/* Main Area */}
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-7xl mx-auto space-y-10">
-
-            {/* AI RESUME BANNER */}
-            <Card className="border-none bg-gradient-to-br from-[#1e3a8a] via-[#2563eb] to-[#4f46e5] rounded-[3rem] p-10 text-white shadow-2xl overflow-hidden relative group">
-              <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-60 h-60 bg-white/5 rounded-full blur-2xl" />
-
-              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
-                <div className="space-y-4 text-center lg:text-left">
-                  <Badge className="bg-white/20 hover:bg-white/30 text-white border-none font-black text-[10px] uppercase tracking-[0.2em] px-4 py-1.5 rounded-full mb-4.inline-block">
-                    AI Personal Branding
-                  </Badge>
-                  <h2 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">
-                    Get Your <span className="text-blue-200">Scholarship-Winning</span> Resume 📄
-                  </h2>
-                  <p className="text-blue-100/80 font-medium text-lg max-w-2xl">
-                    Our AI analyzes your unique academic profile and generates a professional CV formatted specifically for elite global scholarship applications.
-                  </p>
-                </div>
-
-                <Button
-                  onClick={() => downloadResume(setIsDownloading)}
-                  disabled={isDownloading}
-                  className="bg-white hover:bg-blue-50 text-[#1e3a8a] px-10 h-16 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 transition-all disabled:opacity-70 group/btn shrink-0"
-                >
-                  {isDownloading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                      Crafting PDF...
-                    </>
-                  ) : (
-                    <>
-                      Download AI CV
-                      <ChevronRight className="w-5 h-5 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </Card>
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -513,7 +494,7 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
                       <Button
                         variant="ghost"
                         className="w-full justify-between bg-white/20 hover:bg-white text-white hover:text-[#1e3a8a] rounded-2xl font-bold h-14 border border-white/20"
-                        onClick={() => onNavigate('search')}
+                        onClick={() => onNavigate('travel-guide')}
                       >
                         <span className="flex items-center gap-2"><MapPin className="w-5 h-5" /> Travel Guide</span>
                         <ChevronRight className="w-4 h-4" />

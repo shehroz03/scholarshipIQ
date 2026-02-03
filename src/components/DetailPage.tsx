@@ -140,7 +140,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
             <Button
               variant="outline"
               className="rounded-xl font-bold border-slate-200 hover:bg-slate-50"
-              onClick={() => onNavigate('search')}
+              onClick={() => window.history.back()}
             >
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>

@@ -328,7 +328,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   <Checkbox
                     id="research"
                     checked={profile.research_experience}
-                    onCheckedChange={(checked) => setProfile({ ...profile, research_experience: !!checked })}
+                    onCheckedChange={(checked: boolean) => setProfile({ ...profile, research_experience: !!checked })}
                     className="w-5 h-5 rounded-md border-slate-300"
                   />
                   <div className="grid gap-1.5 leading-none">
