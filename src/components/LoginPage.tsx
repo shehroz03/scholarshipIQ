@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
-import { GraduationCap, AlertCircle, Loader2 } from "lucide-react";
+import { GraduationCap, AlertCircle, Loader2, Check } from "lucide-react";
 import { api } from "../api";
 import { Alert, AlertDescription } from "./ui/alert";
 
@@ -52,21 +52,21 @@ export function LoginPage({ onNavigate }: { onNavigate: (page: string, params?: 
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-[#10b981] rounded-full flex items-center justify-center flex-shrink-0">
-                ✓
+                <Check className="w-5 h-5 text-white" />
               </div>
-              <span>Access 50,000+ verified scholarships</span>
+              <span className="font-medium">Access 50,000+ verified scholarships</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-[#10b981] rounded-full flex items-center justify-center flex-shrink-0">
-                ✓
+                <Check className="w-5 h-5 text-white" />
               </div>
-              <span>Track your applications in one place</span>
+              <span className="font-medium">Track your applications in one place</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-[#10b981] rounded-full flex items-center justify-center flex-shrink-0">
-                ✓
+                <Check className="w-5 h-5 text-white" />
               </div>
-              <span>Get personalized AI recommendations</span>
+              <span className="font-medium">Get personalized AI recommendations</span>
             </div>
           </div>
         </div>

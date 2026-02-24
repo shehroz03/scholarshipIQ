@@ -33,7 +33,9 @@ import {
   Zap,
   Calendar,
   TrendingUp,
-  ArrowRight
+  ArrowRight,
+  LogOut,
+  LayoutDashboard
 } from "lucide-react";
 import { api } from "../api";
 import { CurrencySelector } from "./CurrencySelector";
@@ -59,6 +61,19 @@ const FALLBACK_COUNTRIES = [
 
 export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
   const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [userLoggedIn, setUserLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setUserLoggedIn(!!localStorage.getItem("token"));
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUserLoggedIn(false);
+    toast.success("Logged out successfully");
+    // Optionally refresh or stay on landing
+  };
 
   const [statsData, setStatsData] = useState<any>(null);
   const [dbCountries, setDbCountries] = useState<any[]>([]);
@@ -166,10 +181,27 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               <a href="#filters" className="text-gray-700 hover:text-[#1e3a8a] transition-colors">Popular Filters</a>
               <a href="#countries" className="text-gray-700 hover:text-[#1e3a8a] transition-colors">Countries</a>
               <CurrencySelector />
-              <Button variant="ghost" onClick={() => onNavigate('login')}>Sign In</Button>
-              <Button onClick={() => onNavigate('signup')} className="bg-[#1e3a8a] hover:bg-[#1e3a8a]/90">
-                Get Started
-              </Button>
+              {userLoggedIn ? (
+                <>
+                  <Button variant="ghost" onClick={() => onNavigate('dashboard')} className="gap-2 text-[#1e3a8a] font-medium">
+                    <LayoutDashboard className="w-4 h-4" /> Dashboard
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleLogout}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" /> Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={() => onNavigate('login')}>Sign In</Button>
+                  <Button onClick={() => onNavigate('signup')} className="bg-[#1e3a8a] hover:bg-[#1e3a8a]/90">
+                    Get Started
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

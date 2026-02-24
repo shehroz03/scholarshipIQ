@@ -12,6 +12,37 @@ interface Message {
   fileName?: string;
 }
 
+const ComparisonTable = ({ data }: { data: any[] }) => {
+  if (!data || data.length === 0) return null;
+  const headers = Object.keys(data[0]);
+
+  return (
+    <div className="overflow-x-auto my-4 rounded-lg border border-gray-200 shadow-sm">
+      <table className="min-w-full divide-y divide-gray-200 bg-white">
+        <thead className="bg-[#1e3a8a] text-white">
+          <tr>
+            {headers.map((header, index) => (
+              <th key={index} className="px-4 py-3 text-left text-xs font-semibold uppercase">{header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
+          {data.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {headers.map((header, colIndex) => (
+                <td key={colIndex} className="px-4 py-3 text-sm text-gray-700">
+                  {/* Handle deadline specifically if needed, otherwise just render value */}
+                  {header.toLowerCase().includes('deadline') ? <span className="text-red-600 font-medium">{row[header]}</span> : row[header]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 export function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -167,7 +198,24 @@ export function Chatbot() {
                       📎 {message.fileName}
                     </div>
                   )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {(() => {
+                      // Attempt to parse content as JSON for table rendering
+                      try {
+                        // Very basic heuristic: if starts with [ and ends with ], try to parse
+                        const trimmed = message.content.trim();
+                        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                          const data = JSON.parse(trimmed);
+                          if (Array.isArray(data) && data.length > 0) {
+                            return <ComparisonTable data={data} />;
+                          }
+                        }
+                      } catch (e) {
+                        // Not JSON, render as text
+                      }
+                      return message.content;
+                    })()}
+                  </p>
                 </div>
               </div>
             ))}

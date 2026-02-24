@@ -118,45 +118,47 @@ export function DashboardHome() {
             </div>
 
             {/* Detail Dialog */}
-            <Dialog open={!!activeFR} onOpenChange={(open: boolean) => !open && setActiveFR(null)}>
-                <DialogContent className="bg-white text-gray-900 border-gray-200 sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                            {activeFR ? frs[activeFR]?.name : ''}
-                            <Badge className="bg-green-100 text-green-700 border-green-200 ml-2">WORKING</Badge>
-                        </DialogTitle>
-                        <DialogDescription className="text-gray-500 font-mono text-xs">
-                            Requirement ID: {activeFR?.toUpperCase()}
-                        </DialogDescription>
-                    </DialogHeader>
+            {activeFR && frs[activeFR] && (
+                <Dialog open={!!activeFR} onOpenChange={(open: boolean) => !open && setActiveFR(null)}>
+                    <DialogContent className="bg-white text-gray-900 border-gray-200 sm:max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                {frs[activeFR]?.name}
+                                <Badge className="bg-green-100 text-green-700 border-green-200 ml-2">WORKING</Badge>
+                            </DialogTitle>
+                            <DialogDescription className="text-gray-500 font-mono text-xs">
+                                Requirement ID: {activeFR?.toUpperCase()}
+                            </DialogDescription>
+                        </DialogHeader>
 
-                    <div className="space-y-6 pt-2">
-                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                            <p className="text-xs font-bold text-gray-500 uppercase mb-1">Current Status</p>
-                            <p className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                                <CheckCircle className="w-5 h-5 text-green-500" />
-                                {activeFR ? frs[activeFR]?.details : ''}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> System Check: {activeFR ? frs[activeFR]?.last_test : ''}
-                            </p>
-                        </div>
+                        <div className="space-y-6 pt-2">
+                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Current Status</p>
+                                <p className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                    {frs[activeFR]?.details}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" /> System Check: {frs[activeFR]?.last_test}
+                                </p>
+                            </div>
 
-                        <div>
-                            <p className="text-sm font-bold text-gray-900 mb-2">Technical Description</p>
-                            <p className="text-gray-600 leading-relaxed text-sm">
-                                {activeFR ? frDetails[activeFR] || "Detailed technical specifications available in main documentation." : ''}
-                            </p>
-                        </div>
+                            <div>
+                                <p className="text-sm font-bold text-gray-900 mb-2">Technical Description</p>
+                                <p className="text-gray-600 leading-relaxed text-sm">
+                                    {frDetails[activeFR.toLowerCase()] || frDetails[activeFR] || "Detailed technical specifications available in main documentation."}
+                                </p>
+                            </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-2">
-                            <Button variant="outline" className="w-full text-xs h-8" onClick={() => setActiveFR(null)}>
-                                Close
-                            </Button>
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <Button variant="outline" className="w-full text-xs h-8" onClick={() => setActiveFR(null)}>
+                                    Close
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }

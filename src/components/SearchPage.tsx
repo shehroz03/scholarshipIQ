@@ -499,8 +499,9 @@ export function SearchPage({ onNavigate = () => { }, initialFilters = {} }: { on
 
       setScholarships(sanitizedResults);
 
-      // Scroll to top of results
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setScholarships(sanitizedResults);
+
+      // Scroll to top removed to prevent jumping while filtering
     } catch (err: any) {
       console.error("Search error:", err);
       setError("We couldn't load scholarships right now. Please try again in a moment.");
@@ -514,6 +515,7 @@ export function SearchPage({ onNavigate = () => { }, initialFilters = {} }: { on
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
     handleSearch(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handlePageSizeChange = (newSize: string) => {
@@ -881,9 +883,14 @@ export function SearchPage({ onNavigate = () => { }, initialFilters = {} }: { on
                                 <div className="flex flex-col items-end justify-between min-w-[180px] gap-4">
                                   <div className="text-right space-y-1">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deadline</p>
-                                    <p className={`font-bold flex items-center gap-1.5 ${new Date(s.deadline).getTime() < new Date().getTime() + 1000 * 60 * 60 * 24 * 30 ? 'text-red-500' : 'text-gray-700'}`}>
+                                    <p className={`font-bold flex items-center justify-end gap-1.5 ${new Date(s.deadline).getTime() < new Date().getTime() ? 'text-red-600' : (new Date(s.deadline).getTime() < new Date().getTime() + 1000 * 60 * 60 * 24 * 30 ? 'text-amber-600' : 'text-gray-700')}`}>
                                       <Calendar className="w-4 h-4" />
                                       {formatDate(s.deadline)}
+                                      {new Date(s.deadline).getTime() < new Date().getTime() && (
+                                        <span className="bg-red-100/80 text-red-600 text-[10px] px-1.5 py-0.5 rounded-md font-black uppercase tracking-wider border border-red-200 ml-1">
+                                          Expired
+                                        </span>
+                                      )}
                                     </p>
                                   </div>
 

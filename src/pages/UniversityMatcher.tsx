@@ -220,7 +220,7 @@ export function UniversityMatcher({ onNavigate }: { onNavigate: (page: string, p
             {/* Navbar Placeholder / Back Button */}
             <div className="bg-white border-b px-4 lg:px-6 py-4 flex flex-col sm:flex-row items-center justify-between z-40 shadow-sm gap-4">
                 <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <Button variant="ghost" size="sm" onClick={() => onNavigate('landing')} className="hover:bg-blue-50 text-blue-600">
+                    <Button variant="ghost" size="sm" onClick={() => onNavigate('dashboard')} className="hover:bg-blue-50 text-blue-600">
                         <ChevronRight className="w-4 h-4 rotate-180 mr-1" /> Back
                     </Button>
                     <h1 className="text-lg lg:text-xl font-bold text-gray-900 flex items-center gap-2 truncate">

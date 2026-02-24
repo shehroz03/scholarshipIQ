@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Check, Loader2, AlertCircle } from "lucide-react";
+import { Check, Loader2, AlertCircle, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -29,10 +29,20 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [isMounted, setIsMounted] = useState(false);
+    const [userLoggedIn, setUserLoggedIn] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
+        setUserLoggedIn(!!localStorage.getItem("token"));
     }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUserLoggedIn(false);
+        toast.success("Logged out");
+        onNavigate('landing');
+    };
 
     const features = [
         {
@@ -100,7 +110,14 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
     };
 
     return (
-        <div className={`min-h-screen bg-white transition-opacity duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`min-h-screen bg-white transition-opacity duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'} relative`}>
+            {userLoggedIn && (
+                <div className="absolute top-4 right-4 z-50">
+                    <Button variant="ghost" onClick={handleLogout} className="text-red-600 hover:bg-red-50 font-bold border border-red-100 bg-white/80 backdrop-blur-sm shadow-sm">
+                        <LogOut className="w-4 h-4 mr-2" /> Logout
+                    </Button>
+                </div>
+            )}
             <div className="container mx-auto px-4 py-8 lg:py-16">
                 <div className="grid lg:grid-cols-2 gap-16 max-w-7xl mx-auto">
                     {/* Left Column */}

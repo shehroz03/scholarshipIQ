@@ -1,9 +1,8 @@
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 from sqlalchemy.orm import Session
 from app.db.models import User, Scholarship
 import re
+import math
+from collections import Counter
 
 def clean_text(text):
     if not text:
@@ -12,6 +11,23 @@ def clean_text(text):
     text = text.lower()
     text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
     return text
+
+def get_cosine_similarity(vec1, vec2):
+    intersection = set(vec1.keys()) & set(vec2.keys())
+    numerator = sum([vec1[x] * vec2[x] for x in intersection])
+
+    sum1 = sum([vec1[x]**2 for x in vec1.keys()])
+    sum2 = sum([vec2[x]**2 for x in vec2.keys()])
+    denominator = math.sqrt(sum1) * math.sqrt(sum2)
+
+    if not denominator:
+        return 0.0
+    else:
+        return float(numerator) / denominator
+
+def text_to_vector(text):
+    words = text.split()
+    return Counter(words)
 
 def get_recommendations(db: Session, user_id: int):
     # 1. Fetch User Profile
@@ -43,56 +59,51 @@ def get_recommendations(db: Session, user_id: int):
     if not scholarships:
         return []
 
-    # 3. AI Scoring (Step 2): Content-Based Filtering
+    # 3. AI Scoring (Step 2): Content-Based Filtering (Pure Python Implementation)
     
     # Prepare User Tag
     user_tag = f"{user.field_of_interest or ''} {user.specialization or ''} {user.field_of_interest or ''}"
-    user_tag = clean_text(user_tag)
+    user_tag_clean = clean_text(user_tag)
+    user_vector = text_to_vector(user_tag_clean)
     
-    # Prepare Scholarship Tags
+    # Process Scholarships
     scholarship_data = []
     for s in scholarships:
         s_tag = f"{s.title} {s.description or ''} {s.field_of_study or ''}"
+        s_tag_clean = clean_text(s_tag)
+        s_vector = text_to_vector(s_tag_clean)
+        
+        # Calculate Cosine Similarity
+        score = get_cosine_similarity(user_vector, s_vector)
+        
         scholarship_data.append({
-            "id": s.id,
-            "tag": clean_text(s_tag),
-            "object": s
-        })
-
-    # Combine user tag with scholarship tags for vectorization
-    all_texts = [user_tag] + [item["tag"] for item in scholarship_data]
-    
-    # TF-IDF Vectorization
-    vectorizer = TfidfVectorizer(stop_words='english')
-    tfidf_matrix = vectorizer.fit_transform(all_texts)
-    
-    # Calculate Cosine Similarity
-    # tfidf_matrix[0:1] is the user vector
-    # tfidf_matrix[1:] are the scholarship vectors
-    cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:])
-    
-    # Ranking
-    scores = cosine_sim[0]
-    for i, score in enumerate(scores):
-        scholarship_data[i]["score"] = float(score)
-
-    # Sort by score descending
-    scholarship_data.sort(key=lambda x: x["score"], reverse=True)
-
-    # Top 10
-    top_recommendations = scholarship_data[:10]
-    
-    results = []
-    for item in top_recommendations:
-        s = item["object"]
-        results.append({
             "id": s.id,
             "title": s.title,
             "university_name": s.university.name if s.university else "Unknown",
             "country": s.country,
             "degree_level": s.degree_level,
-            "fit_score": round(item["score"] * 100, 1),
-            "field_of_study": s.field_of_study
+            "fit_score": round(score * 100, 1),
+            "field_of_study": s.field_of_study,
+            "raw_score": score
         })
 
-    return results
+    # Sort by score descending
+    scholarship_data.sort(key=lambda x: x["raw_score"], reverse=True)
+
+    # Top 10
+    results = scholarship_data[:10]
+    
+    # Clean up internal keys before returning
+    final_results = []
+    for item in results:
+        final_results.append({
+            "id": item["id"],
+            "title": item["title"],
+            "university_name": item["university_name"],
+            "country": item["country"],
+            "degree_level": item["degree_level"],
+            "fit_score": item["fit_score"],
+            "field_of_study": item["field_of_study"]
+        })
+
+    return final_results
