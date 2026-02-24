@@ -18,7 +18,7 @@ async def check_deadlines_and_notify():
     Checks for scholarships where the deadline is exactly 7 days from today
     and notifies users who have saved them.
     """
-    print(f"[{datetime.datetime.now()}] 🔍 Checking for upcoming scholarship deadlines (T-7 days)...")
+    print(f"[{datetime.datetime.now()}] Checking for upcoming scholarship deadlines (T-7 days)...")
     db: Session = SessionLocal()
     
     try:
@@ -33,7 +33,7 @@ async def check_deadlines_and_notify():
         ).all()
 
         if not upcoming_scholarships:
-            print(f"[{datetime.datetime.now()}] ✅ No scholarships found expiring on {target_date}.")
+            print(f"[{datetime.datetime.now()}] No scholarships found expiring on {target_date}.")
             return
 
         fm = FastMail(conf)
@@ -65,7 +65,7 @@ async def check_deadlines_and_notify():
                 """
 
                 message = MessageSchema(
-                    subject=f"⚠️ 7 Days Left: {scholarship.title} Deadline",
+                    subject=f"7 Days Left: {scholarship.title} Deadline",
                     recipients=[user.email],
                     body=email_body,
                     subtype=MessageType.html
@@ -73,12 +73,12 @@ async def check_deadlines_and_notify():
 
                 try:
                     await fm.send_message(message)
-                    print(f"📧 Email sent to {user.email} for '{scholarship.title}'")
+                    print(f"Email sent to {user.email} for '{scholarship.title}'")
                 except Exception as e:
-                    print(f"❌ Failed to send email to {user.email}: {e}")
+                    print(f"Failed to send email to {user.email}: {e}")
 
     except Exception as e:
-        print(f"🚨 Critical error in deadline scheduler: {e}")
+        print(f"Critical error in deadline scheduler: {e}")
     finally:
         db.close()
 
@@ -88,4 +88,4 @@ scheduler = AsyncIOScheduler()
 def start_scheduler():
     scheduler.add_job(check_deadlines_and_notify, 'cron', hour=9, minute=0)
     scheduler.start()
-    print("🚀 [Scheduler] Started! Daily deadline check scheduled for 09:00 AM.")
+    print("[Scheduler] Started! Daily deadline check scheduled for 09:00 AM.")
