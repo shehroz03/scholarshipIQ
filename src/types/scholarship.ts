@@ -87,4 +87,11 @@ export interface Scholarship {
     // Nested Objects
     university?: University;
     match_score?: number;
+    fraud_badge?: {
+        is_safe: boolean;
+        risk_level: string;
+        risk_score: number;
+        badge_color: string;
+        badge_text: string;
+    };
 }

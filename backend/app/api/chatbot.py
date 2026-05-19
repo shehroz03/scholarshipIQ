@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 from app.services.chatbot import get_ai_response
 from app.db.session import get_db
-from app.db.models import ChatMessage, User
+from app.db.models import ChatMessage, User, ChatSession
 from app.api.deps import get_current_user # Auth dependency
 
 router = APIRouter()
@@ -52,8 +52,25 @@ async def chat_endpoint(
         file_type = file.content_type
         file_name = file.filename
 
+    # Ensure there is an active ChatSession
+    chat_session = db.query(ChatSession).filter(
+        ChatSession.user_id == current_user.id,
+        ChatSession.is_active == True
+    ).order_by(ChatSession.created_at.desc()).first()
+
+    if not chat_session:
+        chat_session = ChatSession(
+            user_id=current_user.id,
+            tool_type="general_chat",
+            is_active=True
+        )
+        db.add(chat_session)
+        db.commit()
+        db.refresh(chat_session)
+
     # --- A. User ka Message DB mein Save Karein ---
     user_msg_db = ChatMessage(
+        session_id=chat_session.id,
         user_id=current_user.id,
         role="user",
         content=message,
@@ -67,6 +84,7 @@ async def chat_endpoint(
     
     # --- C. AI ka Jawab DB mein Save Karein ---
     ai_msg_db = ChatMessage(
+        session_id=chat_session.id,
         user_id=current_user.id,
         role="ai",
         content=ai_reply_text

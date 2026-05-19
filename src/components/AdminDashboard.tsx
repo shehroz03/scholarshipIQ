@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLogin } from "./admin/AdminLogin";
 import { DashboardHome } from "./admin/DashboardHome";
 import { UserManagement } from "./admin/UserManagement";
@@ -7,15 +7,56 @@ import { ApiHealth } from "./admin/ApiHealth";
 import { AdminAnalytics } from "./admin/Analytics";
 import { DatabaseViewer } from "./admin/DatabaseViewer";
 import { FraudManager } from "./admin/FraudManager";
-import { LayoutDashboard, Users, BookOpen, Activity, BarChart2, Database, ShieldAlert, LogOut, Settings } from "lucide-react";
+import { DataPipeline } from "./admin/DataPipeline";
+import { AutoUpdater } from "./admin/AutoUpdater";
+import { TeacherApprovals } from "./admin/TeacherApprovals";
+import { LayoutDashboard, Users, BookOpen, Activity, BarChart2, Database, ShieldAlert, LogOut, Settings, RefreshCw, Zap, GraduationCap } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
+import { darkTheme, lightTheme } from "../styles/theme";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface AdminDashboardProps {
   onNavigate?: (page: string) => void;
 }
 
 export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("token"));
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return false;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.sub === "admin";
+    } catch (e) {
+      return false;
+    }
+  });
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem("admin_active_tab") || "dashboard");
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      if (!token && isLoggedIn) {
+        setIsLoggedIn(false);
+        return;
+      }
+      if (token && isLoggedIn) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.sub !== "admin") setIsLoggedIn(false);
+        } catch (e) {
+          setIsLoggedIn(false);
+        }
+      }
+    };
+    const interval = setInterval(checkAuth, 1000);
+    window.addEventListener('storage', checkAuth);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, [isLoggedIn]);
 
   if (!isLoggedIn) {
     return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
@@ -30,6 +71,9 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       case "analytics": return <AdminAnalytics />;
       case "database": return <DatabaseViewer />;
       case "fraud": return <FraudManager />;
+      case "pipeline": return <DataPipeline />;
+      case "autoupdate": return <AutoUpdater />;
+      case "teachers": return <TeacherApprovals />;
       default: return <DashboardHome />;
     }
   };
@@ -41,18 +85,21 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     { id: "health", label: "API Status", icon: Activity },
     { id: "analytics", label: "Analytics", icon: BarChart2 },
     { id: "database", label: "Database", icon: Database },
+    { id: "pipeline", label: "Data Pipeline", icon: RefreshCw },
     { id: "fraud", label: "Fraud Security", icon: ShieldAlert },
+    { id: "teachers", label: "Teacher Approvals", icon: GraduationCap },
+    { id: "autoupdate", label: "Auto-Update AI", icon: Zap },
   ];
 
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-100 font-sans">
+    <div className="flex h-screen font-sans" style={{ backgroundColor: theme.bg, color: theme.text }}>
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
-        <div className="p-6 border-b border-gray-800">
+      <aside className="w-64 border-r flex flex-col" style={{ backgroundColor: isDark ? theme.bgSecondary : '#0f172a', borderColor: theme.border }}>
+        <div className="p-6 border-b" style={{ borderColor: theme.border }}>
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
             ScholarIQ Admin
           </h1>
-          <p className="text-xs text-gray-500 mt-1">System Control Panel</p>
+          <p className="text-xs mt-1" style={{ color: theme.textSecondary }}>System Control Panel</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -66,9 +113,10 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                   localStorage.setItem("admin_active_tab", item.id);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "hover:bg-white/5"
                   }`}
+                style={{ color: activeTab === item.id ? 'white' : theme.textSecondary }}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium text-sm">{item.label}</span>
@@ -77,7 +125,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-4 border-t" style={{ borderColor: theme.border }}>
           <button
             onClick={() => {
               setIsLoggedIn(false);
@@ -93,17 +141,18 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-gray-50">
-        <header className="h-16 border-b border-gray-200 bg-white sticky top-0 z-10 px-8 flex items-center justify-between shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800 capitalize">
+      <main className="flex-1 overflow-auto" style={{ backgroundColor: theme.bg }}>
+        <header className="h-16 border-b sticky top-0 z-10 px-8 flex items-center justify-between shadow-sm" style={{ backgroundColor: theme.headerBg, borderColor: theme.border }}>
+          <h2 className="text-lg font-semibold capitalize" style={{ color: theme.text }}>
             {activeTab.replace("-", " ")} Overview
           </h2>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full border border-green-200">
+            <ThemeToggle />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border" style={{ backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : '#f0fdf4', borderColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#bbf7d0' }}>
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-xs font-medium text-green-700">System Online</span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold ring-2 ring-gray-100 text-white">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-gray-100">
               A
             </div>
           </div>

@@ -1,257 +1,461 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import {
-    GraduationCap,
-    MapPin,
-    Trash2,
-    Loader2,
-    Trophy,
-    Filter,
-    CheckCircle2,
-    Clock,
-    MessageSquare,
-    XCircle,
-    MoreVertical,
-    Banknote,
-    Calendar
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  GraduationCap, 
+  MapPin, 
+  Trash2, 
+  Loader2, 
+  Trophy, 
+  CheckCircle2, 
+  Clock, 
+  XCircle, 
+  Banknote, 
+  Calendar, 
+  Lock, 
+  Crown, 
+  Sparkles, 
+  ArrowRight, 
+  Bookmark, 
+  Pencil, 
+  Mic, 
+  LayoutGrid, 
+  ChevronRight, 
+  Activity, 
+  Zap, 
+  Target 
 } from "lucide-react";
 import { api } from "../api";
 import { toast } from "sonner";
 import { useCurrency } from "../context/CurrencyContext";
+import { useUser } from "../context/UserContext";
+import { useTheme } from "../context/ThemeContext";
+import { Sidebar } from "./Sidebar";
+import { NotificationBell } from "./NotificationBell";
 import { CurrencySelector } from "./CurrencySelector";
+import { ThemeToggle } from "./ThemeToggle";
 
 const STATUS_CONFIG = {
-    All: { label: "All", color: "bg-gray-100 text-gray-700", icon: Filter },
-    Saved: { label: "Saved", color: "bg-gray-100 text-gray-700", icon: Clock },
-    Applied: { label: "Applied", color: "bg-blue-100 text-blue-700", icon: MessageSquare },
-    Interview: { label: "Interview", color: "bg-yellow-100 text-yellow-700", icon: Trophy },
-    Accepted: { label: "Accepted", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
-    Rejected: { label: "Rejected", color: "bg-red-100 text-red-700", icon: XCircle },
+  All: { label: "All Hubs", icon: LayoutGrid, color: "#64748b" },
+  Saved: { label: "Saved", icon: Bookmark, color: "#6366f1" },
+  Applied: { label: "Applied", icon: Pencil, color: "#f59e0b" },
+  Interview: { label: "Interview", icon: Mic, color: "#a855f7" },
+  Accepted: { label: "Accepted", icon: CheckCircle2, color: "#10b981" },
+  Rejected: { label: "Rejected", icon: XCircle, color: "#ef4444" },
 };
 
 export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
-    const { convertAndFormat } = useCurrency();
-    const [applications, setApplications] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [filter, setFilter] = useState("All");
+  const { isDark } = useTheme();
+  const { convertAndFormat } = useCurrency();
+  const [applications, setApplications] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState("All");
+  const { status: userStatus } = useUser();
+  const userPlan = userStatus?.plan || "free";
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
+  const isFreeUser = userPlan === "free";
+  const FREE_TRACKER_LIMIT = 3;
 
-    const fetchApplications = async () => {
-        try {
-            const data = await api.applications.list();
-            setApplications(data);
-        } catch (err) {
-            console.error("Failed to fetch applications", err);
-            toast.error("Failed to load applications");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
-    const handleStatusChange = async (appId: number, newStatus: string) => {
-        try {
-            // Optimistic update
-            setApplications(prev => prev.map(app =>
-                app.id === appId ? { ...app, status: newStatus } : app
-            ));
+  const fetchApplications = async () => {
+    try {
+      const data = await api.applications.list();
+      setApplications(data);
+    } catch (err) {
+      console.error("Failed to fetch applications", err);
+      toast.error("Pipeline synchronization failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            await api.applications.update(appId, { status: newStatus });
-            toast.success(`Status updated to ${newStatus}`);
-        } catch (err) {
-            toast.error("Failed to update status");
-            fetchApplications();
-        }
-    };
+  const handleStatusChange = async (appId: number, newStatus: string) => {
+    try {
+      setApplications(prev => prev.map(app =>
+        app.id === appId ? { ...app, status: newStatus } : app
+      ));
+      await api.applications.update(appId, { status: newStatus });
+      toast.success(`Pipeline state updated: ${newStatus}`);
+    } catch (err) {
+      toast.error("State transition failed");
+      fetchApplications();
+    }
+  };
 
-    const handleDelete = async (appId: number) => {
-        if (!window.confirm("Are you sure you want to stop tracking this scholarship?")) return;
+  const handleDelete = async (appId: number) => {
+    if (!window.confirm("Purge this tracker from your active pipeline?")) return;
+    try {
+      await api.applications.delete(appId);
+      setApplications(prev => prev.filter(app => app.id !== appId));
+      toast.success("Tracker purged successfully");
+    } catch (err) {
+      toast.error("Purge operation failed");
+    }
+  };
 
-        try {
-            await api.applications.delete(appId);
-            setApplications(prev => prev.filter(app => app.id !== appId));
-            toast.success("Scholarship removed from tracking");
-        } catch (err) {
-            toast.error("Failed to delete application record");
-        }
-    };
+  const filteredApps = filter === "All"
+    ? applications
+    : applications.filter(app => app.status === filter);
 
-    const filteredApps = filter === "All"
-        ? applications
-        : applications.filter(app => app.status === filter);
+  const kpis = [
+    { label: "Active Applications", value: applications.filter(a => a.status === 'Applied').length, icon: Pencil, color: "#6366f1", glow: "rgba(99, 102, 241, 0.2)" },
+    { label: "Interviews", value: applications.filter(a => a.status === 'Interview').length, icon: Mic, color: "#a855f7", glow: "rgba(168, 85, 247, 0.2)" },
+    { label: "Accepted", value: applications.filter(a => a.status === 'Accepted').length, icon: CheckCircle2, color: "#10b981", glow: "rgba(16, 185, 129, 0.2)" },
+    { label: "Upcoming Deadlines", value: applications.filter(a => new Date(a.scholarship?.deadline) > new Date()).length, icon: Clock, color: "#f59e0b", glow: "rgba(245, 158, 11, 0.2)" },
+  ];
 
-    return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
-            {/* Header */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-                <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('dashboard')}>
-                    <div className="w-10 h-10 bg-[#1e3a8a] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <GraduationCap className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xl font-black text-[#1e3a8a] tracking-tight">ScholarIQ</span>
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      background: '#0f172a',
+      color: 'white',
+      fontFamily: "'Inter', sans-serif"
+    }}>
+      {/* Sidebar */}
+      <div style={{ width: '260px', flexShrink: 0 }}>
+        <Sidebar onNavigate={onNavigate} currentPage="tracker" />
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Header */}
+        <header style={{
+          height: '80px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0 40px',
+          background: 'rgba(15, 23, 42, 0.8)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          zIndex: 40
+        }}>
+          <div>
+            <h1 style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.02em' }}>Application Pipeline</h1>
+            <p style={{ fontSize: '10px', fontWeight: '700', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Mission Control
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <ThemeToggle />
+            <CurrencySelector variant="dark" />
+            <NotificationBell onNavigate={onNavigate} />
+            <button 
+              onClick={() => onNavigate('dashboard')}
+              style={{
+                background: '#2563eb',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '12px',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 15px rgba(37,99,235,0.3)'
+              }}
+            >
+              <Target size={16} /> Operations Hub
+            </button>
+          </div>
+        </header>
+
+        <main style={{ flex: 1, overflowY: 'auto', padding: '40px' }} className="custom-scrollbar">
+          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+            
+            {/* KPI Section */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '16px'
+            }}>
+              {kpis.map((kpi, i) => (
+                <div key={i} style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '20px',
+                  padding: '24px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: `0 10px 30px -10px ${kpi.glow}`
+                }}>
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    background: `${kpi.color}15`,
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <kpi.icon size={22} color={kpi.color} />
+                  </div>
+                  <p style={{ color: 'white', fontSize: '32px', fontWeight: '800', lineHeight: '1' }}>{kpi.value}</p>
+                  <p style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '6px' }}>
+                    {kpi.label}
+                  </p>
+                  <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', background: kpi.color, opacity: 0.03, borderRadius: '50%', filter: 'blur(40px)' }} />
                 </div>
+              ))}
+            </div>
 
-                <div className="flex items-center gap-4">
-                    <CurrencySelector />
-                    <Button
-                        variant="ghost"
-                        className="font-bold text-gray-500 hover:text-[#1e3a8a] rounded-xl"
-                        onClick={() => onNavigate('dashboard')}
-                    >
-                        Dashboard
-                    </Button>
-                    <div className="w-px h-6 bg-gray-200" />
-                    <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
-                        <span className="font-black text-[#1e3a8a] text-lg">{applications.length}</span>
-                        <span className="text-[#1e3a8a] text-[10px] font-black uppercase tracking-widest">Global Leads</span>
-                    </div>
+            {/* Status Tabs (Segmented Control) */}
+            <div style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: '16px',
+              padding: '6px',
+              display: 'flex',
+              gap: '4px',
+              overflowX: 'auto'
+            }} className="no-scrollbar">
+              {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+                const isActive = filter === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setFilter(key)}
+                    style={{
+                      flex: 1,
+                      minWidth: '120px',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                      color: isActive ? '#a5b4fc' : '#64748b',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap',
+                      boxShadow: isActive ? '0 4px 12px rgba(99, 102, 241, 0.1)' : 'none'
+                    }}
+                  >
+                    <config.icon size={16} />
+                    {config.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Main Content Area */}
+            <div style={{ minHeight: '400px' }}>
+              {isLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '100px 0', gap: '16px' }}>
+                  <Loader2 size={40} className="animate-spin text-blue-500" />
+                  <p style={{ color: '#64748b', fontSize: '12px', fontWeight: '700', letterSpacing: '2px' }}>SYNCING PIPELINE...</p>
                 </div>
-            </header>
-
-            <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-                    <div>
-                        <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-tight">
-                            My Scholarship <span className="text-blue-600">Trackers</span> 🗂️
-                        </h1>
-                        <p className="text-gray-500 font-medium text-lg mt-2">Manage your journey to elite global universities.</p>
-                    </div>
-
-                    {/* Status Tabs */}
-                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto max-w-full">
-                        {Object.keys(STATUS_CONFIG).map((statusKey) => {
-                            const { label, icon: Icon } = STATUS_CONFIG[statusKey as keyof typeof STATUS_CONFIG];
-                            const isActive = filter === statusKey;
-                            return (
-                                <button
-                                    key={statusKey}
-                                    onClick={() => setFilter(statusKey)}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${isActive
-                                        ? "bg-[#1e3a8a] text-white shadow-lg shadow-blue-200"
-                                        : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
-                                        }`}
-                                >
-                                    <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-300"}`} />
-                                    {label}
-                                </button>
-                            );
-                        })}
-                    </div>
+              ) : filteredApps.length === 0 ? (
+                <div style={{
+                  padding: '100px 40px',
+                  textAlign: 'center',
+                  background: 'rgba(255,255,255,0.01)',
+                  border: '1px dashed rgba(255,255,255,0.1)',
+                  borderRadius: '32px'
+                }}>
+                  <div style={{ width: '64px', height: '64px', background: 'rgba(99,102,241,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                    <Target size={32} color="#6366f1" opacity={0.4} />
+                  </div>
+                  <h3 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px' }}>Pipeline Empty</h3>
+                  <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '400px', margin: '0 auto 32px' }}>
+                    Start tracking your applications to see them here. Explore scholarships to add to your pipeline.
+                  </p>
+                  <button 
+                    onClick={() => onNavigate('search')}
+                    style={{ background: '#2563eb', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '16px', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    Find Scholarships
+                  </button>
                 </div>
-
-                {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[3rem] border border-gray-100">
-                        <div className="relative">
-                            <div className="w-16 h-16 border-4 border-blue-50 rounded-full" />
-                            <Loader2 className="w-16 h-16 animate-spin text-[#1e3a8a] absolute top-0 left-0" />
+              ) : (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '24px'
+                }}>
+                  <AnimatePresence>
+                    {(isFreeUser ? filteredApps.slice(0, FREE_TRACKER_LIMIT) : filteredApps).map((app) => (
+                      <motion.div
+                        key={app.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '24px',
+                          padding: '24px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '20px',
+                          position: 'relative'
+                        }}
+                      >
+                        {/* Header Part */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ fontSize: '18px', fontWeight: '800', color: 'white', marginBottom: '4px', lineHeight: '1.3' }}>
+                              {app.scholarship?.title}
+                            </h4>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                               <p style={{ color: '#94a3b8', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                 <GraduationCap size={14} color="#6366f1" /> {app.scholarship?.university_name}
+                               </p>
+                               <p style={{ color: '#94a3b8', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                 <MapPin size={14} color="#ef4444" /> {app.scholarship?.country}
+                               </p>
+                            </div>
+                          </div>
+                          <div style={{
+                            padding: '6px 14px',
+                            background: `${STATUS_CONFIG[app.status as keyof typeof STATUS_CONFIG]?.color}20`,
+                            border: `1px solid ${STATUS_CONFIG[app.status as keyof typeof STATUS_CONFIG]?.color}40`,
+                            borderRadius: '999px',
+                            color: STATUS_CONFIG[app.status as keyof typeof STATUS_CONFIG]?.color,
+                            fontSize: '11px',
+                            fontWeight: '800',
+                            textTransform: 'uppercase'
+                          }}>
+                            {app.status}
+                          </div>
                         </div>
-                        <p className="text-gray-400 font-bold mt-6 uppercase tracking-widest text-sm">Syncing with Cloud Database...</p>
-                    </div>
-                ) : filteredApps.length === 0 ? (
-                    <div className="text-center py-32 bg-white rounded-[3rem] border border-dashed border-gray-200 shadow-inner">
-                        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Clock className="w-10 h-10 text-gray-300" />
+
+                        {/* Details Grid */}
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(2, 1fr)',
+                          gap: '12px',
+                          padding: '16px',
+                          background: 'rgba(255,255,255,0.02)',
+                          borderRadius: '16px',
+                          border: '1px solid rgba(255,255,255,0.04)'
+                        }}>
+                          <div>
+                            <p style={{ color: '#64748b', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Funding</p>
+                            <p style={{ color: '#10b981', fontSize: '13px', fontWeight: '800' }}>
+                              {convertAndFormat(app.scholarship?.amount) || 'Full Funding'}
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ color: '#64748b', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Target Date</p>
+                            <p style={{ color: '#f59e0b', fontSize: '13px', fontWeight: '800' }}>
+                              {app.scholarship?.deadline ? new Date(app.scholarship.deadline).toLocaleDateString() : 'Pending'}
+                            </p>
+                          </div>
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">No Trackers Found</h3>
-                        <p className="text-gray-400 font-medium max-w-sm mx-auto mb-8">
-                            Aap ne abhi tak koi scholarship is category mein save nahi ki. Start exploring to find the best matches.
-                        </p>
-                        <Button
-                            onClick={() => onNavigate('search')}
-                            className="bg-[#1e3a8a] text-white font-black px-10 h-14 rounded-2xl shadow-xl shadow-blue-900/10 hover:scale-105 transition-transform"
-                        >
-                            Explore Now 🎯
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-                        {filteredApps.map((app) => (
-                            <Card key={app.id} className="group border-none bg-white rounded-[2.5rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2">
-                                <div className={`h-2 bg-gradient-to-r ${app.status === 'Accepted' ? 'from-green-400 to-emerald-600' :
-                                    app.status === 'Rejected' ? 'from-red-400 to-rose-600' :
-                                        app.status === 'Interview' ? 'from-orange-400 to-amber-600' :
-                                            app.status === 'Applied' ? 'from-blue-400 to-indigo-600' :
-                                                'from-gray-300 to-gray-500'
-                                    }`} />
-                                <CardContent className="p-8">
-                                    <div className="flex justify-between items-start mb-6">
-                                        <Badge className={`rounded-xl border-none font-black text-[10px] uppercase tracking-widest px-4 py-1.5 ${STATUS_CONFIG[app.status as keyof typeof STATUS_CONFIG]?.color || "bg-gray-100 text-gray-700"
-                                            }`}>
-                                            {app.status}
-                                        </Badge>
-                                        <button
-                                            onClick={() => handleDelete(app.id)}
-                                            className="p-3 text-gray-300 hover:text-red-500 lg:opacity-0 group-hover:opacity-100 transition-all rounded-xl hover:bg-red-50"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
-                                    </div>
 
-                                    <h3 className="font-black text-xl text-gray-900 leading-tight mb-2 group-hover:text-[#1e3a8a] transition-colors line-clamp-2">
-                                        {app.scholarship?.title}
-                                    </h3>
+                        {/* Status Timeline Visualization */}
+                        <div style={{ display: 'flex', gap: '4px', height: '6px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '999px', overflow: 'hidden' }}>
+                           {['Saved', 'Applied', 'Interview', 'Accepted'].map((step, idx) => {
+                             const stepsOrder = ['Saved', 'Applied', 'Interview', 'Accepted', 'Rejected'];
+                             const currentIdx = stepsOrder.indexOf(app.status);
+                             const stepIdx = stepsOrder.indexOf(step);
+                             const isPast = stepIdx <= currentIdx;
+                             return (
+                               <div key={step} style={{
+                                 flex: 1,
+                                 background: isPast ? '#6366f1' : 'transparent',
+                                 opacity: isPast ? 1 : 0.2
+                               }} />
+                             );
+                           })}
+                        </div>
 
-                                    <div className="space-y-3 mb-6">
-                                        <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
-                                            <GraduationCap className="w-4 h-4 text-gray-300 shrink-0" />
-                                            <span className="line-clamp-1">{app.scholarship?.university_name || 'Global University'}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
-                                            <MapPin className="w-4 h-4 text-gray-300 shrink-0" />
-                                            <span>{app.scholarship?.country}</span>
-                                        </div>
-                                    </div>
+                        {/* Action Buttons */}
+                        <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+                          <div style={{ flex: 1, position: 'relative' }}>
+                            <select
+                              value={app.status}
+                              onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                              style={{
+                                width: '100%',
+                                height: '42px',
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '10px',
+                                color: 'white',
+                                padding: '0 12px',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                appearance: 'none'
+                              }}
+                            >
+                              <option value="Saved">Saved</option>
+                              <option value="Applied">Applied</option>
+                              <option value="Interview">Interview</option>
+                              <option value="Accepted">Accepted</option>
+                              <option value="Rejected">Rejected</option>
+                            </select>
+                            <ChevronRight size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none', opacity: 0.5 }} />
+                          </div>
+                          <button 
+                            onClick={() => onNavigate('detail', { id: app.scholarship_id })}
+                            style={{ padding: '0 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
+                          >
+                            View Intel
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(app.id)}
+                            style={{ width: '42px', height: '42px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                          >
+                            <Trash2 size={18} color="#ef4444" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
 
-                                    <div className="bg-gray-50 p-5 rounded-3xl mb-8 space-y-3">
-                                        <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-gray-400">
-                                            <span>Valuation</span>
-                                            <span>Next Phase</span>
-                                        </div>
-                                        <div className="flex justify-between items-center font-black">
-                                            <span className="text-emerald-600 flex items-center gap-1">
-                                                <Banknote className="w-5 h-5" />
-                                                {convertAndFormat(app.scholarship?.amount || "Varies")}
-                                            </span>
-                                            <span className="text-gray-900 flex items-center gap-1">
-                                                <Calendar className="w-4 h-4" />
-                                                {app.scholarship?.deadline ? new Date(app.scholarship.deadline).toLocaleDateString() : 'N/A'}
-                                            </span>
-                                        </div>
-                                    </div>
+              {/* Upgrade Gate */}
+              {isFreeUser && filteredApps.length > FREE_TRACKER_LIMIT && (
+                <div style={{
+                  marginTop: '40px',
+                  padding: '40px',
+                  background: 'linear-gradient(135deg, #1e1b4b, #0f172a)',
+                  borderRadius: '32px',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ width: '56px', height: '56px', background: 'rgba(99,102,241,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                    <Lock size={28} color="#6366f1" />
+                  </div>
+                  <h4 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>Pipeline Capacity Limited</h4>
+                  <p style={{ color: '#94a3b8', fontSize: '14px', maxWidth: '500px', margin: '0 auto 24px' }}>
+                    Free accounts can track up to 3 applications simultaneously. Upgrade to Professional for unlimited lifecycle management.
+                  </p>
+                  <button 
+                    onClick={() => onNavigate('pricing')}
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)', color: 'white', border: 'none', padding: '14px 36px', borderRadius: '16px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: '0 auto', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)' }}
+                  >
+                    <Crown size={20} /> Upgrade to Professional
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
 
-                                    <div className="pt-6 border-t border-gray-100">
-                                        <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-4">Pipeline Status</label>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <select
-                                                value={app.status}
-                                                onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                                                className="w-full h-12 bg-white border border-gray-100 shadow-sm rounded-xl text-sm font-bold px-4 focus:ring-2 focus:ring-[#1e3a8a] outline-none appearance-none cursor-pointer hover:border-blue-200 transition-colors"
-                                            >
-                                                <option value="Saved">📌 Saved</option>
-                                                <option value="Applied">📝 Applied</option>
-                                                <option value="Interview">🎤 Interview</option>
-                                                <option value="Accepted">🎉 Accepted</option>
-                                                <option value="Rejected">❌ Rejected</option>
-                                            </select>
-                                            <Button
-                                                variant="outline"
-                                                className="h-12 rounded-xl border-gray-100 font-bold text-gray-600 hover:bg-gray-50"
-                                                onClick={() => onNavigate('detail', { id: app.scholarship_id })}
-                                            >
-                                                View Case
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </main>
-        </div>
-    );
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.3); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+    </div>
+  );
 }

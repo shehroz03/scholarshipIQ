@@ -47,6 +47,39 @@ class UserBase(BaseModel):
     english_proficiency: Optional[str] = None
     research_experience: Optional[bool] = False
     email_notifications: Optional[bool] = True
+    
+    # New Fields
+    cgpa_scale: Optional[str] = None
+    english_test_type: Optional[str] = None
+    ielts_overall: Optional[float] = None
+    ielts_listening: Optional[float] = None
+    ielts_reading: Optional[float] = None
+    ielts_writing: Optional[float] = None
+    ielts_speaking: Optional[float] = None
+    toefl_score: Optional[int] = None
+    pte_score: Optional[int] = None
+    duolingo_score: Optional[int] = None
+    target_field: Optional[str] = None
+    target_start_year: Optional[int] = None
+    study_mode: Optional[str] = None
+    monthly_family_income: Optional[str] = None
+    can_afford_partial: Optional[bool] = False
+    max_budget_gbp: Optional[float] = None
+    scholarship_type_pref: Optional[str] = None
+    work_experience_years: Optional[str] = None
+    work_experience_type: Optional[str] = None
+    has_publications: Optional[bool] = False
+    leadership_activities: Optional[str] = None
+    passport_valid: Optional[bool] = False
+    transcripts_ready: Optional[bool] = False
+    sop_ready: Optional[str] = None
+    references_count: Optional[int] = 0
+    cv_ready: Optional[bool] = False
+    
+    # Subscription Fields
+    subscription_plan: Optional[str] = "free"
+    subscription_expires: Optional[datetime] = None
+    subscription_started: Optional[datetime] = None
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -62,6 +95,38 @@ class UserUpdate(BaseModel):
     english_proficiency: Optional[str] = None
     research_experience: Optional[bool] = None
     email_notifications: Optional[bool] = None
+    
+    cgpa_scale: Optional[str] = None
+    english_test_type: Optional[str] = None
+    ielts_overall: Optional[float] = None
+    ielts_listening: Optional[float] = None
+    ielts_reading: Optional[float] = None
+    ielts_writing: Optional[float] = None
+    ielts_speaking: Optional[float] = None
+    toefl_score: Optional[int] = None
+    pte_score: Optional[int] = None
+    duolingo_score: Optional[int] = None
+    target_field: Optional[str] = None
+    target_start_year: Optional[int] = None
+    study_mode: Optional[str] = None
+    monthly_family_income: Optional[str] = None
+    can_afford_partial: Optional[bool] = None
+    max_budget_gbp: Optional[float] = None
+    scholarship_type_pref: Optional[str] = None
+    work_experience_years: Optional[str] = None
+    work_experience_type: Optional[str] = None
+    has_publications: Optional[bool] = None
+    leadership_activities: Optional[str] = None
+    passport_valid: Optional[bool] = None
+    transcripts_ready: Optional[bool] = None
+    sop_ready: Optional[str] = None
+    references_count: Optional[int] = None
+    cv_ready: Optional[bool] = None
+
+    # Subscription Fields (Only for Admin/Demo)
+    subscription_plan: Optional[str] = None
+    subscription_expires: Optional[datetime] = None
+    subscription_started: Optional[datetime] = None
 
 class UserCreate(UserBase):
     password: str
@@ -69,6 +134,7 @@ class UserCreate(UserBase):
 class UserOut(UserBase):
     id: int
     is_active: bool
+    profile_completion: int = 0
     created_at: Optional[datetime] = None
     last_login: Optional[datetime] = None
 
@@ -78,6 +144,7 @@ class UserOut(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    role: Optional[str] = "student"
 
 class ScholarshipBase(BaseModel):
     title: str
@@ -95,12 +162,18 @@ class ScholarshipBase(BaseModel):
     duration_text: Optional[str] = None
     website_url: Optional[str] = None
     scholarship_url: Optional[str] = None
-    has_separate_form: bool = True
+    has_separate_form: Optional[bool] = True
     application_type: str = "direct_form"
     button_label: str = "Apply Now 🎯"
     user_note: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    
+    # New Scholarship Criteria
+    min_ielts: Optional[float] = None
+    min_toefl: Optional[int] = None
+    requires_work_exp: Optional[bool] = False
+    open_to_pakistani: Optional[bool] = True
     
     # Verified Financial Data
     tuition_fee_per_year: Optional[str] = None
@@ -134,7 +207,7 @@ class UniversityOut(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
     established_year: Optional[int] = None
-    qs_ranking: Optional[int] = None
+    qs_ranking: Optional[str] = None
     logo_url: Optional[str] = None
     image_url: Optional[str] = None
     scholarship_count: int = 0
@@ -172,9 +245,6 @@ class ScholarshipOut(ScholarshipBase):
 class UniversityDetails(UniversityOut):
     scholarships: List[ScholarshipOut] = []
 
-    class Config:
-        from_attributes = True
-
 class PaginatedScholarshipResponse(BaseModel):
     """Paginated response for scholarship listings"""
     results: List[ScholarshipOut]
@@ -195,6 +265,11 @@ class TopRecommendedScholarship(BaseModel):
     eligibility: str  # eligible, borderline, not_eligible
     short_reason: str
     is_strong_match: bool
+    deadline: Optional[str] = None
+    after_fee: Optional[float] = None
+    amount: Optional[str] = None
+    funding_type: Optional[str] = None
+    match_label: Optional[str] = None # For PRO users
 
 
 class AIRecommendationResponse(BaseModel):
@@ -203,6 +278,7 @@ class AIRecommendationResponse(BaseModel):
     recommended_next_degree: str
     reason_next_degree: str
     top_scholarships: List[TopRecommendedScholarship]
+    ml_active: bool = False
 
 class ScholarshipRecommendation(BaseModel):
     id: int
@@ -219,6 +295,34 @@ class RecommendationResponse(BaseModel):
     recommended_next_degree: str
     reason_next_degree: str
     items: List[ScholarshipRecommendation]
+
+
+class RecommendationItem(BaseModel):
+    """New unified recommendation item with hybrid scoring data."""
+    scholarship_id: int
+    scholarship_name: str
+    uni_name: str
+    country: str
+    city: str
+    fit_score: float
+    match_label: str  # "High Match" | "Good Match" | "Stretch"
+    match_color: str  # "green" | "yellow" | "red"
+    reasons: List[str]
+    scholarship_link: str
+    after_fee: float
+    cgpa_min: float
+    deadline: str
+
+
+class ProfileRecommendationResponse(BaseModel):
+    user_id: int
+    items: List[RecommendationItem]
+    ml_active: bool = False
+
+
+class FeedbackCreate(BaseModel):
+    scholarship_id: int
+    action: str  # "view" | "save" | "apply"
 
 
 class ApplicationBase(BaseModel):
@@ -238,6 +342,20 @@ class ApplicationOut(ApplicationBase):
     user_id: int
     applied_date: datetime
     scholarship: Optional[ScholarshipOut] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SubscriptionBase(BaseModel):
+    email: EmailStr
+
+class SubscriptionCreate(SubscriptionBase):
+    pass
+
+class SubscriptionOut(SubscriptionBase):
+    id: int
+    subscribed_at: datetime
 
     class Config:
         from_attributes = True

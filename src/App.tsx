@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Routes, Route, useNavigate, Navigate, useParams } from "react-router-dom";
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
 import { SignupPage } from "./components/SignupPage";
@@ -10,137 +11,113 @@ import { SavedPage } from "./components/SavedPage";
 import { MyApplicationsPage } from "./components/MyApplicationsPage";
 import { TravelGuidePage } from "./components/TravelGuidePage";
 import { SettingsPage } from "./components/SettingsPage";
+import { ConsultantPage } from "./components/ConsultantPage";
+import { PricingPage } from "./components/PricingPage";
+
 import { Chatbot } from "./components/Chatbot";
 import AdminDashboard from "./components/AdminDashboard";
 import { UniversityMatcher } from "./pages/UniversityMatcher";
 import { Toaster } from "./components/ui/sonner";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+
+
+import { DocumentChecklistPage } from "./components/DocumentChecklistPage";
+import { ApplicationTimeline } from "./pages/ApplicationTimeline";
+import VisaGuidanceLandingPage from './components/VisaGuidance/VisaGuidanceLandingPage';
+import TeacherDashboard from './components/teacher/TeacherDashboard';
+import CoursesPage from './pages/CoursesPage';
+import CourseDetailPage from './pages/CourseDetailPage';
+import VisaProfileFormPage from "./components/VisaGuidance/VisaProfileFormPage";
+import VisaChecklistResultPage from "./components/VisaGuidance/VisaChecklistResultPage";
 
 import { CurrencyProvider } from "./context/CurrencyContext";
+import { UserProvider } from "./context/UserContext";
+import { ThemeProvider } from "./context/ThemeContext";
+
+// Wrapper for DetailPage to extract ID from URL without modifying the component itself
+const DetailPageWrapper = ({ onNavigate }: { onNavigate: any }) => {
+  const { id } = useParams();
+  return <DetailPage onNavigate={onNavigate} scholarshipId={parseInt(id || "1")} />;
+};
 
 export default function App() {
+  const navigate = useNavigate();
   const isLoggedIn = () => !!localStorage.getItem("token");
-
-  const publicPages = ["landing", "login", "signup", "admin", "auth-required"];
-  const protectedPages = ["dashboard", "saved", "applications", "settings", "detail", "matcher", "search"];
-
-  const getInitialPage = () => {
-    const hash = window.location.hash.replace("#", "").split("?")[0];
-    if (hash && (publicPages.includes(hash) || protectedPages.includes(hash))) {
-      if (protectedPages.includes(hash) && !isLoggedIn()) {
-        return "auth-required";
-      }
-      return hash;
-    }
-    return "landing";
-  };
-
-  const [currentPage, setCurrentPage] = useState(getInitialPage());
-  const [selectedScholarshipId, setSelectedScholarshipId] = useState<number | null>(() => {
-    const savedId = localStorage.getItem("selectedScholarshipId");
-    return savedId ? parseInt(savedId) : null;
-  });
 
   const [searchParams, setSearchParams] = useState<any>({});
 
-  // Sync state with URL hash and localStorage
-  useEffect(() => {
-    // Only update hash if it's different to avoid redundant history entries
-    const currentHash = window.location.hash.replace("#", "").split("?")[0];
-    if (currentPage !== currentHash) {
-      window.location.hash = currentPage;
-    }
-
-    if (selectedScholarshipId) {
-      localStorage.setItem("selectedScholarshipId", selectedScholarshipId.toString());
-    } else {
-      localStorage.removeItem("selectedScholarshipId");
-    }
-  }, [currentPage, selectedScholarshipId]);
-
-  // Handle back/forward browser buttons
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace("#", "").split("?")[0];
-      const pageToSet = hash || "landing"; // Support empty hash as landing
-
-      if (pageToSet !== currentPage) {
-        if (protectedPages.includes(pageToSet) && !isLoggedIn()) {
-          setCurrentPage("auth-required");
-        } else {
-          setCurrentPage(pageToSet);
-        }
-      }
-    };
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, [currentPage]);
-
   const handleNavigate = (page: string, params?: any) => {
     if ((page === "login" || page === "signup") && isLoggedIn()) {
-      setCurrentPage("dashboard");
-      return;
-    }
-
-    if (protectedPages.includes(page) && !isLoggedIn()) {
-      setCurrentPage("auth-required");
+      navigate("/dashboard");
       return;
     }
 
     if (page === 'detail' && params?.id) {
-      setSelectedScholarshipId(params.id);
+      navigate(`/detail/${params.id}`);
+      return;
     }
 
-    // Store params for search page
-    if (page === 'search') {
-      setSearchParams(params || {});
+    if (page === 'search' && params) {
+      setSearchParams(params);
+      navigate("/search");
+      return;
     }
 
-    setCurrentPage(page);
-    window.scrollTo(0, 0); // Scroll to top on navigation
+    const route = page === "landing" ? "/" : `/${page}`;
+    navigate(route);
+    window.scrollTo(0, 0);
   };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case "landing":
-        return <LandingPage onNavigate={handleNavigate} />;
-      case "login":
-        return <LoginPage onNavigate={handleNavigate} />;
-      case "signup":
-        return <SignupPage onNavigate={handleNavigate} />;
-      case "auth-required":
-        return <AuthRequiredPage onNavigate={handleNavigate} />;
-      case "dashboard":
-        return <DashboardPage onNavigate={handleNavigate} initialParams={searchParams} />;
-      case "search":
-        return <SearchPage onNavigate={handleNavigate} initialFilters={searchParams} />;
-      case "detail":
-        return <DetailPage onNavigate={handleNavigate} scholarshipId={selectedScholarshipId || 1} />;
-      case "saved":
-        return <SavedPage onNavigate={handleNavigate} />;
-      case "applications":
-        return <MyApplicationsPage onNavigate={handleNavigate} />;
-      case "settings":
-        return <SettingsPage onNavigate={handleNavigate} />;
-      case "admin":
-        return <AdminDashboard onNavigate={handleNavigate} />;
-      case "matcher":
-        return <UniversityMatcher onNavigate={handleNavigate} />;
-      case "travel-guide":
-        return <TravelGuidePage onNavigate={handleNavigate} />;
-      default:
-        return <LandingPage onNavigate={handleNavigate} />;
-    }
-  };
-
-  const showChatbot = ["dashboard", "search", "detail", "saved", "settings", "matcher"].includes(currentPage) && isLoggedIn();
 
   return (
-    <CurrencyProvider>
-      <div className="animate-in fade-in duration-500">
-        {renderPage()}
+    <ThemeProvider>
+      <UserProvider>
+        <CurrencyProvider>
+        <div className="animate-in fade-in duration-500">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage onNavigate={handleNavigate} />} />
+          <Route path="/login" element={isLoggedIn() ? <Navigate to="/dashboard" /> : <LoginPage onNavigate={handleNavigate} />} />
+          <Route path="/signup" element={isLoggedIn() ? <Navigate to="/dashboard" /> : <SignupPage onNavigate={handleNavigate} />} />
+          <Route path="/auth-required" element={<AuthRequiredPage onNavigate={handleNavigate} />} />
+          <Route path="/admin" element={<AdminDashboard onNavigate={handleNavigate} />} />
+          <Route path="/pricing" element={<Navigate to="/dashboard" />} />
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardPage onNavigate={handleNavigate} />} />
+            <Route path="/search" element={<SearchPage onNavigate={handleNavigate} initialFilters={searchParams} />} />
+            <Route path="/detail/:id" element={<DetailPageWrapper onNavigate={handleNavigate} />} />
+            <Route path="/saved" element={<SavedPage onNavigate={handleNavigate} />} />
+            <Route path="/applications" element={<MyApplicationsPage onNavigate={handleNavigate} />} />
+            <Route path="/settings" element={<SettingsPage onNavigate={handleNavigate} />} />
+            <Route path="/matcher" element={<UniversityMatcher onNavigate={handleNavigate} />} />
+            <Route path="/travel-guide" element={<TravelGuidePage onNavigate={handleNavigate} />} />
+            <Route path="/consultant" element={<ConsultantPage />} />
+
+
+
+            <Route path="/checklist" element={<DocumentChecklistPage onNavigate={handleNavigate} />} />
+            <Route path="/timeline" element={<ApplicationTimeline onNavigate={handleNavigate} />} />
+            
+            {/* Teacher & Courses Routes */}
+            <Route path="/teacher" element={<TeacherDashboard />} />
+            <Route path="/courses" element={<CoursesPage />} />
+            <Route path="/courses/:id" element={<CourseDetailPage />} />
+
+            {/* Visa Guidance AI Routes */}
+            <Route path="/visa" element={<VisaGuidanceLandingPage />} />
+            <Route path="/visa/plan/:country" element={<VisaProfileFormPage />} />
+            <Route path="/visa/checklist/:id" element={<VisaChecklistResultPage />} />
+          </Route>
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
       </div>
-      {showChatbot && <Chatbot />}
+      {isLoggedIn() && <Chatbot />}
       <Toaster position="top-right" richColors />
-    </CurrencyProvider>
+      </CurrencyProvider>
+    </UserProvider>
+    </ThemeProvider>
   );
 }

@@ -19,16 +19,16 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
         e.preventDefault();
         setIsLoading(true);
         setError("");
+        
+        // Clear any existing stale token before trying to log in as admin
+        localStorage.removeItem("token");
 
         try {
-            // In a real app, we'd use the dedicated admin login endpoint
-            // For now, simpler simulation or use the one we just made
             await api.admin.login({ username, password });
-            // Token is stored by api.ts (if we updated it to use a separate admin token, 
-            // but for simplicity we overwrite or just assume success means we are admin)
             onLogin();
-        } catch (err) {
-            setError("Invalid admin credentials");
+        } catch (err: any) {
+            console.error("Admin login error:", err);
+            setError(err.message || "Invalid admin credentials");
         } finally {
             setIsLoading(false);
         }

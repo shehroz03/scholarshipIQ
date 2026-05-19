@@ -1,16 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>ScholarIQ Landing Page Design</title>
-      <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
-    </head>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
 
-    <body>
-      <div id="root"></div>
-      <script type="module" src="/src/main.tsx"></script>
-    </body>
-  </html>
-  
+  <!-- Security Meta Tags -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="ScholarIQ - AI-Powered Scholarship Discovery Platform. Find verified scholarships from UK, Australia, Canada and more." />
+  <meta name="theme-color" content="#1e3a8a" />
+
+  <!-- CSP: Content Security Policy - restricts where resources can be loaded from -->
+  <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https: blob:;
+      connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 http://localhost:3000 http://127.0.0.1:3000 http://localhost:3001 http://127.0.0.1:3001 http://localhost:5173 http://127.0.0.1:5173 https://api.openai.com;
+      frame-src 'self';
+      object-src 'none';
+      base-uri 'self';
+    " />
+
+  <!-- Referrer-Policy: Control information sent in Referer header -->
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+  <!-- Permissions-Policy: Disable unused browser features -->
+  <meta name="permissions-policy" content="camera=(), microphone=(), geolocation=()" />
+
+  <!-- Preconnect to external resources for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <title>ScholarIQ - AI Scholarship Finder</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

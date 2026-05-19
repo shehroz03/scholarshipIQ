@@ -1,13 +1,79 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
+from datetime import datetime, timezone
+import traceback
+
+# App local imports
 from app.db import models, schemas
 from app.db.session import get_db
 from app.api import deps
 from app.utils.scoring import calculate_match_score
 from app.services.fraud_detection import analyze_fraud_risk
+from app.services.smart_search import smart_search
+
 
 router = APIRouter()
+ 
+@router.get("/stats")
+def get_stats(db: Session = Depends(get_db)):
+    """Returns global statistics for the landing page."""
+    total_scholarships = db.query(models.Scholarship).filter(
+        models.Scholarship.approval_status == "approved",
+        models.Scholarship.is_suspicious == False,
+        models.Scholarship.is_archived == False
+    ).count()
+    
+    total_universities = db.query(models.University).count()
+    
+    # Countries and cities counts
+    countries_count = db.query(func.count(func.distinct(models.University.country))).scalar()
+    
+    return {
+        "total_scholarships": total_scholarships,
+        "total_universities": total_universities,
+        "countries_count": countries_count,
+        "total_funding": "£25M+", # Estimated or can be calculated
+        "active_users": "5,000+"
+    }
+
+@router.get("/filters/countries")
+def get_countries(db: Session = Depends(get_db)):
+    countries = db.query(func.distinct(models.University.country)).all()
+    return [c[0] for c in countries if c[0]]
+
+@router.get("/filters/cities")
+def get_cities(country: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(func.distinct(models.University.city))
+    if country:
+        query = query.filter(models.University.country.ilike(f"%{country}%"))
+    cities = query.all()
+    return [c[0] for c in cities if c[0]]
+
+@router.get("/filters/fields")
+def get_fields(db: Session = Depends(get_db)):
+    fields = db.query(func.distinct(models.Scholarship.field_of_study)).all()
+    # Flatten and split by pipe if needed, or just return as is
+    return sorted(list(set(f[0] for f in fields if f[0])))
+
+@router.get("/filters/levels")
+def get_levels(db: Session = Depends(get_db)):
+    levels = db.query(func.distinct(models.Scholarship.degree_level)).all()
+    return sorted(list(set(l[0] for l in levels if l[0])))
+
+@router.get("/smart-search")
+def get_smart_search(
+    q: str,
+    user_cgpa: Optional[float] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Perform natural language search with AI-like parsed filters
+    and appended fraud badge information.
+    """
+    return smart_search(query=q, user_cgpa=user_cgpa, db=db)
+
 
 @router.get("/", response_model=schemas.PaginatedScholarshipResponse)
 def list_scholarships(
@@ -31,9 +97,13 @@ def list_scholarships(
     List scholarships with pagination support.
     Returns paginated results with metadata.
     """
-    # Build the base query
-    query = db.query(models.Scholarship).options(joinedload(models.Scholarship.university))
-    
+    # Base filter — only approved scholarships shown to students
+    query = db.query(models.Scholarship).options(joinedload(models.Scholarship.university)).filter(
+        models.Scholarship.approval_status == "approved",
+        models.Scholarship.is_suspicious == False,
+        models.Scholarship.is_archived == False
+    )
+
     # Apply filters
     if university_id:
         query = query.filter(models.Scholarship.university_id == university_id)
@@ -77,8 +147,8 @@ def list_scholarships(
     if field_category:
         query = query.filter(models.Scholarship.field_of_study.ilike(f"%{field_category}%"))
     if deadline_before:
-        from datetime import datetime
         try:
+
             deadline_dt = datetime.strptime(deadline_before, "%Y-%m-%d")
             query = query.filter(models.Scholarship.deadline <= deadline_dt)
         except ValueError:
@@ -152,8 +222,8 @@ def get_scholarship_stats(
         total_universities = db.query(models.University).count()
         
         # Get top countries with counts
-        from sqlalchemy import func
         country_counts = db.query(
+
             models.Scholarship.country, 
             func.count(models.Scholarship.id)
         ).group_by(models.Scholarship.country).order_by(func.count(models.Scholarship.id).desc()).limit(10).all()
@@ -184,9 +254,9 @@ def get_scholarship_stats(
             }
         }
     except Exception as e:
-        import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/filters/cities")
 def get_cities_filter(
@@ -257,9 +327,15 @@ def get_university_details(
     db: Session = Depends(get_db)
 ):
     """Returns detailed information for a specific university including its scholarships."""
-    uni = db.query(models.University).options(joinedload(models.University.scholarships)).filter(models.University.id == uni_id).first()
+    uni = db.query(models.University).options(
+        joinedload(models.University.scholarships)
+    ).filter(models.University.id == uni_id).first()
+    
     if not uni:
         raise HTTPException(status_code=404, detail="University not found")
+    
+    # Filter out archived scholarships from the response
+    uni.scholarships = [s for s in uni.scholarships if not s.is_archived and not s.is_suspicious]
     
     # Populate university_name for each scholarship in the list
     for s in uni.scholarships:
@@ -291,16 +367,18 @@ def create_scholarship(
     """
     Creates a new scholarship and automatically checks for fraud risk.
     """
-    # 1. Fraud Check Run karein
+    # 1. Fraud Check
     fraud_result = analyze_fraud_risk(scholarship.title, scholarship.description)
     
-    # 2. Add to database
+    # 2. Add to database — starts as PENDING (not shown to students yet)
     db_scholarship = models.Scholarship(**scholarship.dict())
+    db_scholarship.is_active = False  # hidden from public until approved
+    db_scholarship.approval_status = "pending"
     
-    # 3. Agar suspicious hai, to auto-flag karein
+    # 3. Auto-flag if suspicious → mark rejected
     if fraud_result["is_suspicious"]:
         db_scholarship.is_suspicious = True
-        # Optional: Reason ko description mein add kiya ja sakta hai
+        db_scholarship.approval_status = "rejected"
         if db_scholarship.description:
             db_scholarship.description += f"\n\n[ADMIN ALERT]: {fraud_result['reason']}"
             
@@ -321,7 +399,7 @@ def get_scholarship(
     db: Session = Depends(get_db)
 ):
     scholarship = db.query(models.Scholarship).options(joinedload(models.Scholarship.university)).filter(models.Scholarship.id == scholarship_id).first()
-    if not scholarship:
+    if not scholarship or scholarship.is_suspicious or scholarship.is_archived:
         raise HTTPException(status_code=404, detail="Scholarship not found")
         
     if scholarship.university:

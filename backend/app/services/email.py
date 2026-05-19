@@ -17,6 +17,92 @@ conf = ConnectionConfig(
     VALIDATE_CERTS=True
 )
 
+async def send_teacher_approved_email(teacher_email: str, teacher_name: str):
+    """Send approval notification email to teacher."""
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff;">
+        <div style="text-align:center; margin-bottom: 24px;">
+            <h2 style="color: #1e3a8a; margin: 0;">ScholarIQ</h2>
+        </div>
+        <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <h3 style="color: #065f46; margin: 0;">🎉 Congratulations! Your Teacher Account is Approved</h3>
+        </div>
+        <p style="color: #374151;">Dear <strong>{teacher_name}</strong>,</p>
+        <p style="color: #374151;">We are pleased to inform you that your teacher account application on <strong>ScholarIQ</strong> has been <strong style="color: #10b981;">approved</strong> by our admin team.</p>
+        <p style="color: #374151;">You can now log in to your Teacher Dashboard and start:</p>
+        <ul style="color: #374151;">
+            <li>Creating and managing courses</li>
+            <li>Scheduling live classes with meeting links</li>
+            <li>Creating quizzes for students</li>
+            <li>Setting your course fees</li>
+            <li>Tracking enrolled students</li>
+        </ul>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="http://localhost:3000/teacher" style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                Go to Teacher Dashboard →
+            </a>
+        </div>
+        <p style="color: #6b7280; font-size: 13px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+            Welcome to ScholarIQ! We look forward to your contributions.<br>
+            <strong>The ScholarIQ Team</strong>
+        </p>
+    </div>
+    """
+    try:
+        message = MessageSchema(
+            subject="✅ Your Teacher Account Has Been Approved - ScholarIQ",
+            recipients=[teacher_email],
+            body=html,
+            subtype=MessageType.html
+        )
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        print(f"[EmailService] Approval email sent to {teacher_email}")
+    except Exception as e:
+        print(f"[EmailService] Failed to send approval email to {teacher_email}: {e}")
+
+
+async def send_teacher_rejected_email(teacher_email: str, teacher_name: str, reason: str = ""):
+    """Send rejection notification email to teacher."""
+    reason_section = f"""
+        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; border-radius: 8px; margin: 16px 0;">
+            <p style="color: #991b1b; margin: 0;"><strong>Reason:</strong> {reason}</p>
+        </div>
+    """ if reason else ""
+
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff;">
+        <div style="text-align:center; margin-bottom: 24px;">
+            <h2 style="color: #1e3a8a; margin: 0;">ScholarIQ</h2>
+        </div>
+        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <h3 style="color: #991b1b; margin: 0;">❌ Teacher Application Status Update</h3>
+        </div>
+        <p style="color: #374151;">Dear <strong>{teacher_name}</strong>,</p>
+        <p style="color: #374151;">We regret to inform you that your teacher account application on <strong>ScholarIQ</strong> has been <strong style="color: #ef4444;">rejected</strong> at this time.</p>
+        {reason_section}
+        <p style="color: #374151;">If you believe this decision was made in error or you would like to appeal, please contact our support team.</p>
+        <p style="color: #374151;">You may also reapply after addressing the mentioned concerns.</p>
+        <p style="color: #6b7280; font-size: 13px; border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 24px;">
+            Thank you for your interest in ScholarIQ.<br>
+            <strong>The ScholarIQ Team</strong>
+        </p>
+    </div>
+    """
+    try:
+        message = MessageSchema(
+            subject="❌ Teacher Application Update - ScholarIQ",
+            recipients=[teacher_email],
+            body=html,
+            subtype=MessageType.html
+        )
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        print(f"[EmailService] Rejection email sent to {teacher_email}")
+    except Exception as e:
+        print(f"[EmailService] Failed to send rejection email to {teacher_email}: {e}")
+
+
 async def send_deadline_email(user_email: str, scholarship_title: str, days_left: int):
     html = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
@@ -39,3 +125,57 @@ async def send_deadline_email(user_email: str, scholarship_title: str, days_left
     fm = FastMail(conf)
     await fm.send_message(message)
     return {"message": "Email sent"}
+async def send_scholarship_saved_email(user_email: str, user_name: str, scholarship_title: str, deadline: str, amount: str, country: str, apply_link: str | None):
+    """
+    Sends a confirmation email when a user saves a scholarship.
+    Includes conditional CTA and safety checks.
+    """
+    cta_button = ""
+    if apply_link and apply_link != "#" and apply_link.startswith("http"):
+        cta_button = f"""
+        <div style="margin-top: 25px; text-align: center;">
+            <a href="{apply_link}" style="background-color: #6366f1; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                Apply Now
+            </a>
+        </div>
+        """
+
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #1e3a8a; margin-top: 0;">Scholarship Saved! 📌</h2>
+        <p>Hi <strong>{user_name}</strong>,</p>
+        <p>You've successfully saved <strong>{scholarship_title}</strong> to your ScholarIQ dashboard. Here are the key details:</p>
+        
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Country:</strong> {country}</p>
+            <p style="margin: 5px 0;"><strong>Amount:</strong> {amount}</p>
+            <p style="margin: 5px 0;"><strong>Deadline:</strong> {deadline}</p>
+        </div>
+
+        <p>Make sure to track your application progress in the dashboard.</p>
+        
+        {cta_button}
+        
+        <p style="margin-top: 30px; font-size: 13px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+            Happy scholarship hunting!<br>
+            <strong>The ScholarIQ Team</strong>
+        </p>
+    </div>
+    """
+
+    try:
+        message = MessageSchema(
+            subject=f"You saved: {scholarship_title}",
+            recipients=[user_email],
+            body=html,
+            subtype=MessageType.html
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        return {"message": "Save confirmation email sent"}
+    except Exception as e:
+        # Log error but don't crash background task
+        print(f"[EmailService] Failed to send save confirmation to {user_email}: {e}")
+        return {"message": "Email failed", "error": str(e)}
+

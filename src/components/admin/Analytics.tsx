@@ -12,10 +12,10 @@ export function AdminAnalytics() {
 
     if (!data) return <div className="text-gray-800">Loading Analytics...</div>;
 
-    const chartData = data.searches_trend.map((val: number, i: number) => ({
-        day: `Day ${i + 1}`,
-        searches: val,
-        saves: data.saves_trend[i]
+    const chartData = data.searches_trend.map((item: any) => ({
+        day: new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
+        searches: item.count,
+        saves: data.saves_trend.find((s: any) => s.date === item.date)?.count || 0
     }));
 
     return (

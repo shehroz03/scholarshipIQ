@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone, timedelta
+
+# App local imports
 from app.db.session import get_db
 from app.db import models, schemas
 from app.api import deps
+from app.core.plans import get_limit
+
 
 router = APIRouter()
 
@@ -26,6 +31,23 @@ def save_application(
     
     if existing:
         raise HTTPException(status_code=400, detail="Scholarship already saved in tracking system")
+
+    # Enforce plan limits
+    plan = current_user.subscription_plan or "free"
+
+    
+    current_apps = db.query(models.Application).filter(models.Application.user_id == current_user.id).all()
+    saved_count = sum(1 for a in current_apps if a.status == "Saved")
+    track_count = sum(1 for a in current_apps if a.status != "Saved")
+
+    if app_in.status == "Saved":
+        limit = get_limit(plan, "saved_scholarships")
+        if limit != -1 and saved_count >= limit:
+            raise HTTPException(status_code=403, detail={"error": "UPGRADE_REQUIRED", "message": "Save limit reached (5). Upgrade to Premium for unlimited saves."})
+    else:
+        limit = get_limit(plan, "track_applications")
+        if limit != -1 and track_count >= limit:
+            raise HTTPException(status_code=403, detail={"error": "UPGRADE_REQUIRED", "message": "Tracking limit reached (3). Upgrade to Premium/Pro to track more."})
 
     new_app = models.Application(
         user_id=current_user.id,
@@ -87,25 +109,26 @@ def delete_application(
     db.commit()
     return {"message": "Application removed from tracking"}
 
-from datetime import datetime, timedelta
 
 @router.get("/notifications")
+
 def get_deadline_notifications(
     db: Session = Depends(get_db), 
     current_user: models.User = Depends(deps.get_current_user)
 ):
     # Logic: Scholarships expiring in the next 7 days
-    today = datetime.utcnow()
-    warning_limit = today + timedelta(days=7)
+    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    warning_limit = now_naive + timedelta(days=7)
     
     apps = db.query(models.Application).filter(models.Application.user_id == current_user.id).all()
     
     notifications = []
     for app in apps:
         if app.scholarship and app.scholarship.deadline:
+            deadline_naive = app.scholarship.deadline.replace(tzinfo=None) if app.scholarship.deadline.tzinfo else app.scholarship.deadline
             # Check if deadline is upcoming
-            if today <= app.scholarship.deadline <= warning_limit:
-                days_left = (app.scholarship.deadline - today).days
+            if now_naive <= deadline_naive <= warning_limit:
+                days_left = (deadline_naive - now_naive).days
                 notifications.append({
                     "id": app.id,
                     "message": f"Deadline for '{app.scholarship.title}' is in {max(0, days_left)} days! ⏳",

@@ -1,0 +1,657 @@
+import { useState, useEffect } from "react";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import {
+  GraduationCap,
+  Brain,
+  Shield,
+  MessageCircle,
+  Award,
+  BookOpen,
+  Palette,
+  Code,
+  Wrench,
+  Stethoscope,
+  UsersRound,
+  Atom,
+  Briefcase,
+  GraduationCapIcon,
+  Microscope,
+  ArrowRight,
+  Banknote,
+  Globe,
+  Scale,
+  Sparkles,
+  FileCheck,
+  MapPin,
+  TrendingUp,
+  Zap,
+  Star,
+  CheckCircle2,
+  Plane,
+} from "lucide-react";
+import { api } from "../api";
+import { CurrencySelector } from "./CurrencySelector";
+import { toast } from "sonner";
+import { useTheme } from "../context/ThemeContext";
+import { darkTheme, lightTheme } from "../styles/theme";
+import { ThemeToggle } from "./ThemeToggle";
+import { Footer } from "./Footer";
+import { HeroSlider, type HeroSlide } from "./landing/HeroSlider";
+
+const isLoggedIn = () => !!localStorage.getItem("token");
+
+const HERO_SLIDES: HeroSlide[] = [
+  {
+    id: "search",
+    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&q=80",
+    title: "Discover Your",
+    highlight: "Dream Scholarship",
+    subtitle: "Search thousands of fully funded and partial scholarships across 50+ countries — matched to your profile.",
+    cta: "Browse Scholarships",
+    accent: "#3b82f6",
+  },
+  {
+    id: "matcher",
+    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&q=80",
+    title: "AI-Powered",
+    highlight: "Smart Matching",
+    subtitle: "Our intelligent matcher analyses your CGPA, field, and goals to recommend universities you'll actually get into.",
+    cta: "Try Smart Matcher",
+    accent: "#8b5cf6",
+  },
+  {
+    id: "funded",
+    image: "https://images.unsplash.com/photo-1541339907192-e08756dedf3c?w=1920&q=80",
+    title: "Fully Funded",
+    highlight: "Opportunities",
+    subtitle: "Filter by funding type, degree level, and destination. From Bachelor's to PhD — find what fits you.",
+    cta: "View Fully Funded",
+    accent: "#f97316",
+  },
+  {
+    id: "visa",
+    image: "https://images.unsplash.com/photo-1434030214721-735608b220c2?w=1920&q=80",
+    title: "Study Abroad",
+    highlight: "Made Simple",
+    subtitle: "Visa guidance, document checklists, and AI consultant — everything you need from application to arrival.",
+    cta: "Explore Visa Guide",
+    accent: "#10b981",
+  },
+];
+
+const FALLBACK_FIELDS = [
+  { title: "Computer Science", scholarships: "—", icon: Code, image: "https://images.unsplash.com/photo-1517694712202-14dd953880a1?w=600&q=80", color: "bg-blue-500" },
+  { title: "Engineering", scholarships: "—", icon: Wrench, image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80", color: "bg-blue-500" },
+  { title: "Business", scholarships: "—", icon: Briefcase, image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80", color: "bg-blue-500" },
+  { title: "Medicine", scholarships: "—", icon: Stethoscope, image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80", color: "bg-blue-500" },
+  { title: "Social Sciences", scholarships: "—", icon: UsersRound, image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80", color: "bg-blue-500" },
+];
+
+const FALLBACK_COUNTRIES = [
+  { name: "United Kingdom", scholarships: "—", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80" },
+  { name: "Germany", scholarships: "—", image: "https://images.unsplash.com/photo-1467269209834-ffdbff0b5a2f?w=600&q=80" },
+  { name: "Australia", scholarships: "—", image: "https://images.unsplash.com/photo-1523482585902-397e9f2cd7d6?w=600&q=80" },
+  { name: "Canada", scholarships: "—", image: "https://images.unsplash.com/photo-1519830315369-fbbfcfb42a1b?w=600&q=80" },
+];
+
+const AI_TOOLS = [
+  { id: "matcher", title: "University Matcher", desc: "Match your profile with top universities worldwide.", icon: Sparkles, color: "from-violet-500 to-purple-600", page: "matcher" },
+  { id: "consultant", title: "AI Consultant", desc: "Get personalised advice on applications and essays.", icon: MessageCircle, color: "from-blue-500 to-cyan-500", page: "consultant" },
+  { id: "visa", title: "Visa Guidance", desc: "Country-specific visa checklists powered by AI.", icon: Plane, color: "from-emerald-500 to-teal-500", page: "visa" },
+  { id: "checklist", title: "Document Roadmap", desc: "Never miss a required document for your application.", icon: FileCheck, color: "from-orange-500 to-amber-500", page: "checklist" },
+];
+
+const HOW_IT_WORKS = [
+  { step: "01", title: "Create Your Profile", desc: "Add your degree, CGPA, IELTS score, and preferred countries.", icon: GraduationCap },
+  { step: "02", title: "Get Smart Matches", desc: "Our AI ranks scholarships by eligibility and fit to your profile.", icon: Brain },
+  { step: "03", title: "Apply with Confidence", desc: "Track applications, get document checklists, and visa guidance.", icon: FileCheck },
+  { step: "04", title: "Land Your Seat", desc: "From shortlist to acceptance — ScholarIQ supports every step.", icon: Award },
+];
+
+const FEATURES = [
+  { icon: Shield, title: "Verified Listings", desc: "Fraud detection and admin-verified scholarship data." },
+  { icon: Brain, title: "AI Recommendations", desc: "Personalised matches based on your academic profile." },
+  { icon: Globe, title: "50+ Countries", desc: "UK, Germany, Canada, Australia, and many more." },
+  { icon: TrendingUp, title: "Live Database", desc: "Thousands of scholarships updated regularly." },
+];
+
+export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const [userLoggedIn, setUserLoggedIn] = useState(false);
+  const [statsData, setStatsData] = useState<any>(null);
+  const [dbCountries, setDbCountries] = useState<any[]>([]);
+  const [dbFields, setDbFields] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setUserLoggedIn(!!localStorage.getItem("token"));
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUserLoggedIn(false);
+    toast.success("Logged out successfully");
+  };
+
+  const getImageUrl = (keyword: string, type: "field" | "country") => {
+    const seeds: Record<string, string> = {
+      "Computer Science": "photo-1517694712202-14dd953880a1",
+      Engineering: "photo-1581091226825-a6a2a5aee158",
+      Business: "photo-1454165804606-c3d57bc86b40",
+      Medicine: "photo-1576091160399-112ba8d25d1d",
+      "United Kingdom": "photo-1513635269975-59663e0ac1ad",
+      Germany: "photo-1467269209834-ffdbff0b5a2f",
+      Australia: "photo-1523482585902-397e9f2cd7d6",
+      Canada: "photo-1519830315369-fbbfcfb42a1b",
+    };
+    const photo = seeds[keyword] || (type === "field" ? "photo-1524178232363-1fb2b075b655" : "photo-1469474968028-56623f02e42e");
+    return `https://images.unsplash.com/${photo}?w=600&q=80`;
+  };
+
+  const [popularFilters, setPopularFilters] = useState<any[]>([
+    { name: "Master's Degree", count: "Loading...", link: "master", params: { level: "Masters" } },
+    { name: "Fully Funded", count: "Loading...", link: "full", params: { funding_type: "Fully Funded" } },
+    { name: "PhD / Research", count: "Loading...", link: "phd", params: { level: "PhD" } },
+    { name: "Bachelor's", count: "Loading...", link: "bachelor", params: { level: "Bachelors" } },
+  ]);
+
+  useEffect(() => {
+    const fetchLandingData = async () => {
+      try {
+        const data = await api.scholarships.getStats();
+        setStatsData(data);
+        if (data.breakdown) {
+          setPopularFilters([
+            { name: "Master's Degree", count: `${data.breakdown.masters}+`, link: "master", params: { level: "Masters" } },
+            { name: "Fully Funded", count: `${data.breakdown.fully_funded}+`, link: "full", params: { funding_type: "Fully Funded" } },
+            { name: "PhD / Research", count: `${data.breakdown.phd}+`, link: "phd", params: { level: "PhD" } },
+            { name: "Bachelor's", count: `${data.breakdown.bachelors}+`, link: "bachelor", params: { level: "Bachelors" } },
+          ]);
+        }
+
+        const fieldIcons: Record<string, any> = {
+          Engineering: Wrench, Medicine: Stethoscope, "Computer Science": Code,
+          "Social Sciences": UsersRound, Arts: Palette, Business: Briefcase,
+          Education: GraduationCapIcon, "Natural Sciences": Microscope, Law: Scale, Humanities: BookOpen,
+        };
+
+        const rawFields = (data.fields || []).filter((f: any) => f && f.name);
+        const mappedFields = rawFields.map((f: any) => ({
+          title: f.name, scholarships: (f.count ?? 0).toLocaleString(),
+          icon: fieldIcons[f.name] || Atom, image: getImageUrl(f.name, "field"), color: "bg-blue-500",
+        }));
+        setDbFields(mappedFields.length > 0 ? mappedFields : FALLBACK_FIELDS);
+
+        const rawCountries = (data.countries || []).filter((c: any) => c && c.name);
+        const mappedCountries = rawCountries.map((c: any) => ({
+          name: c.name, scholarships: (c.count ?? 0).toLocaleString(), image: getImageUrl(c.name, "country"),
+        }));
+        setDbCountries(mappedCountries.length > 0 ? mappedCountries : FALLBACK_COUNTRIES);
+      } catch {
+        setDbFields(FALLBACK_FIELDS);
+        setDbCountries(FALLBACK_COUNTRIES);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchLandingData();
+  }, []);
+
+  const handleExploreClick = (action: () => void) => {
+    if (!isLoggedIn()) {
+      toast.info("Please sign up to explore scholarships.");
+      onNavigate("auth-required");
+      return;
+    }
+    action();
+  };
+
+  const handleHeroSearch = (query: string) => {
+    handleExploreClick(() => onNavigate("search", query ? { keyword: query } : undefined));
+  };
+
+  const handleHeroCta = (slideId: string) => {
+    const actions: Record<string, () => void> = {
+      search: () => onNavigate("search"),
+      matcher: () => onNavigate("matcher"),
+      funded: () => onNavigate("search", { funding_type: "Fully Funded" }),
+      visa: () => onNavigate("visa"),
+    };
+    handleExploreClick(actions[slideId] ?? (() => onNavigate("search")));
+  };
+
+  const totalScholarships = statsData?.total?.toLocaleString() ?? (isLoading ? "..." : "10,000+");
+  const totalCountries = statsData?.countries_count ?? dbCountries.length ?? "50+";
+  const totalFields = statsData?.fields_count ?? dbFields.length ?? "20+";
+
+  return (
+    <div className="min-h-screen transition-colors duration-300" style={{ backgroundColor: theme.bg, color: theme.text }}>
+      <nav className="border-b sticky top-0 z-50 shadow-sm backdrop-blur-md" style={{ backgroundColor: `${theme.headerBg}ee`, borderColor: theme.border }}>
+        <motionNavContainer>
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+              <div className="w-9 h-9 bg-gradient-to-br from-[#1e3a8a] to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <GraduationCap className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-black tracking-tight" style={{ color: theme.text }}>ScholarIQ</span>
+            </div>
+            <div className="hidden md:flex items-center gap-5">
+              <a href="#filters" style={{ color: theme.textSecondary }} className="text-sm font-medium hover:text-[#1e3a8a] transition-colors">Programs</a>
+              <a href="#countries" style={{ color: theme.textSecondary }} className="text-sm font-medium hover:text-[#1e3a8a] transition-colors">Countries</a>
+              <a href="#tools" style={{ color: theme.textSecondary }} className="text-sm font-medium hover:text-[#1e3a8a] transition-colors">AI Tools</a>
+              <a href="#how-it-works" style={{ color: theme.textSecondary }} className="text-sm font-medium hover:text-[#1e3a8a] transition-colors">How It Works</a>
+              <ThemeToggle />
+              <CurrencySelector />
+              {userLoggedIn ? (
+                <motionNavButtonsLoggedIn onNavigate={onNavigate} onLogout={handleLogout} theme={theme} />
+              ) : (
+                <motionNavButtonsGuest onNavigate={onNavigate} theme={theme} />
+              )}
+            </div>
+          </motionNavContainer>
+        </motionNavContainer>
+      </nav>
+
+      <HeroSlider slides={HERO_SLIDES} onSearch={handleHeroSearch} onCta={handleHeroCta} />
+
+      {/* Live stats strip */}
+      <section className="relative z-10 -mt-8 mx-4 sm:mx-6 lg:mx-auto max-w-5xl">
+        <div
+          className="rounded-2xl shadow-2xl border grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 overflow-hidden"
+          style={{ backgroundColor: theme.bg, borderColor: theme.border }}
+        >
+          {[
+            { label: "Scholarships", value: totalScholarships, icon: Award, color: "text-blue-600" },
+            { label: "Countries", value: totalCountries, icon: Globe, color: "text-emerald-600" },
+            { label: "Fields of Study", value: totalFields, icon: BookOpen, color: "text-violet-600" },
+            { label: "AI Tools", value: "4+", icon: Zap, color: "text-orange-500" },
+          ].map((stat, i) => (
+            <div key={i} className="flex items-center gap-3 p-5 md:p-6">
+              <div className={`w-10 h-10 rounded-xl bg-opacity-10 flex items-center justify-center ${stat.color} bg-current/10`}>
+                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+              </div>
+              <div>
+                <p className="text-2xl font-black" style={{ color: theme.text }}>{stat.value}</p>
+                <p className="text-xs font-medium" style={{ color: theme.textSecondary }}>{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="filters" className="py-24 mt-8" style={{ backgroundColor: theme.bgSecondary }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <span className="inline-block px-4 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">Quick Filters</span>
+            <h2 className="text-3xl md:text-4xl font-black mb-4">Explore by Program Type</h2>
+            <p className="max-w-xl mx-auto" style={{ color: theme.textSecondary }}>
+              Jump straight to scholarships that match your degree level and funding needs.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {popularFilters.map((filter, i) => (
+              <Card
+                key={i}
+                className="cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group border-2 hover:border-blue-500"
+                style={{ backgroundColor: theme.bg, borderColor: theme.border }}
+                onClick={() => handleExploreClick(() => onNavigate("search", filter.params))}
+              >
+                <CardContent className="p-6">
+                  <motionFilterCard filter={filter} index={i} theme={theme} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <span className="inline-block px-4 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-bold uppercase tracking-wider mb-4">Simple Process</span>
+            <h2 className="text-3xl md:text-4xl font-black mb-4">How ScholarIQ Works</h2>
+            <p className="max-w-xl mx-auto" style={{ color: theme.textSecondary }}>
+              From profile to acceptance — four steps to your dream degree abroad.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {HOW_IT_WORKS.map((item, i) => (
+              <div key={i} className="relative text-center group">
+                {i < HOW_IT_WORKS.length - 1 && (
+                  <motionHowItWorksConnector />
+                )}
+                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-[#1e3a8a] to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <item.icon className="w-8 h-8 text-white" />
+                </div>
+                <span className="text-4xl font-black text-blue-100 absolute top-0 right-4 select-none">{item.step}</span>
+                <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: theme.textSecondary }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+          <motionHowItWorksCta onNavigate={onNavigate} handleExploreClick={handleExploreClick} />
+        </div>
+      </section>
+
+      <section id="programs" className="py-24" style={{ backgroundColor: theme.bgSecondary }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <span className="inline-block px-4 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-3">By Discipline</span>
+              <h2 className="text-3xl md:text-4xl font-black">Browse by Field</h2>
+            </div>
+            <Button variant="ghost" className="font-semibold" onClick={() => handleExploreClick(() => onNavigate("search"))}>
+              View All <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {dbFields.map((field, i) => (
+              <div
+                key={i}
+                className="group relative rounded-2xl overflow-hidden cursor-pointer h-52 shadow-md hover:shadow-2xl transition-shadow"
+                onClick={() => handleExploreClick(() => onNavigate("search", { query: field.title }))}
+              >
+                <img src={field.image} alt={field.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f1f4a]/95 via-[#0f1f4a]/40 to-transparent flex flex-col justify-end p-4">
+                  <field.icon className="w-5 h-5 text-blue-300 mb-1" />
+                  <h3 className="text-white font-bold text-sm leading-tight">{field.title}</h3>
+                  <p className="text-blue-200 text-xs mt-0.5">{field.scholarships} scholarships</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="countries" className="py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-12">
+            <motionCountriesHeader theme={theme} />
+            <Button variant="ghost" className="font-semibold shrink-0" onClick={() => handleExploreClick(() => onNavigate("search"))}>
+              All Countries <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {dbCountries.slice(0, 8).map((country, i) => (
+              <Card
+                key={i}
+                className="overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group p-0 border-0"
+                onClick={() => handleExploreClick(() => onNavigate("search", { country: country.name }))}
+              >
+                <div className="relative h-44">
+                  <img src={country.image} alt={country.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <img
+                        src={`https://flagcdn.com/w40/${getFlagCode(country.name)}.png`}
+                        alt=""
+                        className="w-6 h-4 object-cover rounded shadow"
+                      />
+                      <h3 className="text-white font-bold">{country.name}</h3>
+                    </div>
+                    <p className="text-blue-200 text-sm flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {country.scholarships} scholarships
+                    </p>
+                  </motionCountriesHeader>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="tools" className="py-24" style={{ backgroundColor: theme.bgSecondary }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <span className="inline-block px-4 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-4">Powered by AI</span>
+            <h2 className="text-3xl md:text-4xl font-black mb-4">Smart Tools for Students</h2>
+            <p className="max-w-xl mx-auto" style={{ color: theme.textSecondary }}>
+              Everything you need beyond search — visa help, matching, and application support.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {AI_TOOLS.map((tool) => (
+              <Card
+                key={tool.id}
+                className="cursor-pointer hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden border-0"
+                onClick={() => handleExploreClick(() => onNavigate(tool.page))}
+              >
+                <CardContent className="p-0">
+                  <div className={`h-2 bg-gradient-to-r ${tool.color}`} />
+                  <div className="p-6">
+                    <motionAiToolCard tool={tool} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="features" className="py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motionFeaturesGrid theme={theme} onNavigate={onNavigate} handleExploreClick={handleExploreClick} />
+        </div>
+      </section>
+
+      <section className="py-20 mx-4 sm:mx-6 lg:mx-8 max-w-7xl lg:mx-auto">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#0f1f4a] via-[#1e3a8a] to-blue-700 px-8 py-16 md:px-16 text-center text-white">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl" />
+            <motionCtaBlur />
+          </motionCtaBlur>
+          <h2 className="text-3xl md:text-5xl font-black mb-4 relative z-10">
+            Ready to Find Your Scholarship?
+          </h2>
+          <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto relative z-10">
+            Join thousands of students using ScholarIQ to discover funded opportunities worldwide.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
+            <Button
+              size="lg"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 h-14 rounded-2xl text-base"
+              onClick={() => (userLoggedIn ? onNavigate("dashboard") : onNavigate("signup"))}
+            >
+              {userLoggedIn ? "Go to Dashboard" : "Get Started Free"}
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white/40 text-white hover:bg-white/10 h-14 rounded-2xl font-semibold px-8"
+              onClick={() => handleExploreClick(() => onNavigate("search"))}
+            >
+              Browse Scholarships
+            </Button>
+          </div>
+          <div className="flex items-center justify-center gap-6 mt-8 relative z-10 flex-wrap">
+            {["Free to start", "No credit card", "AI-powered matching"].map((t) => (
+              <span key={t} className="flex items-center gap-1.5 text-sm text-blue-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Footer onNavigate={onNavigate} />
+    </div>
+  );
+}
+
+function getFlagCode(countryName: string) {
+  const map: Record<string, string> = {
+    "United Kingdom": "gb", Germany: "de", Canada: "ca", Turkey: "tr",
+    Australia: "au", Malaysia: "my", "Saudi Arabia": "sa", UAE: "ae",
+    "United States": "us", Pakistan: "pk", India: "in", China: "cn",
+    France: "fr", Netherlands: "nl", Global: "un",
+  };
+  return map[countryName] || "un";
+}
+
+function motionNavContainer({ children }: { children: React.ReactNode }) {
+  return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</motionNavContainer>;
+}
+
+function motionNavButtonsLoggedIn({ onNavigate, onLogout, theme }: { onNavigate: (p: string) => void; onLogout: () => void; theme: typeof lightTheme }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" onClick={() => onNavigate("dashboard")} style={{ color: theme.textSecondary }}>Dashboard</Button>
+      <Button variant="ghost" onClick={onLogout} className="text-red-500 hover:text-red-600">Logout</Button>
+    </div>
+  );
+}
+
+function motionNavButtonsGuest({ onNavigate, theme }: { onNavigate: (p: string) => void; theme: typeof lightTheme }) {
+  return (
+    <motionNavButtonsGuestInner onNavigate={onNavigate} theme={theme} />
+  );
+}
+
+function motionNavButtonsGuestInner({ onNavigate, theme }: { onNavigate: (p: string) => void; theme: typeof lightTheme }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" onClick={() => onNavigate("login")} style={{ color: theme.text }}>Sign In</Button>
+      <Button onClick={() => onNavigate("signup")} className="bg-[#1e3a8a] hover:bg-blue-800 text-white rounded-xl px-5">Get Started</Button>
+    </div>
+  );
+}
+
+function motionFilterCard({ filter, index, theme }: { filter: any; index: number; theme: typeof lightTheme }) {
+  const icons = [GraduationCap, Banknote, Microscope, BookOpen];
+  const Icon = icons[index] ?? GraduationCap;
+  return (
+    <>
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg ${index % 2 === 0 ? "bg-blue-600" : "bg-orange-500"}`}>
+        <Icon className="w-7 h-7" />
+      </div>
+      <h3 className="font-bold text-lg group-hover:text-blue-600 transition-colors">{filter.name}</h3>
+      <p className="text-sm mt-1" style={{ color: theme.textSecondary }}>{filter.count} Scholarships</p>
+      <p className="text-xs text-blue-500 font-semibold mt-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        Explore <ArrowRight className="w-3 h-3" />
+      </p>
+    </>
+  );
+}
+
+function motionHowItWorksConnector() {
+  return <div className="hidden lg:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-blue-200 to-transparent" />;
+}
+
+function motionHowItWorksCta({ onNavigate, handleExploreClick }: { onNavigate: (p: string) => void; handleExploreClick: (a: () => void) => void }) {
+  return (
+    <div className="text-center mt-12">
+      <Button
+        size="lg"
+        className="bg-[#1e3a8a] hover:bg-blue-800 text-white rounded-2xl px-8 h-12 font-bold"
+        onClick={() => handleExploreClick(() => onNavigate("signup"))}
+      >
+        Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
+      </Button>
+    </div>
+  );
+}
+
+function motionCountriesHeader({ theme }: { theme: typeof lightTheme }) {
+  return (
+    <div>
+      <span className="inline-block px-4 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold uppercase tracking-wider mb-3">Destinations</span>
+      <h2 className="text-3xl md:text-4xl font-black" style={{ color: theme.text }}>Study Destinations</h2>
+    </div>
+  );
+}
+
+function motionAiToolCard({ tool }: { tool: (typeof AI_TOOLS)[0] }) {
+  return (
+    <>
+      <motionAiToolCardIcon tool={tool} />
+      <h3 className="font-bold text-lg mb-2">{tool.title}</h3>
+      <p className="text-sm text-gray-500 leading-relaxed mb-4">{tool.desc}</p>
+      <span className="text-sm font-semibold text-blue-600 flex items-center gap-1 group-hover:gap-2 transition-all">
+        Open tool <ArrowRight className="w-4 h-4" />
+      </span>
+    </>
+  );
+}
+
+function motionAiToolCardIcon({ tool }: { tool: (typeof AI_TOOLS)[0] }) {
+  return (
+    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${tool.color} flex items-center justify-center mb-4 shadow-lg`}>
+      <tool.icon className="w-6 h-6 text-white" />
+    </div>
+  );
+}
+
+function motionFeaturesGrid({ theme, onNavigate, handleExploreClick }: { theme: typeof lightTheme; onNavigate: (p: string, params?: any) => void; handleExploreClick: (a: () => void) => void }) {
+  return (
+    <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <div>
+        <span className="inline-block px-4 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">Why ScholarIQ</span>
+        <h2 className="text-3xl md:text-4xl font-black mb-6">Built for Ambitious Students</h2>
+        <p className="mb-8 leading-relaxed" style={{ color: theme.textSecondary }}>
+          ScholarIQ combines verified scholarship data with AI tools so you spend less time searching and more time applying.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {FEATURES.map((f, i) => (
+            <div key={i} className="flex gap-4">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                <f.icon className="w-5 h-5 text-[#1e3a8a]" />
+              </div>
+              <div>
+                <h4 className="font-bold mb-1">{f.title}</h4>
+                <p className="text-sm" style={{ color: theme.textSecondary }}>{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </motionFeaturesGrid>
+      </div>
+      <div className="relative">
+        <div className="rounded-3xl p-8 bg-gradient-to-br from-[#0f1f4a] to-blue-800 text-white shadow-2xl">
+          <div className="flex items-center gap-1 mb-4">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star key={s} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            ))}
+          </div>
+          <p className="text-lg leading-relaxed mb-6 text-blue-50">
+            &ldquo;ScholarIQ helped me find 12 fully funded Master&apos;s programs in Germany within a week. The AI matcher saved me hours of manual research.&rdquo;
+          </p>
+          <div className="flex items-center gap-3">
+            <motionTestimonialAvatar />
+            <div>
+              <p className="font-bold">Ayesha Khan</p>
+              <p className="text-sm text-blue-300">MSc Computer Science · Germany</p>
+            </div>
+          </div>
+          <Button
+            className="w-full mt-8 bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 rounded-xl"
+            onClick={() => handleExploreClick(() => onNavigate("matcher"))}
+          >
+            Try Smart Matcher <Sparkles className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function motionTestimonialAvatar() {
+  return (
+    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-violet-500 flex items-center justify-center font-bold text-lg">
+      AK
+    </div>
+  );
+}
+
+function motionCtaBlur() {
+  return <motionCtaBlurInner />;
+}
+
+function motionCtaBlurInner() {
+  return <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-400 rounded-full blur-3xl" />;
+}

@@ -18,6 +18,9 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { useTheme } from "../context/ThemeContext";
+import { darkTheme, lightTheme } from "../styles/theme";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface CountryGuide {
     id: string;
@@ -94,223 +97,135 @@ const DESTINATIONS: CountryGuide[] = [
 ];
 
 export function TravelGuidePage({ onNavigate }: { onNavigate: (page: string) => void }) {
+    const { isDark } = useTheme();
+    const theme = isDark ? darkTheme : lightTheme;
     const [selectedCountry, setSelectedCountry] = useState<CountryGuide>(DESTINATIONS[0]);
 
     return (
-        <div className="min-h-screen bg-[#f8fafc]">
-            {/* Header */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 sm:px-8 py-4 sticky top-0 z-[100]">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-2 cursor-pointer group" onClick={() => onNavigate('dashboard')}>
-                        <div className="p-2 bg-[#1e3a8a] rounded-xl text-white shadow-lg shadow-blue-900/10 group-hover:scale-105 transition-transform">
-                            <GraduationCap className="w-5 h-5" />
-                        </div>
-                        <span className="text-xl font-black text-slate-900 tracking-tight">ScholarIQ</span>
+        <div className="min-h-screen transition-colors duration-300" style={{ backgroundColor: theme.bg, color: theme.text }}>
+            <header className="border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md" style={{ backgroundColor: theme.headerBg, borderColor: theme.border }}>
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('dashboard')}>
+                    <div className="w-10 h-10 bg-[#1e3a8a] rounded-xl flex items-center justify-center shadow-lg">
+                        <GraduationCap className="w-6 h-6 text-white" />
                     </div>
-                    <Button
-                        variant="outline"
-                        className="rounded-xl font-bold border-slate-200 hover:bg-slate-50"
-                        onClick={() => onNavigate('dashboard')}
-                    >
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                    <span className="text-xl font-black tracking-tight" style={{ color: theme.text }}>ScholarIQ</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <ThemeToggle />
+                    <Button variant="ghost" onClick={() => onNavigate('dashboard')} style={{ color: theme.textSecondary }}>
+                        <ChevronLeft className="w-4 h-4 mr-2" /> Dashboard
                     </Button>
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-6 sm:px-8 py-10">
-                <div className="mb-12">
-                    <Badge className="bg-blue-50 text-[#1e3a8a] border-blue-100 font-bold px-3 py-1 rounded-lg mb-4">Study Abroad 2024</Badge>
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight tracking-tight mb-4">
-                        Destination Travel Guide
-                    </h1>
-                    <p className="text-lg text-slate-500 font-medium max-w-2xl">
-                        Everything you need to know about your dream study destination, from visa requirements to living costs.
-                    </p>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div className="mb-10">
+                    <h1 className="text-4xl font-black mb-2" style={{ color: theme.text }}>Global Study Destinations 🌏</h1>
+                    <p style={{ color: theme.textSecondary }}>Expert guides on living costs, visas, and university life.</p>
                 </div>
 
-                <div className="grid lg:grid-cols-12 gap-10">
-                    {/* Country Selection Sidebar */}
-                    <div className="lg:col-span-4 space-y-4">
-                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2 px-2">Top Destinations</h3>
-                        {DESTINATIONS.map((country) => (
+                <div className="grid lg:grid-cols-4 gap-8">
+                    <div className="space-y-4">
+                        <p className="text-xs font-black uppercase tracking-widest px-2" style={{ color: theme.textSecondary }}>Select Destination</p>
+                        {DESTINATIONS.map((dest) => (
                             <button
-                                key={country.id}
-                                onClick={() => setSelectedCountry(country)}
-                                className={`w-full flex items-center gap-4 p-5 rounded-[2rem] transition-all border-2 text-left group
-                  ${selectedCountry.id === country.id
-                                        ? "bg-[#1e3a8a] border-[#1e3a8a] text-white shadow-xl shadow-blue-900/10"
-                                        : "bg-white border-transparent hover:border-blue-100 text-slate-600 hover:bg-blue-50/50"}`}
+                                key={dest.id}
+                                onClick={() => setSelectedCountry(dest)}
+                                className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-3 font-bold ${selectedCountry.id === dest.id ? 'border-blue-500 shadow-lg shadow-blue-500/10' : ''}`}
+                                style={{
+                                    backgroundColor: selectedCountry.id === dest.id ? (isDark ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff') : theme.bgSecondary,
+                                    borderColor: selectedCountry.id === dest.id ? '#3b82f6' : theme.border,
+                                    color: selectedCountry.id === dest.id ? '#3b82f6' : theme.text
+                                }}
                             >
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-white/10
-                  ${selectedCountry.id === country.id ? "text-white" : "bg-slate-50 text-slate-900"}`}>
-                                    {country.flag}
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-bold text-lg">{country.name}</p>
-                                    <p className={`text-xs ${selectedCountry.id === country.id ? "text-blue-200" : "text-slate-400"}`}>
-                                        {country.visaSuccess} Visa Success
-                                    </p>
-                                </div>
-                                <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${selectedCountry.id === country.id ? "text-white" : "text-slate-300"}`} />
+                                <span className="text-2xl">{dest.flag}</span>
+                                <span>{dest.name}</span>
                             </button>
                         ))}
-
-                        <Card className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] border-none text-white p-8 mt-10 overflow-hidden relative">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-                            <Info className="w-10 h-10 text-white/30 mb-6" />
-                            <h4 className="text-xl font-bold mb-2">Need a custom plan?</h4>
-                            <p className="text-blue-100/80 text-sm mb-6 font-medium leading-relaxed">Our AI can build a personalized pre-travel checklist for your specific background.</p>
-                            <Button className="w-full bg-white text-indigo-600 hover:bg-blue-50 font-bold rounded-xl h-12">Talk to Advisor</Button>
-                        </Card>
                     </div>
 
-                    {/* Guide Content */}
-                    <div className="lg:col-span-8">
-                        <div className="bg-white rounded-[3rem] shadow-sm border border-slate-200 overflow-hidden">
-                            {/* Feature Image */}
-                            <div className="h-64 relative overflow-hidden">
-                                <img
-                                    src={selectedCountry.image}
-                                    alt={selectedCountry.name}
-                                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                <div className="absolute bottom-6 left-8">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="text-4xl">{selectedCountry.flag}</span>
-                                        <h2 className="text-3xl font-black text-white">{selectedCountry.name}</h2>
-                                    </div>
-                                    <p className="text-white/80 font-medium">Official Student Destination Guide</p>
+                    <div className="lg:col-span-3">
+                        <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden" style={{ backgroundColor: theme.bgSecondary }}>
+                            <div className="h-64 relative">
+                                <img src={selectedCountry.image} alt={selectedCountry.name} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-8">
+                                    <h2 className="text-4xl font-black text-white flex items-center gap-3">
+                                        {selectedCountry.flag} {selectedCountry.name}
+                                    </h2>
                                 </div>
                             </div>
-
-                            <div className="p-8 md:p-12">
-                                <Tabs defaultValue="overview" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-3 bg-slate-50 p-1.5 rounded-2xl h-14 border border-slate-100 mb-10">
-                                        <TabsTrigger value="overview" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm">Overview</TabsTrigger>
-                                        <TabsTrigger value="visa" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm">Visa & Travel</TabsTrigger>
-                                        <TabsTrigger value="academics" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm">Academics</TabsTrigger>
-                                    </TabsList>
-
-                                    <TabsContent value="overview" className="mt-0 space-y-8 animate-in fade-in duration-500">
-                                        <div className="prose prose-slate max-w-none">
-                                            <p className="text-slate-600 leading-relaxed text-lg font-medium">
-                                                {selectedCountry.description}
-                                            </p>
+                            <CardContent className="p-8">
+                                <div className="grid md:grid-cols-3 gap-8">
+                                    <div className="md:col-span-2 space-y-8">
+                                        <div>
+                                            <h3 className="text-xl font-black mb-4 flex items-center gap-2" style={{ color: theme.text }}>
+                                                <Info className="w-5 h-5 text-blue-500" /> About the Country
+                                            </h3>
+                                            <p className="text-lg leading-relaxed" style={{ color: theme.textSecondary }}>{selectedCountry.description}</p>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="bg-slate-50 border border-slate-200 p-6 rounded-3xl group hover:border-blue-400 transition-all">
-                                                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mb-4 text-[#1e3a8a]">
-                                                    <Banknote className="w-5 h-5" />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-6 rounded-3xl border" style={{ backgroundColor: theme.bg, borderColor: theme.border }}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Banknote className="w-5 h-5 text-emerald-500" />
+                                                    <span className="text-xs font-black uppercase tracking-wider" style={{ color: theme.textSecondary }}>Living Cost</span>
                                                 </div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Monthly Cost of Living</p>
-                                                <p className="text-xl font-black text-slate-900">{selectedCountry.livingCost}</p>
+                                                <p className="text-xl font-black" style={{ color: theme.text }}>{selectedCountry.livingCost}</p>
                                             </div>
-                                            <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-3xl group hover:border-emerald-400 transition-all">
-                                                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center mb-4 text-emerald-600">
-                                                    <ShieldCheck className="w-5 h-5" />
+                                            <div className="p-6 rounded-3xl border" style={{ backgroundColor: theme.bg, borderColor: theme.border }}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <BadgeCheck className="w-5 h-5 text-blue-500" />
+                                                    <span className="text-xs font-black uppercase tracking-wider" style={{ color: theme.textSecondary }}>Visa Success</span>
                                                 </div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600/60 mb-1">Visa Success Rate</p>
-                                                <p className="text-xl font-black text-emerald-900">{selectedCountry.visaSuccess}</p>
+                                                <p className="text-xl font-black" style={{ color: theme.text }}>{selectedCountry.visaSuccess}</p>
                                             </div>
                                         </div>
 
-                                        <div className="p-8 bg-amber-50 rounded-[2rem] border-2 border-amber-100">
-                                            <div className="flex items-center gap-3 mb-6 font-black text-amber-900">
-                                                <Plane className="w-5 h-5" /> Quick Checklist
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {[
-                                                    "Valid Passport (6 months+)",
-                                                    "Financial Proof (Maintenance)",
-                                                    "Health Insurance / IHS",
-                                                    "TB Screening (If applicable)",
-                                                    "Biometric Enrollment",
-                                                    "CAS / Acceptance Letter"
-                                                ].map((item, i) => (
-                                                    <div key={i} className="flex items-center gap-3 text-amber-800 font-medium text-sm">
-                                                        <BadgeCheck className="w-5 h-5 text-amber-600 shrink-0" /> {item}
+                                        <div>
+                                            <h3 className="text-xl font-black mb-4 flex items-center gap-2" style={{ color: theme.text }}>
+                                                <Building2 className="w-5 h-5 text-indigo-500" /> Top Universities
+                                            </h3>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {selectedCountry.topUniversities.map((uni) => (
+                                                    <div key={uni} className="p-3 rounded-xl border flex items-center gap-2 font-bold" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
+                                                        <GraduationCap className="w-4 h-4 text-slate-400" /> {uni}
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
-                                    </TabsContent>
+                                    </div>
 
-                                    <TabsContent value="visa" className="mt-0 space-y-8 animate-in fade-in duration-500">
-                                        <div className="space-y-6">
-                                            <div className="flex items-start gap-5 p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
-                                                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center shrink-0 text-blue-600">
-                                                    <Plane className="w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-lg font-black text-slate-900 mb-1">Visa Category</h4>
-                                                    <p className="text-slate-500 font-medium mb-2">{selectedCountry.visaType}</p>
-                                                    <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 px-3 py-1 font-bold">Duration: {selectedCountry.visaDuration}</Badge>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-start gap-5 p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
-                                                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center shrink-0 text-purple-600">
-                                                    <Clock className="w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-lg font-black text-slate-900 mb-1">Part-time Work Rights</h4>
-                                                    <p className="text-slate-500 font-medium leading-relaxed">{selectedCountry.workRights}</p>
-                                                    <p className="text-xs text-purple-600 mt-2 font-bold uppercase tracking-tighter">*Restrictions apply during vacation periods</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-                                            <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                                <Globe className="w-5 h-5 text-blue-400" /> Pre-Departure Guide
+                                    <div className="space-y-6">
+                                        <div className="p-6 rounded-3xl border border-blue-500/20" style={{ backgroundColor: isDark ? 'rgba(59, 130, 246, 0.05)' : '#eff6ff' }}>
+                                            <h4 className="font-black mb-4 text-blue-600 flex items-center gap-2">
+                                                <ShieldCheck className="w-5 h-5" /> Visa Essentials
                                             </h4>
-                                            <p className="text-slate-400 text-sm mb-6 leading-relaxed">Download our comprehensive PDF guide covering currency exchange, sim cards, and airport pickup.</p>
-                                            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold border-none h-12 px-8 shadow-lg shadow-blue-500/20">
-                                                Download PDF Guide
-                                            </Button>
-                                        </div>
-                                    </TabsContent>
-
-                                    <TabsContent value="academics" className="mt-0 space-y-8 animate-in fade-in duration-500">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div>
-                                                <h4 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
-                                                    <Building2 className="w-5 h-5 text-indigo-600" /> Top Universities
-                                                </h4>
-                                                <div className="space-y-3">
-                                                    {selectedCountry.topUniversities.map((uni, i) => (
-                                                        <div key={i} className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-white hover:border-indigo-200 transition-all group">
-                                                            <span className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-black text-indigo-700">{i + 1}</span>
-                                                            <span className="font-bold text-slate-700 group-hover:text-indigo-900">{uni}</span>
-                                                        </div>
-                                                    ))}
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Type</p>
+                                                    <p className="font-bold" style={{ color: theme.text }}>{selectedCountry.visaType}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Work Rights</p>
+                                                    <p className="font-bold" style={{ color: theme.text }}>{selectedCountry.workRights}</p>
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <div>
-                                                <h4 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
-                                                    <Users className="w-5 h-5 text-emerald-600" /> Intake Periods
-                                                </h4>
-                                                <div className="flex flex-wrap gap-3">
-                                                    {selectedCountry.intakeMonths.map((month, i) => (
-                                                        <div key={i} className="px-6 py-4 bg-emerald-50 border-2 border-emerald-100 rounded-[1.5rem] text-emerald-900 font-bold flex flex-col items-center">
-                                                            <span className="text-2xl mb-1">{month === 'September' ? '🍂' : month === 'January' ? '❄️' : '🌸'}</span>
-                                                            {month}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <p className="text-xs text-slate-400 font-medium mt-6 leading-relaxed bg-white border border-slate-100 p-4 rounded-xl">
-                                                    <strong>Note:</strong> Applications usually close 6-8 months before the intake starts. Early application is recommended.
-                                                </p>
+                                        <div className="p-6 rounded-3xl border" style={{ backgroundColor: theme.bg, borderColor: theme.border }}>
+                                            <h4 className="font-black mb-4 flex items-center gap-2" style={{ color: theme.text }}>
+                                                <Clock className="w-5 h-5 text-orange-500" /> Intake Periods
+                                            </h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedCountry.intakeMonths.map((m) => (
+                                                    <Badge key={m} className="bg-orange-500/10 text-orange-500 border-orange-500/20">{m}</Badge>
+                                                ))}
                                             </div>
                                         </div>
-                                    </TabsContent>
-                                </Tabs>
-                            </div>
-                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </main>

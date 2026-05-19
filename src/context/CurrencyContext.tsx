@@ -31,15 +31,18 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     const [currentCode, setCurrentCode] = useState<CurrencyCode>(() => {
-        const saved = localStorage.getItem('scholar_iq_currency');
-        return (saved as CurrencyCode) || 'USD';
+        const saved = localStorage.getItem('scholar_iq_currency') as CurrencyCode;
+        if (saved && currencies[saved]) {
+            return saved;
+        }
+        return 'USD';
     });
 
     useEffect(() => {
         localStorage.setItem('scholar_iq_currency', currentCode);
     }, [currentCode]);
 
-    const currency = currencies[currentCode];
+    const currency = currencies[currentCode] || currencies['USD'];
 
     const convertAndFormat = (amountStr: string | undefined | null): string => {
         if (!amountStr) return "N/A";

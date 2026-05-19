@@ -82,7 +82,7 @@ def get_ai_response(user_message: str, file_data=None, file_type=None):
         response = client.chat.completions.create(
             model="gpt-4o-mini",  # Best & Cheapest Vision Model
             messages=messages,
-            max_tokens=300,
+            max_tokens=600,
             temperature=0.7
         )
 

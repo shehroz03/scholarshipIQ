@@ -18,25 +18,54 @@ export function ApiHealth() {
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {health.apis.map((ep: any, i: number) => (
-                    <Card key={i} className="bg-white border-gray-200 text-gray-900 shadow-sm">
-                        <CardContent className="p-4 flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-mono text-gray-500 mb-1">{ep.endpoint}</p>
-                                <div className="flex items-center gap-2">
-                                    <Badge className={ep.status === 200 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
-                                        {ep.status}
-                                    </Badge>
-                                    <span className={`text-sm font-bold ${ep.response_time_ms < 100 ? "text-green-600" : "text-yellow-600"}`}>
-                                        {ep.response_time_ms}ms
-                                    </span>
-                                </div>
-                            </div>
-                            <div className={`w-2 h-2 rounded-full ${ep.status === 200 ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-                        </CardContent>
-                    </Card>
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-white border-gray-200 text-gray-900 shadow-sm">
+                    <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-mono text-gray-500 mb-1">DATABASE</p>
+                            <Badge className={health.database === "ok" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                                {health.database.toUpperCase()}
+                            </Badge>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full ${health.database === "ok" ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-white border-gray-200 text-gray-900 shadow-sm">
+                    <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-mono text-gray-500 mb-1">OPENAI API</p>
+                            <Badge className={health.openai === "configured" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
+                                {health.openai.toUpperCase()}
+                            </Badge>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full ${health.openai === "configured" ? "bg-green-500" : "bg-yellow-500"}`} />
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-white border-gray-200 text-gray-900 shadow-sm">
+                    <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-mono text-gray-500 mb-1">EMAIL SERVICE</p>
+                            <Badge className={health.email === "configured" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
+                                {health.email.toUpperCase()}
+                            </Badge>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full ${health.email === "configured" ? "bg-green-500" : "bg-yellow-500"}`} />
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-white border-gray-200 text-gray-900 shadow-sm">
+                    <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-mono text-gray-500 mb-1">SCHEDULER</p>
+                            <Badge className={health.scheduler === "running" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                                {health.scheduler.toUpperCase()}
+                            </Badge>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full ${health.scheduler === "running" ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                    </CardContent>
+                </Card>
             </div>
 
             <Card className="bg-white border-gray-200 text-gray-900 mt-8 shadow-sm">

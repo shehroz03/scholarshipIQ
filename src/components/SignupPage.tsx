@@ -13,8 +13,14 @@ import {
 import { api } from "../api";
 import { Alert, AlertDescription } from "./ui/alert";
 import { toast } from "sonner";
+import { useTheme } from "../context/ThemeContext";
+import { darkTheme, lightTheme } from "../styles/theme";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
+    const { isDark } = useTheme();
+    const theme = isDark ? darkTheme : lightTheme;
+    const [role, setRole] = useState<"student" | "teacher">("student");
     const [formData, setFormData] = useState({
         fullName: "",
         email: "",
@@ -25,6 +31,16 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
         specialization: "",
         target_country: "",
         target_degree: ""
+    });
+    // Teacher-specific fields
+    const [teacherData, setTeacherData] = useState({
+        bio: "",
+        specializations: "IELTS",
+        experience_years: 1,
+        qualification: "",
+        degree: "",
+        institution: "",
+        cv_url: ""
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -67,9 +83,8 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
         e.preventDefault();
         setIsLoading(true);
         setError("");
-
         try {
-            // First, register the user
+            // Register with role and teacher data if applicable
             await api.auth.register({
                 email: formData.email,
                 password: formData.password,
@@ -80,24 +95,28 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                 specialization: formData.specialization,
                 target_country: formData.target_country,
                 target_degree: formData.target_degree
-            });
+            }, role, role === "teacher" ? teacherData : undefined);
 
-            // Then, automatically log them in
-            const loginFormData = new FormData();
-            loginFormData.append('username', formData.email);
-            loginFormData.append('password', formData.password);
-            await api.auth.login(loginFormData);
-
-            toast.success("Account created successfully!");
-            // Pass the registration data to the dashboard to show personalized scholarships immediately
-            onNavigate('dashboard', {
-                autoSearch: true,
-                filters: {
-                    level: formData.target_degree,
-                    country: formData.target_country,
-                    field: formData.major
-                }
-            });
+            if (role === "teacher") {
+                // Teachers need admin approval - don't auto-login
+                toast.success("Teacher application submitted! 🎓\nAdmin approval required. You'll receive an email when approved.");
+                onNavigate('login');
+            } else {
+                // Students auto-login
+                const loginFormData = new FormData();
+                loginFormData.append('username', formData.email);
+                loginFormData.append('password', formData.password);
+                await api.auth.login(loginFormData);
+                toast.success("Account created successfully!");
+                onNavigate('dashboard', {
+                    autoSearch: true,
+                    filters: {
+                        level: formData.target_degree,
+                        country: formData.target_country,
+                        field: formData.major
+                    }
+                });
+            }
         } catch (err: any) {
             setError(err.message || "Registration failed");
         } finally {
@@ -106,11 +125,21 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
     };
 
     const handleChange = (field: string, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => {
+            const next = { ...prev, [field]: value };
+            if (field === "currentDegree") {
+                if (value === "Bachelors" && next.target_degree === "Bachelors") {
+                    next.target_degree = "";
+                } else if ((value === "Masters" || value === "PhD") && (next.target_degree === "Bachelors" || next.target_degree === "Masters")) {
+                    next.target_degree = "";
+                }
+            }
+            return next;
+        });
     };
 
     return (
-        <div className={`min-h-screen bg-white transition-opacity duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'} relative`}>
+        <div className={`min-h-screen transition-opacity duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'} relative`} style={{ backgroundColor: theme.bg, color: theme.text }}>
             {userLoggedIn && (
                 <div className="absolute top-4 right-4 z-50">
                     <Button variant="ghost" onClick={handleLogout} className="text-red-600 hover:bg-red-50 font-bold border border-red-100 bg-white/80 backdrop-blur-sm shadow-sm">
@@ -118,20 +147,26 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                     </Button>
                 </div>
             )}
+            <div className="absolute top-4 left-4 z-50 lg:hidden">
+                <ThemeToggle />
+            </div>
+            
             <div className="container mx-auto px-4 py-8 lg:py-16">
                 <div className="grid lg:grid-cols-2 gap-16 max-w-7xl mx-auto">
                     {/* Left Column */}
                     <div className="space-y-8 pt-12 text-left">
                         <div className="space-y-4">
-                            <h1 className="text-5xl font-bold text-gray-900 leading-tight">
+                            <div className="hidden lg:block mb-8">
+                                <ThemeToggle />
+                            </div>
+                            <h1 className="text-5xl font-bold leading-tight" style={{ color: theme.text }}>
                                 Create Your Account
                             </h1>
-                            <p className="text-lg text-gray-600">
+                            <p className="text-lg" style={{ color: theme.textSecondary }}>
                                 Tell us about your current education so we can match you to the right scholarships.
                             </p>
                         </div>
 
-                        {/* Features List */}
                         <div className="space-y-6 pt-4">
                             {features.map((feature, index) => (
                                 <div key={index} className="flex gap-4 items-start">
@@ -139,10 +174,10 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         <Check className="w-4 h-4 text-white" strokeWidth={3} />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-gray-900 text-lg mb-1">
+                                        <h3 className="font-semibold text-lg mb-1" style={{ color: theme.text }}>
                                             {feature.title}
                                         </h3>
-                                        <p className="text-gray-600 leading-relaxed">
+                                        <p className="leading-relaxed" style={{ color: theme.textSecondary }}>
                                             {feature.description}
                                         </p>
                                     </div>
@@ -150,36 +185,76 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                             ))}
                         </div>
 
-                        {/* Info Box */}
-                        <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r">
-                            <p className="text-gray-700 leading-relaxed">
+                        <div className="p-6 rounded-r border-l-4" style={{ backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff', borderColor: '#3b82f6' }}>
+                            <p className="leading-relaxed" style={{ color: theme.text }}>
                                 <span className="font-semibold">Free Forever.</span> No credit card required. Start discovering scholarships in minutes.
                             </p>
                         </div>
                     </div>
 
                     {/* Right Column - Form */}
-                    <div className="bg-gray-50 rounded-[2rem] p-8 lg:p-14 text-left shadow-sm border border-slate-100">
+                    <div className="rounded-[2rem] p-8 lg:p-14 text-left shadow-2xl border" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
                         <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            <h2 className="text-2xl font-bold mb-2" style={{ color: theme.text }}>
                                 Registration Details
                             </h2>
-                            <p className="text-gray-600">
+                            <p style={{ color: theme.textSecondary }}>
                                 Please fill in your information to get started
                             </p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Role Selection */}
+                            <div className="flex gap-2 p-1 rounded-xl border" style={{ backgroundColor: theme.bg, borderColor: theme.border }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setRole("student")}
+                                    className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all ${
+                                        role === "student"
+                                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
+                                            : "text-gray-600 hover:bg-gray-100"
+                                    }`}
+                                >
+                                    📚 Student
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setRole("teacher")}
+                                    className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all ${
+                                        role === "teacher"
+                                            ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg"
+                                            : "text-gray-600 hover:bg-gray-100"
+                                    }`}
+                                >
+                                    🎓 Teacher
+                                </button>
+                            </div>
+
+                            {/* Teacher Approval Notice */}
+                            {role === "teacher" && (
+                                <div className="p-4 rounded-xl border-l-4 bg-amber-50 border-amber-400">
+                                    <div className="flex items-start gap-3">
+                                        <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <p className="font-semibold text-amber-800 text-sm">Admin Approval Required</p>
+                                            <p className="text-amber-700 text-xs mt-1">
+                                                Teacher accounts require verification of your degree, qualifications, and CV.
+                                                You'll receive an email once approved.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {error && (
-                                <Alert variant="destructive" className="rounded-xl bg-red-50 border-red-100">
+                                <Alert variant="destructive" className="rounded-xl">
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertDescription className="font-bold">{error}</AlertDescription>
                                 </Alert>
                             )}
 
-                            {/* Full Name */}
                             <div className="space-y-2">
-                                <Label htmlFor="fullName" className="text-gray-700 font-bold ml-1">
+                                <Label htmlFor="fullName" style={{ color: theme.text }}>
                                     Full Name <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
@@ -188,15 +263,15 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                     placeholder="John Doe"
                                     value={formData.fullName}
                                     onChange={(e) => handleChange('fullName', e.target.value)}
-                                    className="bg-white border-gray-200 h-[52px] rounded-xl px-4 focus:ring-2 focus:ring-blue-100 transition-all font-medium"
+                                    style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                    className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
                                     required
                                 />
                             </div>
 
-                            {/* Email & Password Row */}
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="email" className="text-gray-700 font-bold ml-1">
+                                    <Label htmlFor="email" style={{ color: theme.text }}>
                                         Email <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
@@ -205,13 +280,13 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         placeholder="your@email.com"
                                         value={formData.email}
                                         onChange={(e) => handleChange('email', e.target.value)}
-                                        className="bg-white border-gray-200 h-[52px] rounded-xl px-4 focus:ring-2 focus:ring-blue-100 transition-all font-medium"
+                                        style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                        className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
                                         required
                                     />
                                 </div>
-
                                 <div className="space-y-2">
-                                    <Label htmlFor="password" className="text-gray-700 font-bold ml-1">
+                                    <Label htmlFor="password" style={{ color: theme.text }}>
                                         Password <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
@@ -220,139 +295,238 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         placeholder="••••••••"
                                         value={formData.password}
                                         onChange={(e) => handleChange('password', e.target.value)}
-                                        className="bg-white border-gray-200 h-[52px] rounded-xl px-4 focus:ring-2 focus:ring-blue-100 transition-all font-medium"
+                                        style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                        className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
                                         required
                                     />
                                 </div>
                             </div>
 
-                            {/* Country & Degree Row */}
+                            {role !== "teacher" && (
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="country" className="text-gray-700 font-bold ml-1">
+                                    <Label htmlFor="country" style={{ color: theme.text }}>
                                         Country <span className="text-red-500">*</span>
                                     </Label>
                                     <Select value={formData.nationality} onValueChange={(value: string) => handleChange('nationality', value)} required>
-                                        <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
                                             <SelectValue placeholder="Select your country" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
+                                        <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
                                             {["Pakistan", "India", "USA", "UK", "Canada", "Germany", "Others"].map(c => (
-                                                <SelectItem key={c} value={c} className="rounded-lg py-2.5">{c}</SelectItem>
+                                                <SelectItem key={c} value={c} className="rounded-lg py-2.5" style={{ color: theme.text }}>{c}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
-
                                 <div className="space-y-2">
-                                    <Label htmlFor="degree" className="text-gray-700 font-bold ml-1">
+                                    <Label htmlFor="degree" style={{ color: theme.text }}>
                                         Highest completed degree <span className="text-red-500">*</span>
                                     </Label>
                                     <Select value={formData.currentDegree} onValueChange={(value: string) => handleChange('currentDegree', value)} required>
-                                        <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
                                             <SelectValue placeholder="Select degree" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
-                                            <SelectItem value="High School" className="rounded-lg py-2.5">High School</SelectItem>
-                                            <SelectItem value="Bachelors" className="rounded-lg py-2.5">Bachelor's Degree</SelectItem>
-                                            <SelectItem value="Masters" className="rounded-lg py-2.5">Master's Degree</SelectItem>
-                                            <SelectItem value="PhD" className="rounded-lg py-2.5">PhD</SelectItem>
+                                        <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
+                                            <SelectItem value="High School" style={{ color: theme.text }} className="rounded-lg py-2.5">High School</SelectItem>
+                                            <SelectItem value="Bachelors" style={{ color: theme.text }} className="rounded-lg py-2.5">Bachelor's Degree</SelectItem>
+                                            <SelectItem value="Masters" style={{ color: theme.text }} className="rounded-lg py-2.5">Master's Degree</SelectItem>
+                                            <SelectItem value="PhD" style={{ color: theme.text }} className="rounded-lg py-2.5">PhD</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                             </div>
+                            )}
 
-                            {/* Helper Text */}
-                            <p className="text-sm text-gray-500 -mt-2 px-1">
-                                Example: If you finished a Bachelor's and want to study a Master's abroad, select "Bachelor's" here.
-                            </p>
-
-                            {/* Target Goals Row */}
-                            <div className="grid md:grid-cols-2 gap-4 border-t border-slate-100 pt-6">
+                            {role !== "teacher" && (
+                            <>
+                            <div className="grid md:grid-cols-2 gap-4 border-t pt-6" style={{ borderColor: theme.border }}>
                                 <div className="space-y-2">
-                                    <Label htmlFor="target_country" className="text-gray-700 font-bold ml-1">
+                                    <Label htmlFor="target_country" style={{ color: theme.text }}>
                                         Target Country <span className="text-blue-600">*</span>
                                     </Label>
                                     <Select value={formData.target_country} onValueChange={(value: string) => handleChange('target_country', value)} required>
-                                        <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
                                             <SelectValue placeholder="Where to study?" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
+                                        <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
                                             {["USA", "UK", "Canada", "Germany", "Australia", "Europe", "Others"].map(c => (
-                                                <SelectItem key={c} value={c} className="rounded-lg py-2.5">{c}</SelectItem>
+                                                <SelectItem key={c} value={c} className="rounded-lg py-2.5" style={{ color: theme.text }}>{c}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
-
                                 <div className="space-y-2">
-                                    <Label htmlFor="target_degree" className="text-gray-700 font-bold ml-1">
+                                    <Label htmlFor="target_degree" style={{ color: theme.text }}>
                                         Target Degree <span className="text-blue-600">*</span>
                                     </Label>
                                     <Select value={formData.target_degree} onValueChange={(value: string) => handleChange('target_degree', value)} required>
-                                        <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
                                             <SelectValue placeholder="What to study?" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
-                                            <SelectItem value="Bachelors" className="rounded-lg py-2.5">Bachelors (UG)</SelectItem>
-                                            <SelectItem value="Masters" className="rounded-lg py-2.5">Masters (PG)</SelectItem>
-                                            <SelectItem value="PhD" className="rounded-lg py-2.5">PhD (Doctorate)</SelectItem>
+                                        <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
+                                            {formData.currentDegree !== "Bachelors" && formData.currentDegree !== "Masters" && formData.currentDegree !== "PhD" && (
+                                                <SelectItem value="Bachelors" style={{ color: theme.text }} className="rounded-lg py-2.5">Bachelors (UG)</SelectItem>
+                                            )}
+                                            {formData.currentDegree !== "Masters" && formData.currentDegree !== "PhD" && (
+                                                <SelectItem value="Masters" style={{ color: theme.text }} className="rounded-lg py-2.5">Masters (PG)</SelectItem>
+                                            )}
+                                            <SelectItem value="PhD" style={{ color: theme.text }} className="rounded-lg py-2.5">PhD (Doctorate)</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                             </div>
 
-                            {/* Field of Study */}
                             <div className="space-y-2">
-                                <Label htmlFor="fieldOfStudy" className="text-gray-700 font-bold ml-1">
+                                <Label htmlFor="fieldOfStudy" style={{ color: theme.text }}>
                                     Field of Study <span className="text-red-500">*</span>
                                 </Label>
                                 <Select value={formData.major} onValueChange={(value: string) => handleChange('major', value)} required>
-                                    <SelectTrigger className="bg-white border-gray-200 h-[52px] rounded-xl px-4 text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all font-medium">
+                                    <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
                                         <SelectValue placeholder="e.g. Computer Science, Business, Medicine" />
                                     </SelectTrigger>
-                                    <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
-                                        <SelectItem value="Computer Science" className="rounded-lg py-2.5">Computer Science</SelectItem>
-                                        <SelectItem value="Business" className="rounded-lg py-2.5">Business</SelectItem>
-                                        <SelectItem value="Medicine" className="rounded-lg py-2.5">Medicine</SelectItem>
-                                        <SelectItem value="Engineering" className="rounded-lg py-2.5">Engineering</SelectItem>
-                                        <SelectItem value="Arts & Humanities" className="rounded-lg py-2.5">Arts & Humanities</SelectItem>
-                                        <SelectItem value="Law" className="rounded-lg py-2.5">Law</SelectItem>
-                                        <SelectItem value="Social Sciences" className="rounded-lg py-2.5">Social Sciences</SelectItem>
-                                        <SelectItem value="Natural Sciences" className="rounded-lg py-2.5">Natural Sciences</SelectItem>
+                                    <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
+                                        <SelectItem value="Computer Science" style={{ color: theme.text }} className="rounded-lg py-2.5">Computer Science</SelectItem>
+                                        <SelectItem value="Business" style={{ color: theme.text }} className="rounded-lg py-2.5">Business</SelectItem>
+                                        <SelectItem value="Medicine" style={{ color: theme.text }} className="rounded-lg py-2.5">Medicine</SelectItem>
+                                        <SelectItem value="Engineering" style={{ color: theme.text }} className="rounded-lg py-2.5">Engineering</SelectItem>
+                                        <SelectItem value="Arts & Humanities" style={{ color: theme.text }} className="rounded-lg py-2.5">Arts & Humanities</SelectItem>
+                                        <SelectItem value="Law" style={{ color: theme.text }} className="rounded-lg py-2.5">Law</SelectItem>
+                                        <SelectItem value="Social Sciences" style={{ color: theme.text }} className="rounded-lg py-2.5">Social Sciences</SelectItem>
+                                        <SelectItem value="Natural Sciences" style={{ color: theme.text }} className="rounded-lg py-2.5">Natural Sciences</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
+                            </>
+                            )}
 
-                            {/* Specialization */}
-                            <div className="space-y-2">
-                                <Label htmlFor="specialization" className="text-gray-700 font-bold ml-1">
-                                    Specialization
-                                </Label>
-                                <Input
-                                    id="specialization"
-                                    type="text"
-                                    placeholder="e.g. AI, Mechanical, Finance"
-                                    value={formData.specialization}
-                                    onChange={(e) => handleChange('specialization', e.target.value)}
-                                    className="bg-white border-gray-200 h-[52px] rounded-xl px-4 focus:ring-2 focus:ring-blue-100 transition-all font-medium"
-                                />
-                            </div>
+                            {/* Teacher-Specific Fields */}
+                            {role === "teacher" && (
+                                <div className="space-y-6 border-t-2 border-emerald-200 pt-6 mt-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Teacher Profile</span>
+                                    </div>
 
-                            {/* Terms */}
-                            <p className="text-sm text-gray-600 leading-relaxed px-1">
-                                By creating an account, you agree to our{' '}
-                                <button type="button" className="text-blue-600 font-bold hover:underline">
-                                    Terms of Service
-                                </button>{' '}
-                                and{' '}
-                                <button type="button" className="text-blue-600 font-bold hover:underline">
-                                    Privacy Policy
-                                </button>
-                                .
-                            </p>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="specialization" style={{ color: theme.text }}>
+                                            Teaching Specialization <span className="text-red-500">*</span>
+                                        </Label>
+                                        <Select
+                                            value={teacherData.specializations}
+                                            onValueChange={(v) => setTeacherData(prev => ({ ...prev, specializations: v }))}
+                                            required={role === "teacher"}
+                                        >
+                                            <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
+                                                <SelectValue placeholder="What test do you teach?" />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
+                                                <SelectItem value="IELTS" style={{ color: theme.text }} className="rounded-lg py-2.5">IELTS</SelectItem>
+                                                <SelectItem value="TOEFL" style={{ color: theme.text }} className="rounded-lg py-2.5">TOEFL</SelectItem>
+                                                <SelectItem value="GRE" style={{ color: theme.text }} className="rounded-lg py-2.5">GRE</SelectItem>
+                                                <SelectItem value="GMAT" style={{ color: theme.text }} className="rounded-lg py-2.5">GMAT</SelectItem>
+                                                <SelectItem value="SAT" style={{ color: theme.text }} className="rounded-lg py-2.5">SAT</SelectItem>
+                                                <SelectItem value="Multiple" style={{ color: theme.text }} className="rounded-lg py-2.5">Multiple Tests</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-                            {/* Submit Button */}
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="experience" style={{ color: theme.text }}>
+                                                Experience (Years) <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="experience"
+                                                type="number"
+                                                min={0}
+                                                max={50}
+                                                value={teacherData.experience_years}
+                                                onChange={(e) => setTeacherData(prev => ({ ...prev, experience_years: parseInt(e.target.value) || 0 }))}
+                                                style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                                className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                                required={role === "teacher"}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="qualification" style={{ color: theme.text }}>
+                                                Professional Qualification
+                                            </Label>
+                                            <Input
+                                                id="qualification"
+                                                placeholder="e.g. CELTA, TEFL"
+                                                value={teacherData.qualification}
+                                                onChange={(e) => setTeacherData(prev => ({ ...prev, qualification: e.target.value }))}
+                                                style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                                className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="degree" style={{ color: theme.text }}>
+                                                Academic Degree <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="degree"
+                                                placeholder="e.g. M.Ed, B.Ed, MA English"
+                                                value={teacherData.degree}
+                                                onChange={(e) => setTeacherData(prev => ({ ...prev, degree: e.target.value }))}
+                                                style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                                className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                                required={role === "teacher"}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="institution" style={{ color: theme.text }}>
+                                                Institution <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="institution"
+                                                placeholder="University/Institution name"
+                                                value={teacherData.institution}
+                                                onChange={(e) => setTeacherData(prev => ({ ...prev, institution: e.target.value }))}
+                                                style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                                className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                                required={role === "teacher"}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="cvUrl" style={{ color: theme.text }}>
+                                            CV / LinkedIn / Portfolio URL <span className="text-red-500">*</span>
+                                        </Label>
+                                        <Input
+                                            id="cvUrl"
+                                            type="url"
+                                            placeholder="https://linkedin.com/in/yourprofile or CV link"
+                                            value={teacherData.cv_url}
+                                            onChange={(e) => setTeacherData(prev => ({ ...prev, cv_url: e.target.value }))}
+                                            style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                            className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                            required={role === "teacher"}
+                                        />
+                                        <p className="text-xs text-gray-500">Admin will verify this link before approval</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bio" style={{ color: theme.text }}>
+                                            Professional Bio
+                                        </Label>
+                                        <textarea
+                                            id="bio"
+                                            rows={3}
+                                            placeholder="Briefly describe your teaching experience and expertise..."
+                                            value={teacherData.bio}
+                                            onChange={(e) => setTeacherData(prev => ({ ...prev, bio: e.target.value }))}
+                                            style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                            className="w-full rounded-xl px-4 py-3 focus:ring-2 transition-all font-medium border"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <Button
                                 type="submit"
                                 disabled={isLoading}
@@ -361,15 +535,15 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                 {isLoading ? (
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="w-5 h-5 animate-spin" />
-                                        <span>Creating Account...</span>
+                                        <span>{role === "teacher" ? "Submitting Application..." : "Creating Account..."}</span>
                                     </div>
                                 ) : (
-                                    "Create Account"
+                                    role === "teacher" ? "🎓 Submit Teacher Application" : "Create Account"
                                 )}
                             </Button>
 
                             <div className="text-center pt-2">
-                                <p className="font-bold text-slate-400">
+                                <p className="font-bold" style={{ color: theme.textSecondary }}>
                                     Already part of the network? {" "}
                                     <button
                                         type="button"

@@ -1,0 +1,12 @@
+{
+    "venvPath": ".",
+    "venv": ".venv",
+    "include": [
+        "."
+    ],
+    "reportMissingImports": "none",
+    "reportMissingModuleSource": "none",
+    "reportGeneralTypeIssues": "none",
+    "reportAttributeAccessIssue": "none",
+    "typeCheckingMode": "off"
+}

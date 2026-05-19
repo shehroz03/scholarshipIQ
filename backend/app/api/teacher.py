@@ -1,0 +1,554 @@
+"""
+Teacher Dashboard API
+Endpoints for teacher registration, course/lesson/quiz/live-class management.
+"""
+import json
+from datetime import datetime
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Body
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.db import models
+from app.api.deps import get_current_user
+
+router = APIRouter(prefix="/teacher", tags=["Teacher"])
+
+
+def get_teacher(db: Session, user_id: int) -> models.TeacherProfile:
+    t = db.query(models.TeacherProfile).filter(models.TeacherProfile.user_id == user_id).first()
+    if not t:
+        raise HTTPException(status_code=403, detail="Not a registered teacher. Register first.")
+    return t
+
+
+# ── REGISTRATION ──────────────────────────────
+
+@router.post("/register")
+def register_teacher(
+    bio: str = Body(""),
+    specializations: str = Body("IELTS"),
+    experience_years: int = Body(1),
+    qualification: str = Body(""),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    existing = db.query(models.TeacherProfile).filter(models.TeacherProfile.user_id == current_user.id).first()
+    if existing:
+        raise HTTPException(400, "Already registered as teacher")
+    teacher = models.TeacherProfile(
+        user_id=current_user.id,
+        bio=bio,
+        specializations=specializations,
+        experience_years=experience_years,
+        qualification=qualification,
+    )
+    db.add(teacher)
+    db.commit()
+    db.refresh(teacher)
+    return {"message": "Teacher registered!", "teacher_id": teacher.id}
+
+
+@router.get("/profile")
+def get_teacher_profile(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    courses_count = db.query(models.Course).filter(models.Course.teacher_id == teacher.id).count()
+    total_students = db.query(models.Enrollment).join(models.Course).filter(models.Course.teacher_id == teacher.id).count()
+    return {
+        "id": teacher.id,
+        "user_id": teacher.user_id,
+        "name": current_user.full_name,
+        "email": current_user.email,
+        "bio": teacher.bio,
+        "specializations": teacher.specializations.split(",") if teacher.specializations else [],
+        "experience_years": teacher.experience_years,
+        "qualification": teacher.qualification,
+        "is_verified": teacher.is_verified,
+        "courses_count": courses_count,
+        "total_students": total_students,
+    }
+
+
+@router.put("/profile")
+def update_teacher_profile(
+    bio: Optional[str] = Body(None),
+    specializations: Optional[str] = Body(None),
+    experience_years: Optional[int] = Body(None),
+    qualification: Optional[str] = Body(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    teacher = get_teacher(db, current_user.id)
+    if bio is not None: teacher.bio = bio
+    if specializations is not None: teacher.specializations = specializations
+    if experience_years is not None: teacher.experience_years = experience_years
+    if qualification is not None: teacher.qualification = qualification
+    db.commit()
+    return {"message": "Profile updated"}
+
+
+# ── COURSES ────────────────────────────────────
+
+@router.post("/courses")
+def create_course(
+    title: str = Body(...),
+    subject: str = Body(""),
+    description: str = Body(""),
+    test_type: str = Body("IELTS"),
+    level: str = Body("Beginner"),
+    price: float = Body(0),
+    thumbnail_url: str = Body(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    teacher = get_teacher(db, current_user.id)
+    course = models.Course(
+        teacher_id=teacher.id,
+        title=title,
+        subject=subject or None,
+        description=description,
+        test_type=test_type,
+        level=level,
+        price=price,
+        thumbnail_url=thumbnail_url or None,
+    )
+    db.add(course)
+    db.commit()
+    db.refresh(course)
+    return {"message": "Course created!", "course_id": course.id}
+
+
+@router.get("/courses")
+def list_my_courses(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    courses = db.query(models.Course).filter(models.Course.teacher_id == teacher.id).all()
+    result = []
+    for c in courses:
+        enrolled = db.query(models.Enrollment).filter(models.Enrollment.course_id == c.id).count()
+        meeting_links = [
+            {
+                "id": ml.id,
+                "date": ml.date.isoformat(),
+                "time": ml.time,
+                "link": ml.link,
+                "platform": ml.platform,
+                "description": ml.description
+            }
+            for ml in c.meeting_links
+        ]
+        quizzes = [
+            {
+                "id": q.id,
+                "title": q.title,
+                "section": q.section,
+                "scheduled_at": q.scheduled_at.isoformat() if q.scheduled_at else None,
+                "time_limit_minutes": q.time_limit_minutes,
+                "pass_score": q.pass_score
+            }
+            for q in c.quizzes
+        ]
+        live_classes = [
+            {
+                "id": lc.id,
+                "title": lc.title,
+                "scheduled_at": lc.scheduled_at.isoformat() if lc.scheduled_at else None,
+                "platform": lc.platform,
+                "meet_link": lc.meet_link,
+                "duration_minutes": lc.duration_minutes,
+                "is_cancelled": lc.is_cancelled
+            }
+            for lc in c.live_classes
+            if not lc.is_cancelled  # Only show active classes
+        ]
+        lessons = [
+            {
+                "id": l.id,
+                "title": l.title,
+                "duration_minutes": l.duration_minutes,
+                "is_free_preview": l.is_free_preview,
+                "video_url": l.video_url,
+                "order": l.order
+            }
+            for l in c.lessons
+        ]
+        result.append({
+            "id": c.id, "title": c.title, "subject": c.subject, "test_type": c.test_type, "level": c.level,
+            "price": c.price, "is_published": c.is_published,
+            "total_lessons": len(c.lessons), "total_quizzes": len(c.quizzes),
+            "total_live_classes": len(live_classes),
+            "lessons": lessons,
+            "live_classes": live_classes,
+            "meeting_links": meeting_links,
+            "quizzes": quizzes,
+            "enrolled_students": enrolled,
+            "created_at": c.created_at.isoformat()
+        })
+    return result
+
+
+@router.put("/courses/{course_id}")
+def update_course(
+    course_id: int,
+    title: Optional[str] = Body(None),
+    description: Optional[str] = Body(None),
+    level: Optional[str] = Body(None),
+    price: Optional[float] = Body(None),
+    is_published: Optional[bool] = Body(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    teacher = get_teacher(db, current_user.id)
+    course = db.query(models.Course).filter(models.Course.id == course_id, models.Course.teacher_id == teacher.id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    if title is not None: course.title = title
+    if description is not None: course.description = description
+    if level is not None: course.level = level
+    if price is not None: course.price = price
+    if is_published is not None: course.is_published = is_published
+    db.commit()
+    return {"message": "Course updated"}
+
+
+@router.delete("/courses/{course_id}")
+def delete_course(course_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    course = db.query(models.Course).filter(models.Course.id == course_id, models.Course.teacher_id == teacher.id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    db.delete(course)
+    db.commit()
+    return {"message": "Course deleted"}
+
+
+# ── LESSONS ────────────────────────────────────
+
+@router.post("/courses/{course_id}/lessons")
+def add_lesson(
+    course_id: int,
+    title: str = Body(...),
+    content: str = Body(""),
+    video_url: str = Body(""),
+    duration_minutes: int = Body(0),
+    is_free_preview: bool = Body(False),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    teacher = get_teacher(db, current_user.id)
+    course = db.query(models.Course).filter(models.Course.id == course_id, models.Course.teacher_id == teacher.id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    order = db.query(models.Lesson).filter(models.Lesson.course_id == course_id).count()
+    lesson = models.Lesson(
+        course_id=course_id, title=title, content=content,
+        video_url=video_url or None, duration_minutes=duration_minutes,
+        order=order, is_free_preview=is_free_preview
+    )
+    db.add(lesson)
+    db.commit()
+    db.refresh(lesson)
+    return {"message": "Lesson added!", "lesson_id": lesson.id}
+
+
+@router.put("/lessons/{lesson_id}")
+def update_lesson(
+    lesson_id: int,
+    title: Optional[str] = Body(None),
+    content: Optional[str] = Body(None),
+    video_url: Optional[str] = Body(None),
+    duration_minutes: Optional[int] = Body(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    teacher = get_teacher(db, current_user.id)
+    lesson = db.query(models.Lesson).join(models.Course).filter(
+        models.Lesson.id == lesson_id, models.Course.teacher_id == teacher.id
+    ).first()
+    if not lesson:
+        raise HTTPException(404, "Lesson not found")
+    if title is not None: lesson.title = title
+    if content is not None: lesson.content = content
+    if video_url is not None: lesson.video_url = video_url
+    if duration_minutes is not None: lesson.duration_minutes = duration_minutes
+    db.commit()
+    return {"message": "Lesson updated"}
+
+
+@router.delete("/lessons/{lesson_id}")
+def delete_lesson(lesson_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    lesson = db.query(models.Lesson).join(models.Course).filter(
+        models.Lesson.id == lesson_id, models.Course.teacher_id == teacher.id
+    ).first()
+    if not lesson:
+        raise HTTPException(404, "Lesson not found")
+    db.delete(lesson)
+    db.commit()
+    return {"message": "Lesson deleted"}
+
+
+# ── QUIZZES ────────────────────────────────────
+
+@router.post("/courses/{course_id}/quizzes")
+def create_quiz(
+    course_id: int,
+    title: str = Body(...),
+    description: str = Body(""),
+    section: str = Body("General"),
+    time_limit_minutes: int = Body(30),
+    pass_score: int = Body(60),
+    scheduled_at: str = Body(None),  # ISO datetime string
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    teacher = get_teacher(db, current_user.id)
+    course = db.query(models.Course).filter(models.Course.id == course_id, models.Course.teacher_id == teacher.id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+
+    scheduled_dt = None
+    if scheduled_at:
+        try:
+            scheduled_dt = datetime.fromisoformat(scheduled_at)
+        except Exception:
+            raise HTTPException(400, "Invalid scheduled_at format. Use ISO format: 2026-06-01T10:00:00")
+
+    quiz = models.Quiz(
+        course_id=course_id, title=title, description=description,
+        test_type=course.test_type, section=section,
+        time_limit_minutes=time_limit_minutes, pass_score=pass_score,
+        scheduled_at=scheduled_dt
+    )
+    db.add(quiz)
+    db.commit()
+    db.refresh(quiz)
+    return {"message": "Quiz created!", "quiz_id": quiz.id}
+
+
+@router.post("/quizzes/{quiz_id}/questions")
+def add_question(
+    quiz_id: int,
+    question: str = Body(...),
+    options: list = Body(...),
+    correct_answer: str = Body(...),
+    explanation: str = Body(""),
+    difficulty: str = Body("Medium"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    teacher = get_teacher(db, current_user.id)
+    quiz = db.query(models.Quiz).join(models.Course).filter(
+        models.Quiz.id == quiz_id, models.Course.teacher_id == teacher.id
+    ).first()
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    order = db.query(models.QuizQuestion).filter(models.QuizQuestion.quiz_id == quiz_id).count()
+    q = models.QuizQuestion(
+        quiz_id=quiz_id, question=question,
+        options=json.dumps(options), correct_answer=correct_answer,
+        explanation=explanation, difficulty=difficulty, order=order
+    )
+    db.add(q)
+    db.commit()
+    db.refresh(q)
+    return {"message": "Question added!", "question_id": q.id}
+
+
+@router.delete("/questions/{question_id}")
+def delete_question(question_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    q = db.query(models.QuizQuestion).join(models.Quiz).join(models.Course).filter(
+        models.QuizQuestion.id == question_id, models.Course.teacher_id == teacher.id
+    ).first()
+    if not q:
+        raise HTTPException(404, "Question not found")
+    db.delete(q)
+    db.commit()
+    return {"message": "Question deleted"}
+
+
+@router.delete("/quizzes/{quiz_id}")
+def delete_quiz(quiz_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """Delete a quiz and all its questions/attempts."""
+    teacher = get_teacher(db, current_user.id)
+    quiz = db.query(models.Quiz).join(models.Course).filter(
+        models.Quiz.id == quiz_id, models.Course.teacher_id == teacher.id
+    ).first()
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    # Delete related attempts first
+    db.query(models.QuizAttempt).filter(models.QuizAttempt.quiz_id == quiz_id).delete()
+    # Delete related questions
+    db.query(models.QuizQuestion).filter(models.QuizQuestion.quiz_id == quiz_id).delete()
+    # Delete the quiz
+    db.delete(quiz)
+    db.commit()
+    return {"message": "Quiz deleted"}
+
+
+# ── LIVE CLASSES ───────────────────────────────
+
+@router.post("/courses/{course_id}/live-classes")
+def schedule_live_class(
+    course_id: int,
+    title: str = Body(...),
+    description: str = Body(""),
+    meet_link: str = Body(...),
+    platform: str = Body("Google Meet"),
+    scheduled_at: str = Body(...),
+    duration_minutes: int = Body(60),
+    max_students: int = Body(30),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    teacher = get_teacher(db, current_user.id)
+    course = db.query(models.Course).filter(models.Course.id == course_id, models.Course.teacher_id == teacher.id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    try:
+        scheduled_dt = datetime.fromisoformat(scheduled_at)
+    except Exception:
+        raise HTTPException(400, "Invalid date format. Use ISO format: 2026-06-01T10:00:00")
+    lc = models.LiveClass(
+        course_id=course_id, title=title, description=description,
+        meet_link=meet_link, platform=platform,
+        scheduled_at=scheduled_dt, duration_minutes=duration_minutes,
+        max_students=max_students
+    )
+    db.add(lc)
+    db.commit()
+    db.refresh(lc)
+    return {"message": "Live class scheduled!", "live_class_id": lc.id}
+
+
+@router.delete("/live-classes/{lc_id}")
+def cancel_live_class(lc_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    lc = db.query(models.LiveClass).join(models.Course).filter(
+        models.LiveClass.id == lc_id, models.Course.teacher_id == teacher.id
+    ).first()
+    if not lc:
+        raise HTTPException(404, "Live class not found")
+    lc.is_cancelled = True
+    db.commit()
+    return {"message": "Live class cancelled"}
+
+
+# ── DAILY MEETING LINKS ────────────────────────
+
+@router.post("/courses/{course_id}/meeting-links")
+def add_meeting_link(
+    course_id: int,
+    date: str = Body(...),
+    time: str = Body(""),
+    link: str = Body(...),
+    platform: str = Body("Google Meet"),
+    description: str = Body(""),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Add a daily meeting link for enrolled students (paid only)."""
+    teacher = get_teacher(db, current_user.id)
+    course = db.query(models.Course).filter(models.Course.id == course_id, models.Course.teacher_id == teacher.id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    try:
+        meeting_date = datetime.fromisoformat(date)
+    except Exception:
+        raise HTTPException(400, "Invalid date format. Use YYYY-MM-DD")
+
+    ml = models.MeetingLink(
+        course_id=course_id,
+        date=meeting_date,
+        time=time,
+        link=link,
+        platform=platform,
+        description=description
+    )
+    db.add(ml)
+    db.commit()
+    db.refresh(ml)
+    return {"message": "Meeting link added!", "link_id": ml.id}
+
+
+@router.get("/courses/{course_id}/meeting-links")
+def list_meeting_links(course_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """List all meeting links for a course (teacher view)."""
+    teacher = get_teacher(db, current_user.id)
+    course = db.query(models.Course).filter(models.Course.id == course_id, models.Course.teacher_id == teacher.id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    links = db.query(models.MeetingLink).filter(models.MeetingLink.course_id == course_id).order_by(models.MeetingLink.date.desc()).all()
+    return [
+        {
+            "id": l.id,
+            "date": l.date.isoformat(),
+            "time": l.time,
+            "link": l.link,
+            "platform": l.platform,
+            "description": l.description,
+            "created_at": l.created_at.isoformat()
+        }
+        for l in links
+    ]
+
+
+@router.delete("/meeting-links/{link_id}")
+def delete_meeting_link(link_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """Delete a meeting link."""
+    teacher = get_teacher(db, current_user.id)
+    ml = db.query(models.MeetingLink).join(models.Course).filter(
+        models.MeetingLink.id == link_id, models.Course.teacher_id == teacher.id
+    ).first()
+    if not ml:
+        raise HTTPException(404, "Meeting link not found")
+    db.delete(ml)
+    db.commit()
+    return {"message": "Meeting link deleted"}
+
+
+# ── STUDENT MANAGEMENT ─────────────────────────
+
+@router.get("/students")
+def get_my_students(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    enrollments = db.query(models.Enrollment).join(models.Course).filter(
+        models.Course.teacher_id == teacher.id
+    ).all()
+    result = []
+    for e in enrollments:
+        attempts = db.query(models.QuizAttempt).filter(models.QuizAttempt.user_id == e.user_id).count()
+        avg_score = db.query(models.QuizAttempt).filter(models.QuizAttempt.user_id == e.user_id).all()
+        avg = round(sum(a.score for a in avg_score) / len(avg_score), 1) if avg_score else 0
+        result.append({
+            "student_name": e.user.full_name or e.user.email,
+            "student_email": e.user.email,
+            "course_title": e.course.title,
+            "test_type": e.course.test_type,
+            "progress": e.progress_percent,
+            "enrolled_at": e.enrolled_at.isoformat(),
+            "quiz_attempts": attempts,
+            "avg_score": avg,
+        })
+    return result
+
+
+@router.get("/analytics")
+def get_teacher_analytics(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    courses = db.query(models.Course).filter(models.Course.teacher_id == teacher.id).all()
+    course_ids = [c.id for c in courses]
+    total_students = db.query(models.Enrollment).filter(models.Enrollment.course_id.in_(course_ids)).count()
+    total_quizzes = db.query(models.Quiz).filter(models.Quiz.course_id.in_(course_ids)).count()
+    total_lessons = db.query(models.Lesson).filter(models.Lesson.course_id.in_(course_ids)).count()
+    all_attempts = db.query(models.QuizAttempt).join(models.Quiz).filter(models.Quiz.course_id.in_(course_ids)).all()
+    avg_score = round(sum(a.score for a in all_attempts) / len(all_attempts), 1) if all_attempts else 0
+    pass_rate = round(sum(1 for a in all_attempts if a.passed) / len(all_attempts) * 100, 1) if all_attempts else 0
+    return {
+        "total_courses": len(courses),
+        "total_students": total_students,
+        "total_lessons": total_lessons,
+        "total_quizzes": total_quizzes,
+        "total_quiz_attempts": len(all_attempts),
+        "average_score": avg_score,
+        "pass_rate": pass_rate,
+    }
