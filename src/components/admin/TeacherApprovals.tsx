@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, UserCheck, UserX, GraduationCap, ExternalLink, Clock, Search, Users, Building2, Award, FileText } from "lucide-react";
+import { CheckCircle, XCircle, UserCheck, UserX, GraduationCap, ExternalLink, Clock, Search, Users, Building2, Award, FileText, Download, Linkedin } from "lucide-react";
 import { api } from "../../api";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
@@ -15,6 +15,7 @@ interface Teacher {
     degree?: string;
     institution?: string;
     cv_url?: string;
+    cv_file_url?: string;
     bio?: string;
     approval_status: string;
     rejection_reason?: string;
@@ -233,17 +234,35 @@ export function TeacherApprovals() {
                                         </div>
                                     )}
 
-                                    {teacher.cv_url && (
-                                        <a
-                                            href={teacher.cv_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                                        >
-                                            <ExternalLink size={16} />
-                                            View CV/LinkedIn Profile
-                                        </a>
-                                    )}
+                                    <div className="flex flex-wrap gap-3">
+                                        {teacher.cv_url && (
+                                            <a
+                                                href={teacher.cv_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                                            >
+                                                <Linkedin size={16} />
+                                                Open LinkedIn Profile
+                                                <ExternalLink size={14} />
+                                            </a>
+                                        )}
+                                        {teacher.cv_file_url && (
+                                            <a
+                                                href={`http://localhost:8000${teacher.cv_file_url}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                download
+                                                className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                                            >
+                                                <Download size={16} />
+                                                Download CV
+                                            </a>
+                                        )}
+                                        {!teacher.cv_url && !teacher.cv_file_url && (
+                                            <span className="text-sm text-gray-400 italic">No CV or LinkedIn provided</span>
+                                        )}
+                                    </div>
 
                                     {teacher.approval_status === "rejected" && teacher.rejection_reason && (
                                         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">

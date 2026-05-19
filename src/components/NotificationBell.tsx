@@ -11,15 +11,17 @@ export function NotificationBell({ onNavigate }: { onNavigate: (page: string, pa
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const fetchNotifs = async () => {
+        if (!localStorage.getItem("token")) return;
         try {
             const data = await api.notifications.list();
             setNotifications(data);
         } catch (err) {
-            console.error("Failed to fetch notifications", err);
+            // Silently ignore - user may not be logged in
         }
     };
 
     useEffect(() => {
+        if (!localStorage.getItem("token")) return;
         fetchNotifs();
         // Auto-fetch every 2 minutes
         const interval = setInterval(fetchNotifs, 2 * 60 * 1000);

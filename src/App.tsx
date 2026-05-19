@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Routes, Route, useNavigate, Navigate, useParams } from "react-router-dom";
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
+import { TeacherLoginPage } from "./components/TeacherLoginPage";
 import { SignupPage } from "./components/SignupPage";
 import { AuthRequiredPage } from "./components/AuthRequiredPage";
 import { DashboardPage } from "./components/DashboardPage";
@@ -52,6 +53,16 @@ export default function App() {
       return;
     }
 
+    if (page === 'teacher-dashboard') {
+      navigate('/teacher');
+      return;
+    }
+
+    if (page === 'teacher-login') {
+      navigate('/teacher-login');
+      return;
+    }
+
     if (page === 'detail' && params?.id) {
       navigate(`/detail/${params.id}`);
       return;
@@ -77,6 +88,7 @@ export default function App() {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage onNavigate={handleNavigate} />} />
           <Route path="/login" element={isLoggedIn() ? <Navigate to="/dashboard" /> : <LoginPage onNavigate={handleNavigate} />} />
+          <Route path="/teacher-login" element={<TeacherLoginPage onNavigate={handleNavigate} />} />
           <Route path="/signup" element={isLoggedIn() ? <Navigate to="/dashboard" /> : <SignupPage onNavigate={handleNavigate} />} />
           <Route path="/auth-required" element={<AuthRequiredPage onNavigate={handleNavigate} />} />
           <Route path="/admin" element={<AdminDashboard onNavigate={handleNavigate} />} />

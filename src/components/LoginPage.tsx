@@ -177,6 +177,16 @@ export function LoginPage({ onNavigate }: { onNavigate: (page: string, params?: 
                   Create a new account
                 </button>
               </div>
+              <div className="text-center pt-2 border-t" style={{ borderColor: theme.border }}>
+                <p className="text-xs mb-2" style={{ color: theme.textSecondary }}>Are you a teacher?</p>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('teacher-login')}
+                  className="text-sm hover:underline font-semibold text-emerald-600"
+                >
+                  🎓 Go to Teacher Login →
+                </button>
+              </div>
             </form>
           </CardContent>
         </Card>

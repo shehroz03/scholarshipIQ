@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.api import deps
@@ -6,10 +6,47 @@ from app.db import models, schemas
 from app.core import security
 from app.db.session import get_db
 import re
+import os
+import uuid
 
 router = APIRouter()
 
 from sqlalchemy import func
+
+# Ensure uploads directory exists
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "cv")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+@router.post("/upload-cv")
+async def upload_cv(file: UploadFile = File(...)):
+    """Upload a CV/Resume file (PDF, DOC, DOCX). Returns the file URL."""
+    # Validate by file extension (more reliable than MIME type on all OS)
+    filename_orig = file.filename or "cv.pdf"
+    ext = os.path.splitext(filename_orig)[1].lower()
+    allowed_extensions = [".pdf", ".doc", ".docx"]
+    if ext not in allowed_extensions:
+        raise HTTPException(400, "Only PDF, DOC, and DOCX files are allowed")
+
+    # Validate file size (max 5MB)
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(400, "File size must be less than 5MB")
+
+    if len(content) == 0:
+        raise HTTPException(400, "File is empty")
+
+    # Generate unique filename
+    filename = f"{uuid.uuid4().hex}{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    # Save file
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    # Return URL
+    cv_url = f"/uploads/cv/{filename}"
+    return {"cv_url": cv_url, "filename": filename_orig}
 
 
 def sanitize_input(text: str, max_len: int = 255) -> str:
@@ -117,7 +154,8 @@ def register(
             qualification=teacher_data.get("qualification"),
             degree=teacher_data.get("degree"),
             institution=teacher_data.get("institution"),
-            cv_url=teacher_data.get("cv_url"),
+            cv_url=teacher_data.get("cv_url"),              # LinkedIn URL
+            cv_file_url=teacher_data.get("cv_file_url"),    # Uploaded CV file path
             approval_status="pending",  # Requires admin approval
         )
         db.add(teacher)
@@ -164,7 +202,7 @@ def login(
             status_code=400, detail="Inactive user"
         )
 
-    # Check if user is a teacher with pending/rejected approval
+    # Check if user has a teacher profile
     teacher = db.query(models.TeacherProfile).filter(models.TeacherProfile.user_id == user.id).first()
     if teacher:
         if teacher.approval_status == "pending":
@@ -178,10 +216,22 @@ def login(
                 detail=f"Teacher application rejected. Reason: {teacher.rejection_reason or 'Not specified'}. Contact support for appeal."
             )
 
-    print(f"Login success: {email}, role: {user.role}")
+    # Determine correct role:
+    # If user has an approved teacher profile, always return "teacher" role
+    # This fixes cases where user.role was stored as "student" in old accounts
+    if teacher and teacher.approval_status == "approved":
+        effective_role = "teacher"
+        # Also fix it in DB for future logins
+        if user.role != "teacher":
+            user.role = "teacher"
+            db.commit()
+    else:
+        effective_role = user.role or "student"
+
+    print(f"Login success: {email}, role: {effective_role}")
 
     return {
         "access_token": security.create_access_token(user.id),
         "token_type": "bearer",
-        "role": user.role,
+        "role": effective_role,
     }

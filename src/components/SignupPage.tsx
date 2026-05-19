@@ -40,7 +40,9 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
         qualification: "",
         degree: "",
         institution: "",
-        cv_url: ""
+        cv_url: "",
+        cv_file_url: "",
+        cv_filename: ""
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -494,13 +496,13 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="cvUrl" style={{ color: theme.text }}>
-                                            CV / LinkedIn / Portfolio URL <span className="text-red-500">*</span>
+                                        <Label htmlFor="linkedinUrl" style={{ color: theme.text }}>
+                                            LinkedIn Profile URL <span className="text-red-500">*</span>
                                         </Label>
                                         <Input
-                                            id="cvUrl"
+                                            id="linkedinUrl"
                                             type="url"
-                                            placeholder="https://linkedin.com/in/yourprofile or CV link"
+                                            placeholder="https://linkedin.com/in/yourprofile"
                                             value={teacherData.cv_url}
                                             onChange={(e) => setTeacherData(prev => ({ ...prev, cv_url: e.target.value }))}
                                             style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -508,6 +510,60 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                             required={role === "teacher"}
                                         />
                                         <p className="text-xs text-gray-500">Admin will verify this link before approval</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="cvFile" style={{ color: theme.text }}>
+                                            Upload CV / Resume <span className="text-red-500">*</span>
+                                        </Label>
+                                        <div className="relative">
+                                            <input
+                                                id="cvFile"
+                                                type="file"
+                                                accept=".pdf,.doc,.docx"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    if (file.size > 5 * 1024 * 1024) {
+                                                        alert("File size must be less than 5MB");
+                                                        return;
+                                                    }
+                                                    const formData = new FormData();
+                                                    formData.append("file", file);
+                                                    try {
+                                                        const res = await fetch("http://localhost:8000/auth/upload-cv", {
+                                                            method: "POST",
+                                                            body: formData,
+                                                        });
+                                                        if (!res.ok) {
+                                                            const err = await res.json();
+                                                            alert(err.detail || "Upload failed");
+                                                            return;
+                                                        }
+                                                        const data = await res.json();
+                                                        setTeacherData(prev => ({ ...prev, cv_file_url: data.cv_url, cv_filename: data.filename }));
+                                                    } catch {
+                                                        alert("CV upload failed. Please try again.");
+                                                    }
+                                                }}
+                                                className="hidden"
+                                            />
+                                            <label
+                                                htmlFor="cvFile"
+                                                className="flex items-center gap-3 cursor-pointer border-2 border-dashed rounded-xl p-4 hover:border-blue-400 transition-all"
+                                                style={{ borderColor: teacherData.cv_filename ? '#10b981' : theme.border, backgroundColor: theme.bg }}
+                                            >
+                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${teacherData.cv_filename ? 'bg-emerald-100' : 'bg-blue-100'}`}>
+                                                    <span className="text-xl">{teacherData.cv_filename ? '✅' : '📄'}</span>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-sm" style={{ color: theme.text }}>
+                                                        {teacherData.cv_filename || "Click to upload CV (PDF, DOC, DOCX)"}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">Max 5MB</p>
+                                                </div>
+                                            </label>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">

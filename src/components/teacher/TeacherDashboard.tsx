@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { toast } from "sonner";
-import { BookOpen, Users, Video, BarChart2, Plus, ChevronRight, Clock, Star, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, VideoIcon, FileText, HelpCircle, Link2, DollarSign, Settings, LogOut, Menu, X } from "lucide-react";
+import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, Link2 } from "lucide-react";
 
 const TEST_TYPES = ["IELTS", "TOEFL", "GRE", "GMAT", "PTE", "TestDaF", "Duolingo", "SAT"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -306,82 +306,193 @@ export default function TeacherDashboard() {
     </div>
   );
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* TOP NAV */}
-      <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-gray-600 text-sm font-medium">← Dashboard</button>
-          <span className="text-gray-200">|</span>
-          <span className="font-black text-xl text-gray-900">Teacher Dashboard</span>
-          {profile?.is_verified && <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">✓ Verified</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Welcome, {profile?.name?.split(" ")[0]}</span>
-          <button onClick={() => navigate("/courses")} className="bg-indigo-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">View as Student</button>
-        </div>
-      </div>
+  const navItems = [
+    { id: "overview", label: "Overview", icon: LayoutDashboard, color: "#6366f1" },
+    { id: "courses", label: "My Courses", icon: BookOpen, color: "#2563eb" },
+    { id: "students", label: "Students", icon: Users, color: "#0891b2" },
+    { id: "create", label: "Create Course", icon: Plus, color: "#059669" },
+  ];
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* SIDEBAR NAVIGATION */}
-        <div className="flex gap-2 bg-gray-100/80 rounded-2xl p-2 mb-8 w-fit overflow-x-auto">
-          {[
-            ["overview", "Overview", LayoutDashboard],
-            ["courses", "My Courses", BookOpen],
-            ["students", "Students", Users],
-            ["create", "Create Course", Plus],
-          ].map(([id, label, Icon]) => (
+  return (
+    <div className="min-h-screen flex" style={{ backgroundColor: "#f1f5f9" }}>
+      {/* SIDEBAR */}
+      <aside className="w-64 flex-shrink-0 flex flex-col sticky top-0 h-screen" style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%)" }}>
+        {/* Logo */}
+        <div className="px-6 py-6 border-b" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+              <GraduationCap size={22} style={{ color: "#a5b4fc" }} />
+            </div>
+            <div>
+              <p className="font-black text-white text-sm">ScholarIQ</p>
+              <p className="text-xs" style={{ color: "#a5b4fc" }}>Teacher Portal</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Teacher Profile */}
+        <div className="px-6 py-5 border-b" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-lg" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+              {profile?.name?.charAt(0)?.toUpperCase() || "T"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-white text-sm truncate">{profile?.name || "Teacher"}</p>
+              <p className="text-xs truncate" style={{ color: "#c7d2fe" }}>{profile?.specializations}</p>
+            </div>
+          </div>
+          {profile?.is_verified && (
+            <div className="mt-3 flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "rgba(16,185,129,0.2)" }}>
+              <Award size={12} style={{ color: "#6ee7b7" }} />
+              <span className="text-xs font-bold" style={{ color: "#6ee7b7" }}>Verified Teacher</span>
+            </div>
+          )}
+        </div>
+
+        {/* Nav Links */}
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+          {navItems.map(({ id, label, icon: Icon, color }) => (
             <button
               key={id}
               onClick={() => setTab(id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${
-                tab === id
-                  ? "bg-white shadow-md text-indigo-700 ring-1 ring-black/5"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-              }`}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all"
+              style={tab === id
+                ? { backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff", borderLeft: `3px solid ${color}` }
+                : { color: "#c7d2fe", borderLeft: "3px solid transparent" }
+              }
             >
-              <Icon size={16} />
+              <Icon size={18} style={{ color: tab === id ? color : "#a5b4fc" }} />
               {label}
             </button>
           ))}
+        </nav>
+
+        {/* Bottom actions */}
+        <div className="px-4 py-4 border-t space-y-2" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+          <button
+            onClick={() => navigate("/courses")}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{ color: "#c7d2fe" }}
+          >
+            <Eye size={16} style={{ color: "#a5b4fc" }} />
+            View as Student
+          </button>
+          <button
+            onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("userRole"); navigate("/teacher-login"); }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{ color: "#fca5a5" }}
+          >
+            <LogOut size={16} style={{ color: "#fca5a5" }} />
+            Logout
+          </button>
         </div>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 overflow-auto">
+        {/* Top Header */}
+        <div className="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+          <div>
+            <h1 className="text-xl font-black text-gray-900">
+              {navItems.find(n => n.id === tab)?.label || "Dashboard"}
+            </h1>
+            <p className="text-sm text-gray-400">
+              {tab === "overview" && "Your teaching summary and quick actions"}
+              {tab === "courses" && "Manage your courses, lessons, and class links"}
+              {tab === "students" && "View all enrolled students"}
+              {tab === "create" && "Create a new course for your students"}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-500">Welcome back, <strong className="text-gray-800">{profile?.name?.split(" ")[0]}</strong></span>
+            <button
+              onClick={() => setTab("create")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white"
+              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+            >
+              <Plus size={16} /> New Course
+            </button>
+          </div>
+        </div>
+
+        <div className="p-8">
 
         {/* OVERVIEW */}
         {tab === "overview" && analytics && (
-          <div className="space-y-8">
+          <div className="space-y-6">
+            {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Total Courses", value: analytics.total_courses, icon: BookOpen, color: "indigo" },
-                { label: "Total Students", value: analytics.total_students, icon: Users, color: "blue" },
-                { label: "Quiz Attempts", value: analytics.total_quiz_attempts, icon: Zap, color: "purple" },
-                { label: "Avg Score", value: `${analytics.average_score}%`, icon: Star, color: "yellow" },
+                { label: "Total Courses", value: analytics.total_courses, icon: BookOpen, bg: "#eef2ff", iconColor: "#6366f1", border: "#c7d2fe" },
+                { label: "Total Students", value: analytics.total_students, icon: Users, bg: "#eff6ff", iconColor: "#2563eb", border: "#bfdbfe" },
+                { label: "Quiz Attempts", value: analytics.total_quiz_attempts, icon: Zap, bg: "#f5f3ff", iconColor: "#7c3aed", border: "#ddd6fe" },
+                { label: "Avg Score", value: `${analytics.average_score}%`, icon: Star, bg: "#fffbeb", iconColor: "#d97706", border: "#fde68a" },
               ].map(s => (
-                <div key={s.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                  <div className={`w-10 h-10 rounded-xl bg-${s.color}-50 flex items-center justify-center mb-3`}>
-                    <s.icon size={20} className={`text-${s.color}-600`} />
+                <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: `1px solid ${s.border}` }}>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: s.bg }}>
+                    <s.icon size={22} style={{ color: s.iconColor }} />
                   </div>
-                  <div className="text-2xl font-black text-gray-900">{s.value}</div>
-                  <div className="text-sm text-gray-500 mt-0.5">{s.label}</div>
+                  <div className="text-3xl font-black text-gray-900">{s.value}</div>
+                  <div className="text-sm text-gray-500 mt-0.5 font-medium">{s.label}</div>
                 </div>
               ))}
             </div>
+
+            {/* Pass Rate + Quick Actions */}
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 className="font-black text-gray-900 mb-1">Pass Rate</h3>
-                <div className="text-4xl font-black text-green-600">{analytics.pass_rate}%</div>
-                <div className="mt-3 h-3 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full" style={{ width: `${analytics.pass_rate}%` }} />
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp size={20} style={{ color: "#059669" }} />
+                  <h3 className="font-black text-gray-900">Student Pass Rate</h3>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">{analytics.total_quiz_attempts} total attempts</p>
+                <div className="text-5xl font-black mb-2" style={{ color: "#059669" }}>{analytics.pass_rate}%</div>
+                <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#f0fdf4" }}>
+                  <div className="h-full rounded-full transition-all" style={{ width: `${analytics.pass_rate}%`, background: "linear-gradient(90deg, #059669, #34d399)" }} />
+                </div>
+                <p className="text-xs text-gray-400 mt-2">{analytics.total_quiz_attempts} total quiz attempts</p>
               </div>
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 className="font-black text-gray-900 mb-3">Quick Actions</h3>
-                <div className="space-y-2">
-                  <button onClick={() => setTab("create")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-sm transition-colors"><Plus size={16} /> Create New Course</button>
-                  <button onClick={() => setTab("students")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors"><Users size={16} /> View All Students</button>
+
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 className="font-black text-gray-900 mb-4">Quick Actions</h3>
+                <div className="space-y-3">
+                  <button onClick={() => setTab("create")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#eef2ff", color: "#6366f1" }}>
+                    <Plus size={16} /> Create New Course
+                  </button>
+                  <button onClick={() => setTab("courses")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
+                    <BookOpen size={16} /> Manage Courses
+                  </button>
+                  <button onClick={() => setTab("students")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#f0fdf4", color: "#059669" }}>
+                    <Users size={16} /> View All Students
+                  </button>
                 </div>
               </div>
             </div>
+
+            {/* Recent Courses */}
+            {courses.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-black text-gray-900">Recent Courses</h3>
+                  <button onClick={() => setTab("courses")} className="text-sm font-semibold" style={{ color: "#6366f1" }}>View All →</button>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {courses.slice(0, 3).map(c => (
+                    <div key={c.id} className="px-6 py-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: TEST_COLORS[c.test_type] || "#6366f1" }}>{c.test_type}</div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{c.title}</p>
+                          <p className="text-xs text-gray-400">{c.enrolled_students} students · {c.total_lessons} lessons</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold px-2 py-1 rounded-full" style={c.is_published ? { backgroundColor: "#d1fae5", color: "#065f46" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }}>
+                        {c.is_published ? "Published" : "Draft"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -793,6 +904,7 @@ export default function TeacherDashboard() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -715,6 +715,7 @@ def get_pending_teachers(db: Session = Depends(get_db)):
             "degree": t.degree,
             "institution": t.institution,
             "cv_url": t.cv_url,
+            "cv_file_url": t.cv_file_url,
             "bio": t.bio,
             "applied_at": t.created_at.isoformat(),
         })
@@ -745,6 +746,7 @@ def get_all_teachers(
             "degree": t.degree,
             "institution": t.institution,
             "cv_url": t.cv_url,
+            "cv_file_url": t.cv_file_url,
             "bio": t.bio,
             "approval_status": t.approval_status,
             "rejection_reason": t.rejection_reason,
