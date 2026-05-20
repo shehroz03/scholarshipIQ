@@ -556,8 +556,8 @@ const WelcomeScreen = ({ studentName, activeTool, tools, onSendMessage }: {
 
 export function ConsultantPage() {
     const navigate = useNavigate();
-    const { isDark } = useTheme();
-    const theme = isDark ? darkTheme : lightTheme;
+    const isDark = true;
+    const theme = darkTheme;
 
     const { status: userStatus, loading: loadingStatus, refreshStatus: fetchStatus, isPremium, isPro } = useUser();
     const [input, setInput] = useState("");

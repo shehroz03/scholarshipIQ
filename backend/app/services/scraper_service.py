@@ -62,12 +62,126 @@ def is_masters_scholarship(scholarship: dict) -> bool:
         return True
     return False
 
+
+# ─── Per-country defaults (IELTS, TOEFL, CGPA) ───────────────────────────────
+_COUNTRY_DEFAULTS = {
+    "United Kingdom":  {"min_ielts": 6.5, "min_toefl": 90,  "cgpa": 3.0},
+    "Canada":          {"min_ielts": 6.5, "min_toefl": 86,  "cgpa": 3.0},
+    "Australia":       {"min_ielts": 6.5, "min_toefl": 79,  "cgpa": 3.0},
+    "Germany":         {"min_ielts": 6.5, "min_toefl": 80,  "cgpa": 3.0},
+    "United States":   {"min_ielts": 6.5, "min_toefl": 90,  "cgpa": 3.0},
+    "Turkey":          {"min_ielts": 6.0, "min_toefl": 79,  "cgpa": 2.8},
+    "Netherlands":     {"min_ielts": 6.5, "min_toefl": 90,  "cgpa": 3.0},
+}
+_DEFAULT_COUNTRY = {"min_ielts": 6.5, "min_toefl": 80, "cgpa": 3.0}
+
+_DEGREE_DURATION = {
+    "phd": "3-4 years", "doctor": "3-4 years",
+    "master": "1-2 years", "msc": "1-2 years", "mba": "1-2 years",
+    "bachelor": "3-4 years", "undergrad": "3-4 years",
+}
+
+
+def validate_and_enrich_scholarship(s: dict, target: dict) -> dict:
+    """
+    Ensures ALL required fields exist with proper non-zero values.
+    Fills in country-specific defaults for IELTS/TOEFL/CGPA.
+    Derives funding_type, duration_text, eligibility, description if missing.
+    Raises ValueError if critical required fields (title, amount) are absent.
+    """
+    # ── Critical fields must exist ────────────────────────────────────────────
+    if not s.get("title") or not str(s["title"]).strip():
+        raise ValueError("Missing required field: title")
+    if not s.get("scholarship_amount_value") and not s.get("cgpa_min"):
+        raise ValueError(f"Scholarship '{s.get('title')}' missing amount AND cgpa — likely bad data")
+
+    country = target.get("country", "")
+    defaults = _COUNTRY_DEFAULTS.get(country, _DEFAULT_COUNTRY)
+
+    # ── Currency symbol by country ─────────────────────────────────────────────
+    currency_map = {
+        "United Kingdom": ("GBP", "£"),
+        "Canada":         ("CAD", "$"),
+        "Australia":      ("AUD", "$"),
+        "Germany":        ("EUR", "€"),
+        "United States":  ("USD", "$"),
+        "Turkey":         ("USD", "$"),
+        "Netherlands":    ("EUR", "€"),
+    }
+    currency, sym = currency_map.get(country, ("USD", "$"))
+    s["_currency"] = currency
+    s["_sym"] = sym
+
+    # ── Amounts ───────────────────────────────────────────────────────────────
+    amt_num = float(s.get("scholarship_amount_value") or 0)
+    tui_num = float(s.get("tuition_fee_per_year") or 0)
+
+    # Reject zero-amount scholarships (bad scrape data)
+    if amt_num <= 0:
+        raise ValueError(f"Scholarship '{s.get('title')}' has zero/missing amount — skipping")
+
+    s["scholarship_amount_numeric"] = amt_num
+    s["tuition_fee_numeric"] = tui_num
+    s["scholarship_amount_value_str"] = s.get("scholarship_amount_value_str") or f"{sym}{amt_num:,.0f} award"
+    s["tuition_fee_per_year_str"] = s.get("tuition_fee_per_year_str") or (
+        f"{sym}{tui_num:,.0f} per year" if tui_num > 0 else f"{sym}0 (no tuition - public university)"
+    )
+
+    # ── Funding type ──────────────────────────────────────────────────────────
+    if not s.get("funding_type"):
+        if tui_num > 0:
+            s["funding_type"] = "Fully Funded" if amt_num >= tui_num * 0.9 else "Partial"
+        else:
+            s["funding_type"] = "Partial"
+
+    # ── Criteria defaults ─────────────────────────────────────────────────────
+    if not s.get("cgpa_min") or float(s.get("cgpa_min", 0)) == 0:
+        s["cgpa_min"] = defaults["cgpa"]
+    if not s.get("min_ielts") or float(s.get("min_ielts", 0)) == 0:
+        s["min_ielts"] = defaults["min_ielts"]
+    if not s.get("min_toefl") or int(s.get("min_toefl", 0)) == 0:
+        s["min_toefl"] = defaults["min_toefl"]
+
+    # ── Duration ──────────────────────────────────────────────────────────────
+    if not s.get("duration_text"):
+        level = (s.get("degree_level") or "").lower()
+        s["duration_text"] = next(
+            (v for k, v in _DEGREE_DURATION.items() if k in level),
+            "1-2 years"
+        )
+
+    # ── Eligibility ───────────────────────────────────────────────────────────
+    if not s.get("eligibility"):
+        parts = [
+            f"CGPA {s['cgpa_min']}+",
+            f"IELTS {s['min_ielts']}+ / TOEFL {s['min_toefl']}+",
+            f"{s.get('degree_level', 'Masters')} enrollment",
+        ]
+        if s.get("field_of_study") and s["field_of_study"] not in ("All", "All Fields"):
+            parts.append(f"Field: {s['field_of_study']}")
+        if s.get("requires_work_exp"):
+            parts.append("Work experience required")
+        s["eligibility"] = ". ".join(parts) + "."
+
+    # ── Description ───────────────────────────────────────────────────────────
+    if not s.get("description") or len(str(s.get("description", ""))) < 30:
+        ft = s.get("funding_type", "merit-based").lower()
+        field = s.get("field_of_study") or "all fields"
+        level = s.get("degree_level") or "Masters"
+        s["description"] = (
+            f"{s['title']} is a {ft} scholarship offered to international {level} students "
+            f"in {field} at {target['uni']}, {country}. "
+            f"Covers {sym}{amt_num:,.0f} toward tuition and living expenses."
+        )
+
+    return s
+
 def stage_scholarship(db: Session, s: dict, target: dict, fraud: dict, status: str, run_id: str) -> ScholarshipStaging:
-    """Inserts a scholarship into the staging area for manual review."""
+    """Validates, enriches, then inserts a scholarship into the staging area."""
+    s = validate_and_enrich_scholarship(s, target)
     uni = db.query(University).filter(University.name == target["uni"]).first()
-    
-    currency = "GBP" if "United Kingdom" in target["country"] else "CAD" if "Canada" in target["country"] else "AUD"
-    amount_sym = "£" if currency == "GBP" else "$"
+    currency = s["_currency"]
+    sym = s["_sym"]
 
     staged = ScholarshipStaging(
         title=s["title"],
@@ -77,24 +191,27 @@ def stage_scholarship(db: Session, s: dict, target: dict, fraud: dict, status: s
         city=target["city"],
         description=s["description"],
         degree_level=s["degree_level"],
-        field_of_study=s["field_of_study"],
-        funding_type="Partial" if s['scholarship_amount_value'] < s['tuition_fee_per_year'] else "Fully Funded",
-        amount=f"{amount_sym}{s['scholarship_amount_value']}",
+        field_of_study=s.get("field_of_study", "All"),
+        funding_type=s["funding_type"],
+        amount=f"{sym}{s['scholarship_amount_numeric']:,.0f}",
         scholarship_url=s["scholarship_link"],
         website_url=target["url"],
-        
-        # Financials
-        scholarship_amount_value=f"{amount_sym}{s['scholarship_amount_value']} award",
-        scholarship_amount_numeric=float(s['scholarship_amount_value']),
-        tuition_fee_per_year=f"{amount_sym}{s['tuition_fee_per_year']} per year",
-        tuition_fee_numeric=float(s['tuition_fee_per_year']),
+        eligibility=s["eligibility"],
+        duration_text=s["duration_text"],
+
+        # Financials — always populated
+        scholarship_amount_value=s["scholarship_amount_value_str"],
+        scholarship_amount_numeric=s["scholarship_amount_numeric"],
+        tuition_fee_per_year=s["tuition_fee_per_year_str"],
+        tuition_fee_numeric=s["tuition_fee_numeric"],
         currency=currency,
-        
-        # Criteria
-        min_cgpa=s['cgpa_min'],
-        min_ielts=s.get('min_ielts', 6.5),
-        min_toefl=s.get('min_toefl', 90),
-        
+
+        # Criteria — always populated
+        min_cgpa=s["cgpa_min"],
+        min_ielts=s["min_ielts"],
+        min_toefl=s["min_toefl"],
+        requires_work_exp=bool(s.get("requires_work_exp", False)),
+
         # Metadata
         fraud_risk_score=fraud["risk_score"],
         fraud_risk_level=fraud["risk_level"],
@@ -110,42 +227,48 @@ def stage_scholarship(db: Session, s: dict, target: dict, fraud: dict, status: s
     return staged
 
 def insert_scholarship(db: Session, s: dict, target: dict, fraud: dict) -> Scholarship:
-    """Inserts a scholarship directly into production (SAFE only)."""
+    """Validates, enriches, then inserts a scholarship directly into production."""
+    s = validate_and_enrich_scholarship(s, target)
     uni = db.query(University).filter(University.name == target["uni"]).first()
-    
-    currency = "GBP" if "United Kingdom" in target["country"] else "CAD" if "Canada" in target["country"] else "AUD"
-    amount_sym = "£" if currency == "GBP" else "$"
+    currency = s["_currency"]
+    sym = s["_sym"]
 
     new_s = Scholarship(
         title=s["title"],
-        university_id=uni.id,
+        university_id=uni.id if uni else None,
         country=target["country"],
         city=target["city"],
         description=s["description"],
         degree_level=s["degree_level"],
-        field_of_study=s["field_of_study"],
+        field_of_study=s.get("field_of_study", "All"),
         scholarship_url=s["scholarship_link"],
         website_url=target["url"],
+        eligibility=s["eligibility"],
+        duration_text=s["duration_text"],
         currency=currency,
-        funding_type="Partial" if s['scholarship_amount_value'] < s['tuition_fee_per_year'] else "Fully Funded",
-        amount=f"{amount_sym}{s['scholarship_amount_value']}",
-        scholarship_amount_numeric=float(s['scholarship_amount_value']),
-        scholarship_amount_value=f"{amount_sym}{s['scholarship_amount_value']} award",
-        tuition_fee_numeric=float(s['tuition_fee_per_year']),
-        tuition_fee_per_year=f"{amount_sym}{s['tuition_fee_per_year']} per year",
-        min_cgpa=s['cgpa_min'],
+        funding_type=s["funding_type"],
+        amount=f"{sym}{s['scholarship_amount_numeric']:,.0f}",
+        scholarship_amount_numeric=s["scholarship_amount_numeric"],
+        scholarship_amount_value=s["scholarship_amount_value_str"],
+        tuition_fee_numeric=s["tuition_fee_numeric"],
+        tuition_fee_per_year=s["tuition_fee_per_year_str"],
+        min_cgpa=s["cgpa_min"],
+        min_ielts=s["min_ielts"],
+        min_toefl=s["min_toefl"],
+        requires_work_exp=bool(s.get("requires_work_exp", False)),
         is_suspicious=fraud["auto_flag"],
         fraud_risk_score=fraud["risk_score"],
         fraud_risk_level=fraud["risk_level"],
         fraud_reasons=json.dumps(fraud["reasons"]),
         last_fraud_check=datetime.now(timezone.utc).replace(tzinfo=None),
         is_active=True,
+        approval_status="approved",
         tuition_verified="verified",
         scholarship_verified="verified",
         has_separate_form=True,
         application_type="direct_form",
-        latitude=target["lat"],
-        longitude=target["lng"]
+        latitude=target.get("lat"),
+        longitude=target.get("lng")
     )
     db.add(new_s)
     db.commit()
@@ -258,21 +381,16 @@ async def scrape_and_import(db: Session, triggered_by: str = "auto") -> dict:
                         ))
                         continue
 
-                    # D. SAFE + Linked -> Production
-                    new_s_obj = insert_scholarship(db, s, target, fraud)
-                    results["inserted"] += 1
-                    results["new_scholarships"].append(new_s_obj.title)
-                    
+                    # D. SAFE + Linked -> Staging (PENDING) for Auto-Verify bot
+                    # No direct production insert — all go through bot pipeline
+                    results["staged"] += 1
+                    stage_scholarship(db, s, target, fraud, ReviewStatus.PENDING, run_id)
                     db.add(PipelineLog(
-                        event_type="enrichment", action_taken="inserted",
-                        scholarship_title=new_s_obj.title, official_url=new_s_obj.scholarship_url,
-                        message="Safe record inserted directly to production.",
+                        event_type="fraud_gate", action_taken="staged",
+                        scholarship_title=s["title"], official_url=s["scholarship_link"],
+                        message=f"SAFE (score={fraud['risk_score']}) — sent to Auto-Verify bot for final approval.",
                         triggered_by=triggered_by, pipeline_run_id=run_id
                     ))
-
-                    # Notify
-                    from app.services.notification_service import NotificationService
-                    NotificationService.notify_new_matches(db, new_s_obj)
 
                 except Exception as e:
                     results["errors"].append(f"Scholarship {s.get('title', 'Unknown')}: {str(e)}")

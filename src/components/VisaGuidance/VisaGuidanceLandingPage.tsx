@@ -1,14 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from "../../context/ThemeContext";
-import { darkTheme, lightTheme } from "../../styles/theme";
+import { darkTheme } from "../../styles/theme";
 import { ThemeToggle } from "../ThemeToggle";
 import { ChevronLeft } from "lucide-react";
 
 const VisaGuidanceLandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isDark } = useTheme();
-  const theme = isDark ? darkTheme : lightTheme;
+  const isDark = true;
+  const theme = darkTheme;
   const [expanded, setExpanded] = React.useState<string | null>(null);
 
   const countries = [

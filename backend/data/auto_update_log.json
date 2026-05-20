@@ -1,0 +1,25 @@
+[
+  {
+    "scholarship_id": 1,
+    "title": "University of Toronto Scholar Award",
+    "university": "University of Toronto",
+    "changes": [
+      "Deadline: 2025-09-01 \u2192 2025-12-01",
+      "Amount: None \u2192 CAD 10,000",
+      "Funding: None \u2192 Partial"
+    ],
+    "ai_notes": "The deadline has been updated to December 1, 2025. The scholarship now has an amount of CAD 10,000 and is partially funded.",
+    "updated_at": "2026-05-20T14:07:52.788231"
+  },
+  {
+    "scholarship_id": 2,
+    "title": "UBC Graduate Global Leadership Fellowship",
+    "university": "University of British Columbia",
+    "changes": [
+      "Amount: None \u2192 CAD 18,200 per year + full tuition",
+      "Funding: None \u2192 Fully Funded"
+    ],
+    "ai_notes": "The scholarship now provides CAD 18,200 per year plus full tuition coverage, indicating it is fully funded.",
+    "updated_at": "2026-05-20T14:07:59.978619"
+  }
+]

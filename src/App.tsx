@@ -53,8 +53,12 @@ export default function App() {
       return;
     }
 
-    if (page === 'teacher-dashboard') {
+    if (page === 'teacher-dashboard' || page === 'my-classes') {
       navigate('/teacher');
+      return;
+    }
+    if (page === 'courses' || page === 'test-prep') {
+      navigate('/courses');
       return;
     }
 

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, Union, List
 from datetime import datetime
 
 
@@ -207,7 +207,7 @@ class UniversityOut(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
     established_year: Optional[int] = None
-    qs_ranking: Optional[str] = None
+    qs_ranking: Optional[Union[int, str]] = None
     logo_url: Optional[str] = None
     image_url: Optional[str] = None
     scholarship_count: int = 0
@@ -238,6 +238,11 @@ class ScholarshipOut(ScholarshipBase):
     university_name: Optional[str] = None
     match_score: Optional[int] = None
     university: Optional[UniversityOut] = None
+
+    # Criteria fields (returned from DB but not in ScholarshipBase)
+    min_cgpa: Optional[float] = None
+    fraud_risk_level: Optional[str] = None
+    approval_status: Optional[str] = None
 
     class Config:
         from_attributes = True

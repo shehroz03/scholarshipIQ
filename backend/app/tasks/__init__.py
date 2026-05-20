@@ -197,6 +197,24 @@ async def daily_scrape_and_import():
     finally:
         db.close()
 
+
+# --- 7. AUTO-VERIFY STAGED SCHOLARSHIPS ---
+async def auto_verify_staged():
+    """
+    Runs after daily pipeline. Auto-approves/rejects staged (MEDIUM risk) scholarships.
+    SAFE  (score<=39) → auto-approve → promote to production
+    HIGH  (score>=40) → auto-reject  → stays in staging (admin can override)
+    """
+    db: Session = SessionLocal()
+    try:
+        from app.services.auto_verify_service import process_staged_scholarships
+        result = process_staged_scholarships(db, batch_size=100)
+        print(f"[AutoVerify] Processed: {result['processed']} | Approved: {result['approved']} | Rejected: {result['rejected']}")
+    except Exception as e:
+        print(f"[AutoVerify] Task error: {e}")
+    finally:
+        db.close()
+
 async def process_smart_notifications():
     """
     Daily task to generate in-app notifications for:
@@ -226,6 +244,7 @@ def start_scheduler():
     scheduler.add_job(retrain_model, 'cron', day_of_week='sun', hour=2, minute=0)
     scheduler.add_job(daily_fraud_scan, 'cron', hour=3, minute=0)
     scheduler.add_job(daily_scrape_and_import, 'cron', hour=3, minute=0)
-    scheduler.add_job(auto_update_scholarship_data, 'interval', days=3, start_date=datetime.now().replace(hour=4, minute=0, second=0, microsecond=0))
+    scheduler.add_job(auto_verify_staged, 'cron', hour=3, minute=30)
+    scheduler.add_job(auto_update_scholarship_data, 'interval', days=4, start_date=datetime.now().replace(hour=4, minute=0, second=0, microsecond=0))
     scheduler.start()
-    print("[Scheduler] Started! Daily deadline check @ 09:00 AM | Weekly retrain @ Sunday 02:00 AM | Fraud & Pipeline @ 03:00 AM | AI Auto-Update every 3 days @ 04:00 AM.")
+    print("[Scheduler] Started! Deadline@09:00 | Retrain@Sun02:00 | Fraud+Pipeline@03:00 | AutoVerify@03:30 | AutoUpdate every 4 days@04:00 (batch=6)")

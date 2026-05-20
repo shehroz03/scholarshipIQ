@@ -3,14 +3,14 @@ import { AdminLogin } from "./admin/AdminLogin";
 import { DashboardHome } from "./admin/DashboardHome";
 import { UserManagement } from "./admin/UserManagement";
 import { ScholarshipManagement } from "./admin/ScholarshipManagement";
-import { ApiHealth } from "./admin/ApiHealth";
-import { AdminAnalytics } from "./admin/Analytics";
-import { DatabaseViewer } from "./admin/DatabaseViewer";
 import { FraudManager } from "./admin/FraudManager";
 import { DataPipeline } from "./admin/DataPipeline";
-import { AutoUpdater } from "./admin/AutoUpdater";
 import { TeacherApprovals } from "./admin/TeacherApprovals";
-import { LayoutDashboard, Users, BookOpen, Activity, BarChart2, Database, ShieldAlert, LogOut, Settings, RefreshCw, Zap, GraduationCap } from "lucide-react";
+import { AutoVerifyDashboard } from "./admin/AutoVerifyDashboard";
+import { StagedReviewQueue } from "./admin/StagedReviewQueue";
+import { AdminAIChat } from "./admin/AdminAIChat";
+import { PipelineReport } from "./admin/PipelineReport";
+import { LayoutDashboard, Users, BookOpen, ShieldAlert, ShieldCheck, Sparkles, FileBarChart2, LogOut, RefreshCw, GraduationCap, AlertTriangle } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { darkTheme, lightTheme } from "../styles/theme";
 import { ThemeToggle } from "./ThemeToggle";
@@ -24,42 +24,28 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const theme = isDark ? darkTheme : lightTheme;
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const token = localStorage.getItem("token");
-    if (!token) return false;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub === "admin";
-    } catch (e) {
-      return false;
-    }
+    const adminFlag = localStorage.getItem("admin_logged_in");
+    return !!token && adminFlag === "true";
   });
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem("admin_active_tab") || "dashboard");
 
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token");
-      if (!token && isLoggedIn) {
-        setIsLoggedIn(false);
-        return;
-      }
-      if (token && isLoggedIn) {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          if (payload.sub !== "admin") setIsLoggedIn(false);
-        } catch (e) {
-          setIsLoggedIn(false);
-        }
+      const adminFlag = localStorage.getItem("admin_logged_in");
+      if (!token || adminFlag !== "true") {
+        if (isLoggedIn) setIsLoggedIn(false);
       }
     };
-    const interval = setInterval(checkAuth, 1000);
     window.addEventListener('storage', checkAuth);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', checkAuth);
-    };
+    return () => window.removeEventListener('storage', checkAuth);
   }, [isLoggedIn]);
 
   if (!isLoggedIn) {
-    return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
+    return <AdminLogin onLogin={() => {
+      localStorage.setItem("admin_logged_in", "true");
+      setIsLoggedIn(true);
+    }} />;
   }
 
   const renderContent = () => {
@@ -67,12 +53,12 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       case "dashboard": return <DashboardHome />;
       case "users": return <UserManagement />;
       case "scholarships": return <ScholarshipManagement />;
-      case "health": return <ApiHealth />;
-      case "analytics": return <AdminAnalytics />;
-      case "database": return <DatabaseViewer />;
       case "fraud": return <FraudManager />;
       case "pipeline": return <DataPipeline />;
-      case "autoupdate": return <AutoUpdater />;
+      case "autoverify": return <AutoVerifyDashboard />;
+      case "stagedreview": return <StagedReviewQueue />;
+      case "aichat": return <AdminAIChat />;
+      case "reports": return <PipelineReport />;
       case "teachers": return <TeacherApprovals />;
       default: return <DashboardHome />;
     }
@@ -82,13 +68,13 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "users", label: "Users", icon: Users },
     { id: "scholarships", label: "Scholarships", icon: BookOpen },
-    { id: "health", label: "API Status", icon: Activity },
-    { id: "analytics", label: "Analytics", icon: BarChart2 },
-    { id: "database", label: "Database", icon: Database },
     { id: "pipeline", label: "Data Pipeline", icon: RefreshCw },
     { id: "fraud", label: "Fraud Security", icon: ShieldAlert },
     { id: "teachers", label: "Teacher Approvals", icon: GraduationCap },
-    { id: "autoupdate", label: "Auto-Update AI", icon: Zap },
+    { id: "autoverify", label: "Auto-Verify & Update", icon: ShieldCheck },
+    { id: "stagedreview", label: "Review Queue", icon: AlertTriangle },
+    { id: "reports", label: "Pipeline Reports", icon: FileBarChart2 },
+    { id: "aichat", label: "Admin AI", icon: Sparkles },
   ];
 
   return (
@@ -130,6 +116,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
             onClick={() => {
               setIsLoggedIn(false);
               localStorage.removeItem("token");
+              localStorage.removeItem("admin_logged_in");
               localStorage.removeItem("admin_active_tab");
             }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors"

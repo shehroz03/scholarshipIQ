@@ -891,7 +891,15 @@ export function SearchPage({
                           <Banknote size={10} /> FUNDING
                         </div>
                         <div style={{ fontSize: 15, fontWeight: 900, color: '#fff' }}>
-                          {convertAndFormat(s.amount || '0')}
+                          {s.scholarship_amount_value
+                            ? s.scholarship_amount_value
+                            : s.scholarship_amount_numeric && s.scholarship_amount_numeric > 0
+                            ? convertAndFormat(String(s.scholarship_amount_numeric))
+                            : s.funding_amount && s.funding_amount !== '0'
+                            ? s.funding_amount
+                            : s.funding_type === 'Fully Funded'
+                            ? 'Full Coverage'
+                            : 'See Details'}
                         </div>
                       </div>
 
@@ -911,7 +919,7 @@ export function SearchPage({
                           title: s.title,
                           university_name: s.university_name,
                           country: s.country,
-                          amount: s.amount,
+                          amount: s.scholarship_amount_value || s.funding_amount || s.amount,
                           deadline: s.deadline,
                           degree_level: s.degree_level,
                           funding_type: s.funding_type,

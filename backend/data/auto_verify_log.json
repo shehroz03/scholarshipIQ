@@ -1,0 +1,109 @@
+[
+  {
+    "staged_id": 42,
+    "title": "University of Groningen Orange Tulip Scholarship",
+    "university": "University of Groningen",
+    "country": "Netherlands",
+    "fraud_score": 24,
+    "fraud_level": "SAFE",
+    "decision": "approved",
+    "decision_label": "SAFE (score=24) \u2014 auto-approved",
+    "confidence": "76.0%",
+    "reasons": [
+      "Non-academic/government domain (.com/.net)",
+      "URL returned error status code: 404"
+    ],
+    "decided_at": "2026-05-20T10:24:59.981240",
+    "decided_by": "auto_verify_bot",
+    "action": "promoted_to_production"
+  },
+  {
+    "staged_id": 43,
+    "title": "TU Delft Excellence Scholarship",
+    "university": "Delft University of Technology",
+    "country": "Netherlands",
+    "fraud_score": 14,
+    "fraud_level": "SAFE",
+    "decision": "approved",
+    "decision_label": "SAFE (score=14) \u2014 auto-approved",
+    "confidence": "86.0%",
+    "reasons": [
+      "Non-academic/government domain (.com/.net)"
+    ],
+    "decided_at": "2026-05-20T10:24:59.981240",
+    "decided_by": "auto_verify_bot",
+    "action": "promoted_to_production"
+  },
+  {
+    "staged_id": 44,
+    "title": "Leiden University Excellence Scholarship",
+    "university": "Leiden University",
+    "country": "Netherlands",
+    "fraud_score": 24,
+    "fraud_level": "SAFE",
+    "decision": "approved",
+    "decision_label": "SAFE (score=24) \u2014 auto-approved",
+    "confidence": "76.0%",
+    "reasons": [
+      "Non-academic/government domain (.com/.net)",
+      "URL returned error status code: 404"
+    ],
+    "decided_at": "2026-05-20T10:26:27.934892",
+    "decided_by": "auto_verify_bot",
+    "action": "promoted_to_production"
+  },
+  {
+    "staged_id": 45,
+    "title": "Wageningen University Fellowship Programme",
+    "university": "Wageningen University",
+    "country": "Netherlands",
+    "fraud_score": 25,
+    "fraud_level": "SAFE",
+    "decision": "approved",
+    "decision_label": "SAFE (score=25) \u2014 auto-approved",
+    "confidence": "75.0%",
+    "reasons": [
+      "Non-academic/government domain (.com/.net)",
+      "URL returned error status code: 404"
+    ],
+    "decided_at": "2026-05-20T10:26:27.934892",
+    "decided_by": "auto_verify_bot",
+    "action": "promoted_to_production"
+  },
+  {
+    "staged_id": 46,
+    "title": "Leiden University Excellence Scholarship",
+    "university": "Leiden University",
+    "country": "Netherlands",
+    "fraud_score": 38.0,
+    "fraud_level": "MEDIUM",
+    "decision": "admin_review",
+    "decision_label": "MEDIUM risk (score=38.0) \u2014 sent to admin review queue",
+    "confidence": "62.0%",
+    "reasons": [
+      "Non-academic domain flagged",
+      "URL timed out during reachability check"
+    ],
+    "decided_at": "2026-05-20T10:28:24.214827",
+    "decided_by": "auto_verify_bot",
+    "action": "sent_to_admin_review"
+  },
+  {
+    "staged_id": 47,
+    "title": "Wageningen University Fellowship Programme",
+    "university": "Wageningen University",
+    "country": "Netherlands",
+    "fraud_score": 45.0,
+    "fraud_level": "MEDIUM",
+    "decision": "admin_review",
+    "decision_label": "MEDIUM risk (score=45.0) \u2014 sent to admin review queue",
+    "confidence": "55.0%",
+    "reasons": [
+      "ML Anomaly Detector flagged unusual pattern (45%)",
+      "High scholarship amount relative to average"
+    ],
+    "decided_at": "2026-05-20T10:28:24.214827",
+    "decided_by": "auto_verify_bot",
+    "action": "sent_to_admin_review"
+  }
+]

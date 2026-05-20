@@ -15,10 +15,12 @@ const apiBase = {
       headers,
     });
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       localStorage.removeItem("token");
-      // Return null instead of throwing to prevent refresh loops
       return Promise.reject(new Error("Session expired. Please login again."));
+    }
+    if (response.status === 403) {
+      return Promise.reject(new Error("Access forbidden."));
     }
 
     if (!response.ok) {
@@ -307,7 +309,19 @@ export const api = {
     },
     async getHistory() {
       return apiBase.request("/api/chat/history");
-    }
+    },
+    async sendAdminMessage(message: string) {
+      return apiBase.request("/admin/ai-chat", {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      });
+    },
+    async sendTeacherMessage(message: string) {
+      return apiBase.request("/teacher/ai-chat", {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      });
+    },
   },
 
   admin: {
@@ -321,6 +335,27 @@ export const api = {
     },
     async getUsers() {
       return apiBase.request("/admin/users");
+    },
+    async deleteUser(userId: number) {
+      return apiBase.request(`/admin/users/${userId}`, { method: "DELETE" });
+    },
+    async getAutoVerifyStats() {
+      return apiBase.request("/admin/auto-verify/stats");
+    },
+    async getAutoVerifyLog(limit: number = 100) {
+      return apiBase.request(`/admin/auto-verify/log?limit=${limit}`);
+    },
+    async runAutoVerify() {
+      return apiBase.request("/admin/auto-verify/run", { method: "POST" });
+    },
+    async overrideStagedDecision(stagedId: number, action: "approve" | "reject") {
+      return apiBase.request(`/admin/auto-verify/override/${stagedId}`, {
+        method: "POST",
+        body: JSON.stringify({ action }),
+      });
+    },
+    async getStagedPending() {
+      return apiBase.request("/admin/staged/pending");
     },
     async getScholarships() {
       return apiBase.request("/admin/scholarships");
@@ -360,6 +395,9 @@ export const api = {
     },
     async getPipelineLogs(page: number = 1, pageSize: number = 10) {
       return apiBase.request(`/admin/pipeline/logs?page=${page}&page_size=${pageSize}`);
+    },
+    async getPipelineReport(period: "weekly" | "monthly" = "monthly") {
+      return apiBase.request(`/admin/pipeline/report?period=${period}`);
     },
     // Auto-Update APIs
     async triggerAutoUpdate(batchSize: number = 15) {

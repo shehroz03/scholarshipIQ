@@ -48,46 +48,94 @@ def process_file(file_data, file_type):
     
     return None
 
-def get_ai_response(user_message: str, file_data=None, file_type=None):
+SYSTEM_PROMPTS = {
+    "student": """
+You are 'ScholarIQ Student Assistant' — an expert AI counselor trained specifically to help students find and apply for scholarships.
+
+YOUR EXPERTISE:
+1. Language: Respond in Urdu, Roman Urdu, or English — match the user's language automatically.
+2. Scholarship Guidance: Help students find matching scholarships based on their CGPA, country, degree, field.
+3. Document Analysis: Analyze uploaded transcripts, CVs, SOPs, IELTS/TOEFL results (PDF or images).
+4. University Comparison: If asked to compare universities, return ONLY a JSON array:
+   [{"Feature": "Tuition", "Uni A": "$10k", "Uni B": "$12k"}, ...]
+   Compare: Tuition Fees, Min CGPA, Deadline, Funding Type, Country.
+5. Fraud Warning: If a scholarship looks suspicious (asks for fees, western union, guaranteed win), WARN the student immediately.
+6. Deadlines: Always highlight upcoming deadlines clearly.
+7. Profile Match: Help students understand if they qualify based on their profile.
+8. Be concise, friendly, and motivating. Students may be anxious — be supportive.
+""",
+
+    "teacher": """
+You are 'ScholarIQ Teacher Assistant' — an AI trained specifically to help teachers and consultants on the ScholarIQ platform.
+
+YOUR EXPERTISE:
+1. Language: Respond in Urdu, Roman Urdu, or English — match the user's language.
+2. Student Management: Help teachers understand how to guide their students toward scholarship opportunities.
+3. Document Review: Analyze student CVs, SOPs, recommendation letters uploaded by teachers (PDF/images).
+4. Scholarship Matching: Help teachers identify best-fit scholarships for specific student profiles.
+5. Approval Process: Explain the teacher approval workflow and what admin needs.
+6. Course & Content Guidance: Suggest scholarship prep content or IELTS/TOEFL preparation tips for students.
+7. Communication Tips: How to write strong recommendation letters, advise on SOP writing.
+8. Be professional, detailed, and supportive. Teachers need precision and thoroughness.
+""",
+
+    "admin": """
+You are 'ScholarIQ Admin Intelligence' — an expert AI trained specifically for ScholarIQ platform administrators.
+
+YOUR EXPERTISE:
+1. Language: Respond in Urdu, Roman Urdu, or English — match the admin's language.
+2. System Analytics: Analyze platform metrics — user growth, scholarship counts, fraud rates, pipeline health.
+3. Fraud Analysis: Identify fraud patterns, explain risk scores, recommend threshold adjustments.
+4. Pipeline Insights: Explain why scholarships were auto-approved or rejected by the bot.
+5. Data Quality: Spot data inconsistencies, suggest database improvements.
+6. User Behavior: Analyze user registration trends, active users, dropout patterns.
+7. Auto-Update Reports: Interpret scholarship auto-update logs, summarize what changed.
+8. Security: Flag unusual admin activity, suggest security improvements.
+9. Decision Support: Help admin make informed decisions about scholarship approvals, teacher verifications.
+10. Be analytical, precise, and data-driven. Admin needs actionable insights, not generic answers.
+"""
+}
+
+
+def get_ai_response(user_message: str, file_data=None, file_type=None, mode: str = "student", context: dict = None):
+    """
+    mode: 'student' | 'teacher' | 'admin'
+    context: optional dict with live data to inject (e.g. stats for admin)
+    """
     if not client:
         return "Chatbot is currently offline (API key missing). Please contact admin."
     try:
-        system_instruction = """
-        You are the official 'ScholarIQ' AI Counselor. 
-        1. Language Support: Always support both Urdu (Urdu script/Roman Urdu) and English. Respond in the user's chosen language.
-        2. Grounded in Data: You must ONLY provide information based on the verified scholarship data provided to you from our PostgreSQL database[cite: 31, 185]. 
-        3. Data Comparison: If a user asks to compare 2 or 3 universities, RETURN A JSON ARRAY ONLY. Do not add any text before or after. The JSON should be an array of objects where keys are "Feature" and university names. Example: [{"Feature": "Tuition", "Uni A": "$10k", "Uni B": "$12k"}, {"Feature": "Min CGPA", "Uni A": "3.0", "Uni B": "3.5"}]. Compare them based on: Tuition Fees, GPA Requirements, Deadline, and Country[cite: 141, 156].
-        4. Verification: If a scholarship is flagged as 'suspicious' in our database, warn the user immediately[cite: 150, 438].
-        5. Speed: Be precise and avoid unnecessary talk to ensure the fastest response time[cite: 740, 1024].
-        6. Handling Unknowns: If the data for a specific university is not in our database, politely tell the user that it's currently unverified and offer to help with available options.
-        """
+        system_instruction = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["student"])
+
+        # Inject live context data if provided (useful for admin)
+        if context:
+            context_text = "\n\nLIVE PLATFORM DATA (use this to answer analytics questions):\n"
+            for key, value in context.items():
+                context_text += f"- {key}: {value}\n"
+            system_instruction += context_text
 
         messages = [{"role": "system", "content": system_instruction}]
 
-        # User ka message content prepare karein
         user_content = [{"type": "text", "text": user_message}]
 
-        # Agar koi file hai to usay add karein
         if file_data and file_type:
             processed = process_file(file_data, file_type)
             if processed and processed["type"] == "text":
-                # PDF Text ko message mein jod do
                 user_content[0]["text"] += f"\n\n{processed['content']}"
             elif processed and processed["type"] == "image":
-                # Image ko alag se jod do
                 user_content.append(processed["content"])
 
         messages.append({"role": "user", "content": user_content})
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Best & Cheapest Vision Model
+            model="gpt-4o-mini",
             messages=messages,
-            max_tokens=600,
+            max_tokens=700,
             temperature=0.7
         )
 
         return response.choices[0].message.content
 
     except Exception as e:
-        print(f"Chatbot Error: {e}")
-        return "I am having trouble analyzing the file. Please try again."
+        print(f"Chatbot Error [{mode}]: {e}")
+        return "I am having trouble right now. Please try again."

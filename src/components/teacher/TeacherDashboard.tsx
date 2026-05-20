@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { toast } from "sonner";
-import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, Link2 } from "lucide-react";
+import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, HelpCircle } from "lucide-react";
 
 const TEST_TYPES = ["IELTS", "TOEFL", "GRE", "GMAT", "PTE", "TestDaF", "Duolingo", "SAT"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -16,7 +16,7 @@ const TEST_COLORS: Record<string, string> = {
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "courses" | "students" | "create" | "my-classes" | "meeting-links" | "live-classes" | "quizzes">("overview");
+  const [tab, setTab] = useState<"overview" | "courses" | "students" | "create" | "meetings" | "quizzes" | "fees">("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [profile, setProfile] = useState<any>(null);
@@ -38,17 +38,24 @@ export default function TeacherDashboard() {
   const [showLessonForm, setShowLessonForm] = useState(false);
   const [showLiveForm, setShowLiveForm] = useState(false);
   const [showQuizForm, setShowQuizForm] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [expandedQuizId, setExpandedQuizId] = useState<number | null>(null);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [questionForm, setQuestionForm] = useState({
+    question: "", options: ["", "", "", ""], correct_answer: "A", explanation: "", difficulty: "Medium"
+  });
 
   const fetchAll = async () => {
     try {
       const p = await api.request("/teacher/profile");
       setProfile(p); setIsTeacher(true); setIsStudent(false);
-      const [a, c, s] = await Promise.all([
-        api.request("/teacher/analytics"),
+      const [a, c, s, pending] = await Promise.all([
+        api.request("/teacher/analytics").catch(() => ({ total_courses: 0, total_students: 0, total_quiz_attempts: 0, average_score: 0, pass_rate: 0, pending_payments: 0 })),
         api.request("/teacher/courses"),
         api.request("/teacher/students"),
+        api.request("/teacher/payments/pending"),
       ]);
-      setAnalytics(a); setCourses(c); setStudents(s);
+      setAnalytics(a); setCourses(c); setStudents(s); setPendingPayments(pending);
     } catch {
       // Not a teacher, check if student
       try {
@@ -125,6 +132,54 @@ export default function TeacherDashboard() {
     } catch (e: any) { toast.error(e.message); }
   };
 
+  const loadQuizQuestions = async (quizId: number) => {
+    try {
+      const data = await api.request(`/teacher/quizzes/${quizId}`);
+      setQuizQuestions(data.questions || []);
+      setExpandedQuizId(quizId);
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const addQuizQuestion = async (quizId: number) => {
+    const opts = questionForm.options.filter(o => o.trim());
+    if (!questionForm.question.trim() || opts.length < 2) {
+      toast.error("Question and at least 2 options required");
+      return;
+    }
+    try {
+      await api.request(`/teacher/quizzes/${quizId}/questions`, {
+        method: "POST",
+        body: JSON.stringify({
+          question: questionForm.question,
+          options: opts,
+          correct_answer: questionForm.correct_answer,
+          explanation: questionForm.explanation,
+          difficulty: questionForm.difficulty,
+        }),
+      });
+      toast.success("Question added!");
+      setQuestionForm({ question: "", options: ["", "", "", ""], correct_answer: "A", explanation: "", difficulty: "Medium" });
+      loadQuizQuestions(quizId);
+      fetchAll();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const approvePayment = async (enrollmentId: number) => {
+    try {
+      await api.request(`/teacher/enrollments/${enrollmentId}/approve-payment`, { method: "POST" });
+      toast.success("Payment approved — student can access classes!");
+      fetchAll();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const rejectPayment = async (enrollmentId: number) => {
+    try {
+      await api.request(`/teacher/enrollments/${enrollmentId}/reject-payment`, { method: "POST", body: JSON.stringify({ reason: "Payment not verified" }) });
+      toast.warning("Payment rejected");
+      fetchAll();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
   if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-gray-500 text-lg">Loading...</div></div>;
 
   // STUDENT VIEW - Show enrolled courses with meeting links and scheduled quizzes
@@ -141,8 +196,8 @@ export default function TeacherDashboard() {
         <div className="bg-white border-b px-6 py-4 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-black text-gray-900">My Live Classes</h1>
-              <p className="text-sm text-gray-500 mt-1">Your enrolled courses, meeting links & scheduled quizzes</p>
+              <h1 className="text-2xl font-black text-gray-900">My Classes & Test Prep</h1>
+              <p className="text-sm text-gray-500 mt-1">Enrolled courses — pay fee to unlock meeting links, live classes & quizzes</p>
             </div>
             <button onClick={() => navigate("/courses")} className="bg-indigo-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">
               Browse More Courses
@@ -194,9 +249,13 @@ export default function TeacherDashboard() {
                         <p className="text-sm text-gray-500">{course.subject} · {course.teacher_name}</p>
                       </div>
                     </div>
-                    <button onClick={() => navigate(`/courses/${course.id}`)} className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-200">
-                      Open Course →
-                    </button>
+                    <div className="flex flex-col items-end gap-1">
+                      {course.has_access === false && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">Fee pending</span>}
+                      {course.has_access && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Paid</span>}
+                      <button onClick={() => navigate(`/courses/${course.id}`)} className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-200">
+                        Open Course →
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -216,12 +275,12 @@ export default function TeacherDashboard() {
                               {link.time && <span className="text-xs font-bold text-indigo-600 bg-white px-2 py-0.5 rounded">{link.time}</span>}
                             </div>
                             <p className="text-xs text-gray-500 mb-2">{link.platform} · {link.description || "Daily Class"}</p>
-                            {link.link ? (
+                            {link.link && course.has_access !== false ? (
                               <a href={link.link} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-indigo-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-indigo-700">
                                 Join Class
                               </a>
                             ) : (
-                              <span className="block text-center text-xs text-gray-400 py-2">Link hidden</span>
+                              <span className="block text-center text-xs text-amber-600 py-2">Pay fee to unlock</span>
                             )}
                           </div>
                         ))}
@@ -309,8 +368,11 @@ export default function TeacherDashboard() {
   const navItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard, color: "#6366f1" },
     { id: "courses", label: "My Courses", icon: BookOpen, color: "#2563eb" },
-    { id: "students", label: "Students", icon: Users, color: "#0891b2" },
-    { id: "create", label: "Create Course", icon: Plus, color: "#059669" },
+    { id: "meetings", label: "Classes & Links", icon: Video, color: "#0891b2" },
+    { id: "quizzes", label: "Quizzes", icon: Zap, color: "#7c3aed" },
+    { id: "fees", label: "Fee Payments", icon: DollarSign, color: "#059669" },
+    { id: "students", label: "Students", icon: Users, color: "#d97706" },
+    { id: "create", label: "Create Course", icon: Plus, color: "#6366f1" },
   ];
 
   return (
@@ -398,9 +460,12 @@ export default function TeacherDashboard() {
             </h1>
             <p className="text-sm text-gray-400">
               {tab === "overview" && "Your teaching summary and quick actions"}
-              {tab === "courses" && "Manage your courses, lessons, and class links"}
-              {tab === "students" && "View all enrolled students"}
-              {tab === "create" && "Create a new course for your students"}
+              {tab === "courses" && "Manage courses, lessons, meetings, and quizzes"}
+              {tab === "meetings" && "All meeting links and live classes"}
+              {tab === "quizzes" && "Manage quizzes and questions"}
+              {tab === "fees" && "Approve student fee payments"}
+              {tab === "students" && "View enrolled students and progress"}
+              {tab === "create" && "Create a new test-prep course with fee"}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -425,8 +490,8 @@ export default function TeacherDashboard() {
               {[
                 { label: "Total Courses", value: analytics.total_courses, icon: BookOpen, bg: "#eef2ff", iconColor: "#6366f1", border: "#c7d2fe" },
                 { label: "Total Students", value: analytics.total_students, icon: Users, bg: "#eff6ff", iconColor: "#2563eb", border: "#bfdbfe" },
+                { label: "Pending Fees", value: analytics.pending_payments ?? 0, icon: DollarSign, bg: "#f0fdf4", iconColor: "#059669", border: "#bbf7d0" },
                 { label: "Quiz Attempts", value: analytics.total_quiz_attempts, icon: Zap, bg: "#f5f3ff", iconColor: "#7c3aed", border: "#ddd6fe" },
-                { label: "Avg Score", value: `${analytics.average_score}%`, icon: Star, bg: "#fffbeb", iconColor: "#d97706", border: "#fde68a" },
               ].map(s => (
                 <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: `1px solid ${s.border}` }}>
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: s.bg }}>
@@ -464,6 +529,11 @@ export default function TeacherDashboard() {
                   <button onClick={() => setTab("students")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#f0fdf4", color: "#059669" }}>
                     <Users size={16} /> View All Students
                   </button>
+                  {(analytics.pending_payments ?? 0) > 0 && (
+                    <button onClick={() => setTab("fees")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#fffbeb", color: "#d97706" }}>
+                      <DollarSign size={16} /> {analytics.pending_payments} Pending Payment(s)
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -771,16 +841,19 @@ export default function TeacherDashboard() {
                       {c.quizzes?.length > 0 && (
                         <div className="space-y-2 mb-4">
                           {c.quizzes.map((q: any) => (
-                            <div key={q.id} className="bg-white rounded-lg border p-3 flex items-center justify-between">
+                            <div key={q.id} className="bg-white rounded-lg border p-3 space-y-3">
+                              <div className="flex items-center justify-between">
                               <div>
                                 <p className="font-semibold text-sm text-gray-900">{q.title}</p>
-                                <p className="text-xs text-gray-500">{q.section} · {q.time_limit_minutes}min · Pass: {q.pass_score}%</p>
+                                <p className="text-xs text-gray-500">{q.section} · {q.time_limit_minutes}min · Pass: {q.pass_score}% · {q.question_count ?? 0} Qs</p>
                                 {q.scheduled_at && (
                                   <p className="text-xs text-amber-600 mt-1">
                                     📅 Scheduled: {new Date(q.scheduled_at).toLocaleString()}
                                   </p>
                                 )}
                               </div>
+                              <div className="flex gap-2">
+                              <button onClick={() => loadQuizQuestions(q.id)} className="text-xs bg-purple-100 text-purple-700 px-2 py-1.5 rounded-lg font-bold">+ Questions</button>
                               <button
                                 onClick={async () => {
                                   if (!confirm("Delete this quiz permanently?")) return;
@@ -795,6 +868,27 @@ export default function TeacherDashboard() {
                               >
                                 <Trash2 size={14} />
                               </button>
+                              </div>
+                              </div>
+                              {expandedQuizId === q.id && (
+                                <div className="border-t pt-3 space-y-2">
+                                  {quizQuestions.map((qq: any, qi: number) => (
+                                    <div key={qq.id} className="text-xs bg-gray-50 p-2 rounded">{qi + 1}. {qq.question}</div>
+                                  ))}
+                                  <textarea className="w-full border rounded-lg p-2 text-sm" rows={2} placeholder="Question*" value={questionForm.question} onChange={e => setQuestionForm(p => ({ ...p, question: e.target.value }))} />
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {questionForm.options.map((opt, i) => (
+                                      <input key={i} className="border rounded p-2 text-sm" placeholder={`Opt ${["A","B","C","D"][i]}`} value={opt} onChange={e => { const o = [...questionForm.options]; o[i] = e.target.value; setQuestionForm(p => ({ ...p, options: o })); }} />
+                                    ))}
+                                  </div>
+                                  <div className="flex gap-2 items-center">
+                                    <select className="border rounded p-2 text-sm" value={questionForm.correct_answer} onChange={e => setQuestionForm(p => ({ ...p, correct_answer: e.target.value }))}>
+                                      {["A","B","C","D"].map(x => <option key={x}>{x}</option>)}
+                                    </select>
+                                    <button onClick={() => addQuizQuestion(q.id)} className="ml-auto bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-bold">Save</button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -824,6 +918,92 @@ export default function TeacherDashboard() {
           </div>
         )}
 
+        {/* MEETINGS - all courses */}
+        {tab === "meetings" && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">Manage daily meeting links and live classes per course in <button className="text-indigo-600 font-bold" onClick={() => setTab("courses")}>My Courses → Manage</button>, or overview below.</p>
+            {courses.map(c => (
+              <div key={c.id} className="bg-white rounded-2xl border p-5 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl text-white font-bold flex items-center justify-center text-xs" style={{ backgroundColor: TEST_COLORS[c.test_type] || "#6366f1" }}>{c.test_type}</div>
+                  <div>
+                    <h3 className="font-black text-gray-900">{c.title}</h3>
+                    <p className="text-xs text-gray-500">PKR {c.price || "Free"} · {c.meeting_links?.length || 0} links · {c.live_classes?.length || 0} live classes</p>
+                  </div>
+                  <button onClick={() => { setTab("courses"); setSelectedCourse(c); }} className="ml-auto text-sm bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg font-bold">Manage</button>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {(c.meeting_links || []).map((link: any) => (
+                    <div key={link.id} className="bg-indigo-50 rounded-xl p-3 border border-indigo-100">
+                      <p className="font-semibold text-sm">{new Date(link.date).toLocaleDateString()} {link.time && `· ${link.time}`}</p>
+                      <p className="text-xs text-gray-500">{link.platform}</p>
+                      <a href={link.link} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 font-bold mt-1 inline-block">Open link →</a>
+                    </div>
+                  ))}
+                  {(c.live_classes || []).map((lc: any) => (
+                    <div key={lc.id} className="bg-green-50 rounded-xl p-3 border border-green-100">
+                      <p className="font-semibold text-sm">{lc.title}</p>
+                      <p className="text-xs text-gray-500">{new Date(lc.scheduled_at).toLocaleString()}</p>
+                      <a href={lc.meet_link} target="_blank" rel="noreferrer" className="text-xs text-green-700 font-bold mt-1 inline-block">Join →</a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* QUIZZES - all courses */}
+        {tab === "quizzes" && (
+          <div className="space-y-4">
+            {courses.every(c => !(c.quizzes?.length)) ? (
+              <div className="text-center py-16 bg-white rounded-2xl border text-gray-400">No quizzes yet. Create from My Courses.</div>
+            ) : courses.map(c => (c.quizzes || []).map((q: any) => (
+              <div key={q.id} className="bg-white rounded-2xl border p-4 flex items-center justify-between shadow-sm">
+                <div>
+                  <p className="font-bold text-gray-900">{q.title}</p>
+                  <p className="text-xs text-gray-500">{c.title} · {q.section} · {q.question_count ?? 0} questions</p>
+                </div>
+                <button onClick={() => { setTab("courses"); setSelectedCourse(c); loadQuizQuestions(q.id); }} className="text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg font-bold">Manage</button>
+              </div>
+            )))}
+          </div>
+        )}
+
+        {/* FEES */}
+        {tab === "fees" && (
+          <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+            <div className="p-5 border-b">
+              <h3 className="font-black text-gray-900">Pending Fee Payments ({pendingPayments.length})</h3>
+              <p className="text-sm text-gray-500 mt-1">Students submit JazzCash / Easypaisa / Bank transfer — you approve to unlock classes</p>
+            </div>
+            {pendingPayments.length === 0 ? (
+              <div className="text-center py-16 text-gray-400">No pending payments</div>
+            ) : (
+              <div className="divide-y">
+                {pendingPayments.map((p: any) => (
+                  <div key={p.enrollment_id} className="p-5 flex flex-wrap items-center gap-4 justify-between">
+                    <div>
+                      <p className="font-bold text-gray-900">{p.student_name}</p>
+                      <p className="text-sm text-gray-500">{p.course_title} · {p.test_type}</p>
+                      <p className="text-xs text-gray-400 mt-1">Fee: PKR {p.course_price} · Status: <span className="font-bold text-amber-600">{p.payment_status}</span></p>
+                      {p.payment_reference && <p className="text-xs mt-1">Ref: {p.payment_method} — {p.payment_reference}</p>}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => approvePayment(p.enrollment_id)} className="flex items-center gap-1 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-green-700">
+                        <CheckCircle size={14} /> Approve
+                      </button>
+                      <button onClick={() => rejectPayment(p.enrollment_id)} className="flex items-center gap-1 bg-red-100 text-red-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-200">
+                        <XCircle size={14} /> Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* STUDENTS */}
         {tab === "students" && (
           <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
@@ -836,7 +1016,7 @@ export default function TeacherDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b">
-                    <tr>{["Student", "Course", "Test", "Progress", "Avg Score", "Attempts", "Enrolled"].map(h => (
+                    <tr>{["Student", "Course", "Test", "Fee Status", "Progress", "Avg Score", "Actions"].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide">{h}</th>
                     ))}</tr>
                   </thead>
@@ -846,6 +1026,7 @@ export default function TeacherDashboard() {
                         <td className="px-4 py-3 font-semibold text-gray-900">{s.student_name}</td>
                         <td className="px-4 py-3 text-gray-600">{s.course_title}</td>
                         <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: TEST_COLORS[s.test_type] || "#6366f1" }}>{s.test_type}</span></td>
+                        <td className="px-4 py-3"><span className="text-xs font-bold">{s.course_price > 0 ? s.payment_status : "free"}</span></td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full" style={{ width: `${s.progress}%` }} /></div>
@@ -853,8 +1034,9 @@ export default function TeacherDashboard() {
                           </div>
                         </td>
                         <td className="px-4 py-3 font-bold text-indigo-600">{s.avg_score}%</td>
-                        <td className="px-4 py-3 text-gray-500">{s.quiz_attempts}</td>
-                        <td className="px-4 py-3 text-gray-400 text-xs">{new Date(s.enrolled_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          {s.payment_status === "submitted" && <button onClick={() => approvePayment(s.enrollment_id)} className="text-xs bg-green-600 text-white px-2 py-1 rounded font-bold">Approve</button>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { Zap, RefreshCw, CheckCircle, AlertTriangle, Clock, BarChart2 } from "lucide-react";
+import { Zap, RefreshCw, CheckCircle, AlertTriangle, Clock, BarChart2, KeyRound, XCircle } from "lucide-react";
 import { api } from "../../api";
 import { toast } from "sonner";
 
@@ -34,7 +34,7 @@ export function AutoUpdater() {
         setIsRunning(true);
         toast.info("AI Auto-Update scan started... This may take 1-2 minutes.");
         try {
-            const result = await api.admin.triggerAutoUpdate(15);
+            const result = await api.admin.triggerAutoUpdate(6);
             setLastResult(result);
             toast.success(`Scan complete! Checked: ${result.checked} | Updated: ${result.updated}`);
             fetchData();
@@ -59,7 +59,7 @@ export function AutoUpdater() {
                         AI Auto-Update System
                     </h2>
                     <p className="text-gray-500 text-sm mt-1">
-                        Uses Serper (Google) + GPT-4o to detect scholarship changes automatically every 3 days
+                        Uses Serper (Google) + GPT-4o to detect scholarship changes automatically every 4 days
                     </p>
                 </div>
                 <Button
@@ -68,7 +68,7 @@ export function AutoUpdater() {
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6"
                 >
                     <RefreshCw className={`w-4 h-4 mr-2 ${isRunning ? "animate-spin" : ""}`} />
-                    {isRunning ? "Running Scan..." : "Run Now (15 Scholarships)"}
+                    {isRunning ? "Running Scan..." : "Run Now (6 Scholarships)"}
                 </Button>
             </div>
 
@@ -78,8 +78,8 @@ export function AutoUpdater() {
                     {[
                         { label: "Total Live", value: status.total_approved, icon: BarChart2, color: "text-indigo-600" },
                         { label: "Never Checked", value: status.never_checked, icon: AlertTriangle, color: "text-yellow-600" },
-                        { label: "Checked (3d)", value: status.checked_in_last_3_days, icon: CheckCircle, color: "text-green-600" },
-                        { label: "Schedule", value: "3 Days", icon: Clock, color: "text-blue-600" },
+                        { label: "Checked (4d)", value: status.checked_in_last_4_days ?? 0, icon: CheckCircle, color: "text-green-600" },
+                        { label: "Schedule", value: "4 Days", icon: Clock, color: "text-blue-600" },
                     ].map((stat) => (
                         <Card key={stat.label} className="bg-white border-gray-200">
                             <CardContent className="p-4">
@@ -110,6 +110,16 @@ export function AutoUpdater() {
                         </div>
                         <p className="text-xs text-gray-400 mt-2">
                             Schedule: <strong>{status.schedule}</strong> · Batch size: <strong>{status.next_batch_size}</strong> scholarships per run
+                        {!status.api_keys_ok && (
+                            <span className="ml-3 inline-flex items-center gap-1 text-red-500 font-semibold">
+                                <XCircle size={13} /> API Keys missing — auto-update will skip!
+                            </span>
+                        )}
+                        {status.api_keys_ok && (
+                            <span className="ml-3 inline-flex items-center gap-1 text-green-600 font-semibold">
+                                <KeyRound size={13} /> API Keys OK
+                            </span>
+                        )}
                         </p>
                     </CardContent>
                 </Card>
@@ -177,7 +187,7 @@ export function AutoUpdater() {
                     <h3 className="font-bold text-indigo-800 mb-3">⚡ How This System Works</h3>
                     <div className="grid md:grid-cols-4 gap-3 text-sm">
                         {[
-                            { step: "1", title: "Every 3 Days", desc: "Scheduler picks 15 scholarships not checked recently" },
+                            { step: "1", title: "Every 4 Days", desc: "Scheduler picks 6 scholarships not checked recently" },
                             { step: "2", title: "Google Search", desc: "Serper API searches for latest info on each scholarship" },
                             { step: "3", title: "GPT-4o Analysis", desc: "AI compares old data vs new search results" },
                             { step: "4", title: "Auto-Update DB", desc: "Changed deadlines, amounts, or status updated automatically" },

@@ -24,8 +24,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BATCH_SIZE = 15  # scholarships per auto-update run
-DAYS_BETWEEN_CHECKS = 3  # check each scholarship every 3 days
+BATCH_SIZE = 6   # scholarships per run (small = stable, saves API credits)
+DAYS_BETWEEN_CHECKS = 4  # check each scholarship every 4 days (was 3)
 
 
 async def _serper_search(query: str) -> str:
@@ -113,9 +113,15 @@ Only include fields that actually changed. Do NOT guess."""
 
 async def auto_update_scholarships(db: Session, batch_size: int = BATCH_SIZE) -> dict:
     """
-    Main auto-update function. Processes a batch of scholarships.
-    Called by scheduler every 3 days.
+    Main auto-update function. Processes a small batch of scholarships.
+    Called by scheduler every 4 days. Batch kept small (6) to avoid
+    API timeouts and preserve Serper + OpenAI credits.
     """
+    # Guard: skip if API keys missing
+    if not os.getenv("SERPER_API_KEY") or not os.getenv("OPENAI_API_KEY"):
+        print("[AutoUpdater] Skipping: SERPER_API_KEY or OPENAI_API_KEY not set.")
+        return {"checked": 0, "updated": 0, "errors": 0, "skip_reason": "missing_api_keys"}
+
     print(f"[AutoUpdater] Starting scholarship auto-update run... (batch: {batch_size})")
     
     cutoff_date = datetime.now() - timedelta(days=DAYS_BETWEEN_CHECKS)
@@ -158,7 +164,7 @@ async def auto_update_scholarships(db: Session, batch_size: int = BATCH_SIZE) ->
                 "deadline": str(s.deadline.date()) if s.deadline else None,
                 "amount": s.amount,
                 "funding_type": s.funding_type,
-                "cgpa_min": s.cgpa_min,
+                "cgpa_min": s.min_cgpa,
                 "scholarship_url": s.scholarship_url
             }
 
@@ -210,8 +216,8 @@ async def auto_update_scholarships(db: Session, batch_size: int = BATCH_SIZE) ->
             s.last_auto_checked = datetime.now()
             checked += 1
             
-            # Rate limiting: small delay between API calls
-            await asyncio.sleep(1.5)
+            # Rate limiting: delay between API calls to avoid timeouts
+            await asyncio.sleep(2.5)
 
         except Exception as e:
             print(f"[AutoUpdater] Error processing {s.title}: {e}")

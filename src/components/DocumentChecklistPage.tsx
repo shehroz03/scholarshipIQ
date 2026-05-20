@@ -5,7 +5,6 @@ import {
     Search as SearchIcon, User, MessageSquare, Wallet, FileText, Check
 } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { useTheme } from "../context/ThemeContext";
 import { ThemeToggle } from "./ThemeToggle";
 import { Sidebar } from "./Sidebar";
 import { Button } from "./ui/button";
@@ -80,7 +79,7 @@ const DOCUMENT_CATEGORIES: DocumentCategory[] = [
 export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
     const navigate = useNavigate();
     const { status: userStatus, loading: loadingUser } = useUser();
-    const { isDark } = useTheme();
+    const isDark = true;
 
     const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>(() => {
         const saved = localStorage.getItem("scholariq_doc_checklist");

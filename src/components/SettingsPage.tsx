@@ -14,13 +14,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../api";
-import { useTheme } from "../context/ThemeContext";
-import { darkTheme, lightTheme } from "../styles/theme";
+import { darkTheme } from "../styles/theme";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
-  const { isDark } = useTheme();
-  const theme = isDark ? darkTheme : lightTheme;
+  const isDark = true;
+  const theme = darkTheme;
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState({

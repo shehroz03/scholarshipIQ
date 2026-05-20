@@ -132,6 +132,15 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
 def list_users(db: Session = Depends(get_db)):
     return db.query(models.User).order_by(models.User.id.desc()).limit(50).all()
 
+@router.delete("/users/{user_id}", dependencies=[Depends(get_current_admin)])
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
+    db.commit()
+    return {"message": f"User {user_id} deleted successfully"}
+
 # --- Scholarship Management ---
 @router.get("/scholarships", dependencies=[Depends(get_current_admin)])
 def list_scholarships(
@@ -647,9 +656,11 @@ def unarchive_scholarship(id: int, db: Session = Depends(get_db)):
 
 # --- AI Auto-Update System ---
 @router.post("/auto-update/run", dependencies=[Depends(get_current_admin)])
-async def trigger_auto_update(batch_size: int = 15, db: Session = Depends(get_db)):
+async def trigger_auto_update(batch_size: int = 6, db: Session = Depends(get_db)):
     """Manually trigger the AI scholarship auto-update scan."""
+    import os
     from app.services.scholarship_auto_updater import auto_update_scholarships
+    # Override guard for manual admin trigger — allow even if keys present check
     result = await auto_update_scholarships(db, batch_size=batch_size)
     return result
 
@@ -681,15 +692,21 @@ def get_auto_update_status(db: Session = Depends(get_db)):
     ).count()
     from datetime import timedelta
     recently = db.query(models.Scholarship).filter(
-        models.Scholarship.last_auto_checked >= datetime.now() - timedelta(days=3)
+        models.Scholarship.last_auto_checked >= datetime.now() - timedelta(days=4)
     ).count()
+    import os
+    serper_ok  = bool(os.getenv("SERPER_API_KEY", "").strip())
+    openai_ok  = bool(os.getenv("OPENAI_API_KEY", "").strip())
     return {
         "total_approved": total,
         "total_checked_ever": checked,
         "never_checked": never_checked,
-        "checked_in_last_3_days": recently,
-        "next_batch_size": 15,
-        "schedule": "Every 3 days at 4:00 AM"
+        "checked_in_last_4_days": recently,
+        "next_batch_size": 6,
+        "schedule": "Every 4 days at 4:00 AM",
+        "api_keys_ok": serper_ok and openai_ok,
+        "serper_key_set": serper_ok,
+        "openai_key_set": openai_ok,
     }
 
 
@@ -836,3 +853,238 @@ def get_teacher_stats(db: Session = Depends(get_db)):
         "approved": approved,
         "rejected": rejected,
     }
+
+
+# ─── ADMIN AI CHAT ───────────────────────────────────────────────────────────
+
+class AdminChatRequest(BaseModel):
+    message: str
+
+@router.post("/ai-chat", dependencies=[Depends(get_current_admin)])
+def admin_ai_chat(body: AdminChatRequest, db: Session = Depends(get_db)):
+    """Admin-specific AI with live platform data context injected."""
+    from app.services.chatbot import get_ai_response
+
+    # Inject live platform stats as context
+    total_users = db.query(models.User).count()
+    total_scholarships = db.query(models.Scholarship).count()
+    active_scholarships = db.query(models.Scholarship).filter(
+        models.Scholarship.is_active == True,
+        models.Scholarship.approval_status == "approved"
+    ).count()
+    suspicious_count = db.query(models.Scholarship).filter(models.Scholarship.is_suspicious == True).count()
+    pending_teachers = db.query(models.TeacherProfile).filter(models.TeacherProfile.approval_status == "pending").count()
+
+    context = {
+        "Total Registered Users": total_users,
+        "Total Scholarships in DB": total_scholarships,
+        "Active + Approved Scholarships (visible to users)": active_scholarships,
+        "Suspicious/Fraud Flagged Scholarships": suspicious_count,
+        "Teachers Pending Approval": pending_teachers,
+    }
+
+    reply = get_ai_response(body.message, mode="admin", context=context)
+    return {"reply": reply}
+
+
+# ─── PIPELINE REPORTS ────────────────────────────────────────────────────────
+
+@router.get("/pipeline/report", dependencies=[Depends(get_current_admin)])
+def pipeline_report(period: str = "monthly", db: Session = Depends(get_db)):
+    """
+    Weekly or Monthly pipeline report:
+    - Total scraped, staged, approved, rejected
+    - Auto-verify bot decisions
+    - Per-day breakdown
+    period: 'weekly' (7 days) | 'monthly' (30 days)
+    """
+    from app.db.models import ScholarshipStaging
+
+    days = 7 if period == "weekly" else 30
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+
+    # --- Overall pipeline counts from PipelineLog ---
+    logs = db.query(models.PipelineLog).filter(
+        models.PipelineLog.timestamp >= since,
+        models.PipelineLog.event_type == "run_summary"
+    ).all()
+
+    total_runs      = len(logs)
+    total_found     = sum(l.total_found or 0 for l in logs)
+    total_staged    = sum(l.staged or 0 for l in logs)
+    total_fraud_blocked = sum(l.skipped_fraud or 0 for l in logs)
+    total_duplicates    = sum(l.skipped_duplicate or 0 for l in logs)
+
+    # --- Auto-verify bot decisions from PipelineLog ---
+    av_logs = db.query(models.PipelineLog).filter(
+        models.PipelineLog.timestamp >= since,
+        models.PipelineLog.event_type == "auto_verify"
+    ).all()
+
+    bot_approved = sum(1 for l in av_logs if l.action_taken == "approved")
+    bot_rejected = sum(1 for l in av_logs if l.action_taken == "rejected")
+
+    # --- Admin manual overrides ---
+    admin_approved = db.query(models.PipelineLog).filter(
+        models.PipelineLog.timestamp >= since,
+        models.PipelineLog.event_type == "fraud_gate",
+        models.PipelineLog.triggered_by == "admin_override",
+        models.PipelineLog.action_taken == "approved"
+    ).count()
+
+    # --- Daily breakdown ---
+    daily_raw = db.query(
+        func.date(models.PipelineLog.timestamp).label("day"),
+        models.PipelineLog.action_taken,
+        func.count(models.PipelineLog.id).label("cnt")
+    ).filter(
+        models.PipelineLog.timestamp >= since,
+        models.PipelineLog.event_type == "auto_verify"
+    ).group_by(func.date(models.PipelineLog.timestamp), models.PipelineLog.action_taken).all()
+
+    daily_map = {}
+    for row in daily_raw:
+        day_str = str(row.day)
+        if day_str not in daily_map:
+            daily_map[day_str] = {"date": day_str, "approved": 0, "rejected": 0}
+        if row.action_taken == "approved":
+            daily_map[day_str]["approved"] = row.cnt
+        elif row.action_taken == "rejected":
+            daily_map[day_str]["rejected"] = row.cnt
+
+    daily_breakdown = sorted(daily_map.values(), key=lambda x: x["date"])
+
+    # --- Currently in staging (pending admin review) ---
+    pending_in_staging = db.query(ScholarshipStaging).filter(
+        ScholarshipStaging.review_status == "pending"
+    ).count()
+    rejected_in_staging = db.query(ScholarshipStaging).filter(
+        ScholarshipStaging.review_status == "rejected"
+    ).count()
+
+    # --- Total approved scholarships in production ---
+    total_live = db.query(models.Scholarship).filter(
+        models.Scholarship.approval_status == "approved",
+        models.Scholarship.is_active == True
+    ).count()
+
+    return {
+        "period": period,
+        "days": days,
+        "since": since.isoformat(),
+        "pipeline": {
+            "total_runs": total_runs,
+            "total_scraped": total_found,
+            "total_staged": total_staged,
+            "fraud_blocked": total_fraud_blocked,
+            "duplicates_skipped": total_duplicates,
+        },
+        "bot_decisions": {
+            "approved": bot_approved,
+            "rejected": bot_rejected,
+            "total": bot_approved + bot_rejected,
+            "approval_rate": round(bot_approved / max(bot_approved + bot_rejected, 1) * 100, 1),
+        },
+        "admin_overrides": admin_approved,
+        "staging_queue": {
+            "pending_review": pending_in_staging,
+            "rejected": rejected_in_staging,
+        },
+        "production": {
+            "total_live_scholarships": total_live,
+        },
+        "daily_breakdown": daily_breakdown,
+    }
+
+
+# ─── STAGED REVIEW QUEUE ─────────────────────────────────────────────────────
+
+@router.get("/staged/pending", dependencies=[Depends(get_current_admin)])
+def get_staged_pending(db: Session = Depends(get_db)):
+    """
+    Returns all staged scholarships that need admin review:
+    - status = pending (not yet processed by bot)
+    - status = rejected (bot rejected, admin can override)
+    Includes full scholarship data + URL for admin to verify manually.
+    """
+    from app.db.models import ScholarshipStaging
+    rows = db.query(ScholarshipStaging).filter(
+        ScholarshipStaging.review_status.in_(["pending", "rejected"])
+    ).order_by(ScholarshipStaging.scraped_at.desc()).all()
+
+    return [
+        {
+            "id": s.id,
+            "title": s.title,
+            "university": s.university_name_raw,
+            "country": s.country,
+            "city": s.city,
+            "degree_level": s.degree_level,
+            "funding_type": s.funding_type,
+            "scholarship_amount_value": s.scholarship_amount_value,
+            "scholarship_amount_numeric": s.scholarship_amount_numeric,
+            "tuition_fee_per_year": s.tuition_fee_per_year,
+            "min_cgpa": s.min_cgpa,
+            "min_ielts": s.min_ielts,
+            "min_toefl": s.min_toefl,
+            "eligibility": s.eligibility,
+            "duration_text": s.duration_text,
+            "description": s.description,
+            "scholarship_url": s.scholarship_url,
+            "website_url": s.website_url,
+            "fraud_risk_score": s.fraud_risk_score,
+            "fraud_risk_level": s.fraud_risk_level,
+            "fraud_reasons": json.loads(s.fraud_reasons) if s.fraud_reasons else [],
+            "review_status": s.review_status,
+            "scraped_at": s.scraped_at.isoformat() if s.scraped_at else None,
+        }
+        for s in rows
+    ]
+
+
+# ─── AUTO-VERIFY PIPELINE ────────────────────────────────────────────────────
+
+@router.get("/auto-verify/stats", dependencies=[Depends(get_current_admin)])
+def get_auto_verify_stats(db: Session = Depends(get_db)):
+    """Stats for admin: how many staged scholarships exist and their status."""
+    from app.services.auto_verify_service import get_auto_verify_stats
+    return get_auto_verify_stats(db)
+
+
+@router.get("/auto-verify/log", dependencies=[Depends(get_current_admin)])
+def get_auto_verify_log(limit: int = 100):
+    """Returns the auto-verification decision log for admin review."""
+    from app.services.auto_verify_service import get_auto_verify_log
+    return {"log": get_auto_verify_log(limit)}
+
+
+@router.post("/auto-verify/run", dependencies=[Depends(get_current_admin)])
+async def trigger_auto_verify(db: Session = Depends(get_db)):
+    """Manually trigger auto-verification of pending staged scholarships."""
+    from app.services.auto_verify_service import process_staged_scholarships
+    result = process_staged_scholarships(db, batch_size=200)
+    return result
+
+
+@router.post("/auto-verify/override/{staged_id}", dependencies=[Depends(get_current_admin)])
+def override_staged_decision(staged_id: int, action: str = Body(..., embed=True), db: Session = Depends(get_db)):
+    """
+    Admin manually overrides an auto-verify decision.
+    action: 'approve' or 'reject'
+    """
+    from app.db.models import ScholarshipStaging
+    from app.services.auto_verify_service import _promote_to_production
+    staged = db.query(ScholarshipStaging).filter(ScholarshipStaging.id == staged_id).first()
+    if not staged:
+        raise HTTPException(404, "Staged scholarship not found")
+    if action == "approve":
+        prod_s = _promote_to_production(db, staged)
+        staged.review_status = "approved"
+        db.commit()
+        return {"message": f"Manually approved and promoted to production", "title": staged.title}
+    elif action == "reject":
+        staged.review_status = "rejected"
+        db.commit()
+        return {"message": f"Manually rejected", "title": staged.title}
+    else:
+        raise HTTPException(400, "action must be 'approve' or 'reject'")

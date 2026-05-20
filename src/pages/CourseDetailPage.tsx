@@ -29,6 +29,8 @@ export default function CourseDetailPage() {
   const [quizLoading, setQuizLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [quizTimer, setQuizTimer] = useState(0);
+  const [paymentForm, setPaymentForm] = useState({ payment_method: "JazzCash", payment_reference: "", amount_paid: 0 });
+  const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const load = async () => {
     try {
@@ -49,10 +51,26 @@ export default function CourseDetailPage() {
   const handleEnroll = async () => {
     setEnrolling(true);
     try {
-      await api.request(`/courses/${id}/enroll`, { method: "POST" });
-      toast.success("Enrolled successfully! 🎉"); load();
+      const res = await api.request(`/courses/${id}/enroll`, { method: "POST" });
+      toast.success(res.message || "Enrolled!");
+      if (res.fee_required) setPaymentForm(p => ({ ...p, amount_paid: res.fee_required }));
+      load();
     } catch (e: any) { toast.error(e.message); }
     finally { setEnrolling(false); }
+  };
+
+  const handleSubmitPayment = async () => {
+    if (!paymentForm.payment_reference.trim()) { toast.error("Transaction ID required"); return; }
+    setSubmittingPayment(true);
+    try {
+      await api.request(`/courses/${id}/submit-payment`, {
+        method: "POST",
+        body: JSON.stringify(paymentForm),
+      });
+      toast.success("Payment submitted! Teacher will verify soon.");
+      load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setSubmittingPayment(false); }
   };
 
   const markComplete = async (lessonId: number) => {
@@ -115,11 +133,26 @@ export default function CourseDetailPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-green-600 font-bold text-sm"><CheckCircle size={16} />Enrolled</div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full" style={{ width: `${course.progress}%` }} /></div>
-                  <div className="text-xs text-gray-400">{course.progress}% complete</div>
+                  <p className="text-xs text-gray-400">{course.progress}% complete</p>
+                  {!course.has_access && !course.is_free && (
+                    <div className="space-y-2 border-t pt-2 mt-2">
+                      {course.payment_status === "submitted" ? (
+                        <p className="text-xs text-amber-600">Payment under review</p>
+                      ) : (
+                        <>
+                          <select className="w-full border rounded p-2 text-xs" value={paymentForm.payment_method} onChange={e => setPaymentForm(p => ({ ...p, payment_method: e.target.value }))}>
+                            {["JazzCash", "Easypaisa", "Bank Transfer"].map(m => <option key={m}>{m}</option>)}
+                          </select>
+                          <input className="w-full border rounded p-2 text-xs" placeholder="Txn ID*" value={paymentForm.payment_reference} onChange={e => setPaymentForm(p => ({ ...p, payment_reference: e.target.value }))} />
+                          <button onClick={handleSubmitPayment} disabled={submittingPayment} className="w-full bg-amber-500 text-white text-xs font-bold py-2 rounded-lg">Submit Payment</button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <button onClick={handleEnroll} disabled={enrolling} className="w-full text-white font-black py-3 rounded-xl transition-all hover:opacity-90 disabled:opacity-60" style={{ backgroundColor: accent }}>
-                  {enrolling ? "Enrolling..." : "Enroll Now →"}
+                  {enrolling ? "Enrolling..." : course.is_free ? "Enroll Free →" : "Enroll & Pay →"}
                 </button>
               )}
             </div>
@@ -271,6 +304,7 @@ export default function CourseDetailPage() {
                       <button
                         onClick={() => {
                           if (!course.enrolled) { toast.warning("Enroll first!"); return; }
+                          if (!course.has_access) { toast.warning("Pay fee and get teacher approval first!"); return; }
                           if (isScheduled) { toast.warning(`Quiz available on ${scheduleDate?.toLocaleString()}`); return; }
                           openQuiz(q.id);
                         }}
@@ -300,7 +334,7 @@ export default function CourseDetailPage() {
                     <div className="font-semibold text-gray-900 text-sm">{lc.title}</div>
                     <div className="text-xs text-gray-400 mt-1 flex items-center gap-1"><Calendar size={10} />{new Date(lc.scheduled_at).toLocaleString("en-PK")}</div>
                     <div className="text-xs text-gray-400">{lc.platform} · {lc.duration_minutes} min</div>
-                    {lc.meet_link && course.enrolled && (
+                    {lc.meet_link && course.has_access && (
                       <a href={lc.meet_link} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-xs text-green-600 font-bold hover:underline"><ExternalLink size={12} />Join Class</a>
                     )}
                     {!course.enrolled && <div className="text-xs text-gray-300 mt-1">🔒 Enroll to see link</div>}
@@ -311,7 +345,7 @@ export default function CourseDetailPage() {
           )}
 
           {/* DAILY MEETING LINKS - Enrolled Students Only */}
-          {course.enrolled && course.meeting_links?.length > 0 && (
+          {course.has_access && course.meeting_links?.length > 0 && (
             <div className="bg-white rounded-2xl border shadow-sm border-indigo-200">
               <div className="p-4 border-b flex items-center justify-between bg-indigo-50">
                 <div className="flex items-center gap-2">

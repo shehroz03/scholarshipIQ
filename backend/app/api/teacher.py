@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Body
+from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db import models
@@ -142,7 +143,8 @@ def list_my_courses(db: Session = Depends(get_db), current_user: models.User = D
                 "section": q.section,
                 "scheduled_at": q.scheduled_at.isoformat() if q.scheduled_at else None,
                 "time_limit_minutes": q.time_limit_minutes,
-                "pass_score": q.pass_score
+                "pass_score": q.pass_score,
+                "question_count": len(q.questions),
             }
             for q in c.quizzes
         ]
@@ -506,6 +508,39 @@ def delete_meeting_link(link_id: int, db: Session = Depends(get_db), current_use
     return {"message": "Meeting link deleted"}
 
 
+# ── QUIZ DETAIL (teacher) ──────────────────────
+
+@router.get("/quizzes/{quiz_id}")
+def get_quiz_for_teacher(quiz_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    quiz = db.query(models.Quiz).join(models.Course).filter(
+        models.Quiz.id == quiz_id, models.Course.teacher_id == teacher.id
+    ).first()
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    questions = [
+        {
+            "id": q.id,
+            "question": q.question,
+            "options": json.loads(q.options),
+            "correct_answer": q.correct_answer,
+            "explanation": q.explanation,
+            "difficulty": q.difficulty,
+            "order": q.order,
+        }
+        for q in quiz.questions
+    ]
+    return {
+        "id": quiz.id,
+        "title": quiz.title,
+        "section": quiz.section,
+        "scheduled_at": quiz.scheduled_at.isoformat() if quiz.scheduled_at else None,
+        "time_limit_minutes": quiz.time_limit_minutes,
+        "pass_score": quiz.pass_score,
+        "questions": questions,
+    }
+
+
 # ── STUDENT MANAGEMENT ─────────────────────────
 
 @router.get("/students")
@@ -520,16 +555,85 @@ def get_my_students(db: Session = Depends(get_db), current_user: models.User = D
         avg_score = db.query(models.QuizAttempt).filter(models.QuizAttempt.user_id == e.user_id).all()
         avg = round(sum(a.score for a in avg_score) / len(avg_score), 1) if avg_score else 0
         result.append({
+            "enrollment_id": e.id,
             "student_name": e.user.full_name or e.user.email,
             "student_email": e.user.email,
+            "course_id": e.course_id,
             "course_title": e.course.title,
+            "course_price": e.course.price,
             "test_type": e.course.test_type,
             "progress": e.progress_percent,
             "enrolled_at": e.enrolled_at.isoformat(),
             "quiz_attempts": attempts,
             "avg_score": avg,
+            "payment_status": e.payment_status,
+            "payment_method": e.payment_method,
+            "payment_reference": e.payment_reference,
+            "amount_paid": e.amount_paid,
         })
     return result
+
+
+@router.get("/payments/pending")
+def get_pending_payments(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    enrollments = db.query(models.Enrollment).join(models.Course).filter(
+        models.Course.teacher_id == teacher.id,
+        models.Enrollment.payment_status.in_(["pending", "submitted"]),
+        models.Course.price > 0,
+    ).all()
+    return [
+        {
+            "enrollment_id": e.id,
+            "student_name": e.user.full_name or e.user.email,
+            "student_email": e.user.email,
+            "course_title": e.course.title,
+            "test_type": e.course.test_type,
+            "course_price": e.course.price,
+            "payment_status": e.payment_status,
+            "payment_method": e.payment_method,
+            "payment_reference": e.payment_reference,
+            "amount_paid": e.amount_paid,
+            "enrolled_at": e.enrolled_at.isoformat(),
+        }
+        for e in enrollments
+    ]
+
+
+@router.post("/enrollments/{enrollment_id}/approve-payment")
+def approve_payment(enrollment_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    teacher = get_teacher(db, current_user.id)
+    enrollment = db.query(models.Enrollment).join(models.Course).filter(
+        models.Enrollment.id == enrollment_id,
+        models.Course.teacher_id == teacher.id,
+    ).first()
+    if not enrollment:
+        raise HTTPException(404, "Enrollment not found")
+    enrollment.payment_status = "paid"
+    enrollment.paid_at = datetime.now()
+    if enrollment.amount_paid is None:
+        enrollment.amount_paid = enrollment.course.price
+    db.commit()
+    return {"message": "Payment approved. Student now has full access.", "payment_status": "paid"}
+
+
+@router.post("/enrollments/{enrollment_id}/reject-payment")
+def reject_payment(
+    enrollment_id: int,
+    reason: str = Body("Payment could not be verified"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    teacher = get_teacher(db, current_user.id)
+    enrollment = db.query(models.Enrollment).join(models.Course).filter(
+        models.Enrollment.id == enrollment_id,
+        models.Course.teacher_id == teacher.id,
+    ).first()
+    if not enrollment:
+        raise HTTPException(404, "Enrollment not found")
+    enrollment.payment_status = "rejected"
+    db.commit()
+    return {"message": reason, "payment_status": "rejected"}
 
 
 @router.get("/analytics")
@@ -543,6 +647,15 @@ def get_teacher_analytics(db: Session = Depends(get_db), current_user: models.Us
     all_attempts = db.query(models.QuizAttempt).join(models.Quiz).filter(models.Quiz.course_id.in_(course_ids)).all()
     avg_score = round(sum(a.score for a in all_attempts) / len(all_attempts), 1) if all_attempts else 0
     pass_rate = round(sum(1 for a in all_attempts if a.passed) / len(all_attempts) * 100, 1) if all_attempts else 0
+    pending_payments = db.query(models.Enrollment).join(models.Course).filter(
+        models.Course.teacher_id == teacher.id,
+        models.Enrollment.payment_status.in_(["pending", "submitted"]),
+        models.Course.price > 0,
+    ).count()
+    paid_students = db.query(models.Enrollment).join(models.Course).filter(
+        models.Course.teacher_id == teacher.id,
+        models.Enrollment.payment_status == "paid",
+    ).count()
     return {
         "total_courses": len(courses),
         "total_students": total_students,
@@ -551,4 +664,38 @@ def get_teacher_analytics(db: Session = Depends(get_db), current_user: models.Us
         "total_quiz_attempts": len(all_attempts),
         "average_score": avg_score,
         "pass_rate": pass_rate,
+        "pending_payments": pending_payments,
+        "paid_students": paid_students,
     }
+
+
+# ─── TEACHER AI CHAT ──────────────────────────────────────────────────────────
+
+class TeacherChatRequest(PydanticBaseModel):
+    message: str
+
+@router.post("/ai-chat")
+def teacher_ai_chat(
+    body: TeacherChatRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Teacher-specific AI assistant with teacher context injected."""
+    from app.services.chatbot import get_ai_response
+
+    teacher = db.query(models.TeacherProfile).filter(
+        models.TeacherProfile.user_id == current_user.id
+    ).first()
+
+    context = {}
+    if teacher:
+        total_courses = db.query(models.Course).filter(models.Course.teacher_id == teacher.id).count()
+        context = {
+            "Teacher Name": current_user.full_name or current_user.email,
+            "Approval Status": teacher.approval_status,
+            "Specialization": teacher.specialization or "Not set",
+            "Total Courses Created": total_courses,
+        }
+
+    reply = get_ai_response(body.message, mode="teacher", context=context if context else None)
+    return {"reply": reply}

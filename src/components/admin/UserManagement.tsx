@@ -3,7 +3,9 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Badge } from "../../components/ui/badge";
 import { Avatar, AvatarFallback } from "../../components/ui/avatar";
+import { Trash2, Loader2 } from "lucide-react";
 import { api } from "../../api";
+import { toast } from "sonner";
 
 function formatDate(d: string | null | undefined) {
     if (!d) return "—";
@@ -16,10 +18,25 @@ function formatDate(d: string | null | undefined) {
 
 export function UserManagement() {
     const [users, setUsers] = useState<any[]>([]);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     useEffect(() => {
-        api.admin.getUsers().then(setUsers);
+        api.admin.getUsers().then(setUsers).catch(console.error);
     }, []);
+
+    const handleDelete = async (userId: number, userName: string) => {
+        if (!window.confirm(`Are you sure you want to delete "${userName}"?\nThis action cannot be undone.`)) return;
+        setDeletingId(userId);
+        try {
+            await api.admin.deleteUser(userId);
+            setUsers(prev => prev.filter(u => u.id !== userId));
+            toast.success(`User "${userName}" deleted.`);
+        } catch (err: any) {
+            toast.error(err.message || "Failed to delete user.");
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     return (
         <Card className="bg-white border-gray-200 text-gray-900 shadow-sm">
@@ -36,6 +53,7 @@ export function UserManagement() {
                             <TableHead className="text-gray-500 font-semibold">CGPA</TableHead>
                             <TableHead className="text-gray-500 font-semibold">Joined</TableHead>
                             <TableHead className="text-gray-500 font-semibold">Status</TableHead>
+                            <TableHead className="text-gray-500 font-semibold">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -67,9 +85,24 @@ export function UserManagement() {
                                 <TableCell className="text-gray-600 text-sm font-mono">{u.cgpa != null ? u.cgpa : "—"}</TableCell>
                                 <TableCell className="text-gray-500 text-xs">{formatDate(u.created_at)}</TableCell>
                                 <TableCell>
-                                    <Badge className={u.is_active ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-200" : "bg-red-100 text-red-700 hover:bg-red-200 border-red-200"}>
+                                    <Badge className={u.is_active
+                                        ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-200"
+                                        : "bg-red-100 text-red-700 hover:bg-red-200 border-red-200"}>
                                         {u.is_active ? "Active" : "Inactive"}
                                     </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <button
+                                        onClick={() => handleDelete(u.id, u.full_name || u.email)}
+                                        disabled={deletingId === u.id}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
+                                        style={{ color: "#f87171", backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}
+                                    >
+                                        {deletingId === u.id
+                                            ? <Loader2 size={13} className="animate-spin" />
+                                            : <Trash2 size={13} />}
+                                        Delete
+                                    </button>
                                 </TableCell>
                             </TableRow>
                         ))}

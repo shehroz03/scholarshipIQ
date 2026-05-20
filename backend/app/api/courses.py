@@ -14,7 +14,34 @@ from app.api.deps import get_current_user
 router = APIRouter(prefix="/courses", tags=["Courses"])
 
 
-def _serialize_course(c: models.Course, enrolled: bool = False, progress: int = 0):
+def _has_paid_access(enrollment: Optional[models.Enrollment], course: models.Course) -> bool:
+    if not enrollment:
+        return False
+    if course.price == 0:
+        return True
+    return enrollment.payment_status == "paid"
+
+
+def _enrollment_payment_info(enrollment: Optional[models.Enrollment], course: models.Course) -> dict:
+    if not enrollment:
+        return {
+            "payment_status": None,
+            "has_access": False,
+            "payment_method": None,
+            "payment_reference": None,
+            "amount_paid": None,
+        }
+    return {
+        "payment_status": enrollment.payment_status,
+        "has_access": _has_paid_access(enrollment, course),
+        "payment_method": enrollment.payment_method,
+        "payment_reference": enrollment.payment_reference,
+        "amount_paid": enrollment.amount_paid,
+        "paid_at": enrollment.paid_at.isoformat() if enrollment.paid_at else None,
+    }
+
+
+def _serialize_course(c: models.Course, enrolled: bool = False, progress: int = 0, enrollment: Optional[models.Enrollment] = None):
     teacher_name = c.teacher.user.full_name if c.teacher and c.teacher.user else "Unknown"
     return {
         "id": c.id,
@@ -36,6 +63,7 @@ def _serialize_course(c: models.Course, enrolled: bool = False, progress: int = 
         "enrolled": enrolled,
         "progress": progress,
         "created_at": c.created_at.isoformat(),
+        **_enrollment_payment_info(enrollment, c),
     }
 
 
@@ -57,9 +85,12 @@ def list_courses(
     if free_only:
         q = q.filter(models.Course.price == 0)
     courses = q.all()
-    enrolled_ids = {e.course_id for e in db.query(models.Enrollment).filter(models.Enrollment.user_id == current_user.id).all()}
-    progress_map = {e.course_id: e.progress_percent for e in db.query(models.Enrollment).filter(models.Enrollment.user_id == current_user.id).all()}
-    return [_serialize_course(c, c.id in enrolled_ids, progress_map.get(c.id, 0)) for c in courses]
+    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == current_user.id).all()
+    enrollment_map = {e.course_id: e for e in enrollments}
+    return [
+        _serialize_course(c, c.id in enrollment_map, enrollment_map[c.id].progress_percent if c.id in enrollment_map else 0, enrollment_map.get(c.id))
+        for c in courses
+    ]
 
 
 # ⚠️ IMPORTANT: /my/* and /quizzes/* routes MUST be defined BEFORE /{course_id}
@@ -68,7 +99,7 @@ def list_courses(
 @router.get("/my/enrolled")
 def my_courses(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == current_user.id).all()
-    return [_serialize_course(e.course, True, e.progress_percent) for e in enrollments]
+    return [_serialize_course(e.course, True, e.progress_percent, e) for e in enrollments]
 
 
 @router.get("/my/progress")
@@ -100,6 +131,10 @@ def get_quiz(quiz_id: int, db: Session = Depends(get_db), current_user: models.U
     ).first()
     if not enrollment:
         raise HTTPException(403, "Enroll in the course first")
+    if not _has_paid_access(enrollment, quiz.course):
+        raise HTTPException(403, "Fee payment required. Submit payment and wait for teacher approval.")
+    if quiz.scheduled_at and quiz.scheduled_at > datetime.now():
+        raise HTTPException(403, f"Quiz available from {quiz.scheduled_at.isoformat()}")
     questions = [
         {
             "id": q.id, "question": q.question,
@@ -133,6 +168,11 @@ def submit_quiz(
     quiz = db.query(models.Quiz).filter(models.Quiz.id == quiz_id).first()
     if not quiz:
         raise HTTPException(404, "Quiz not found")
+    enrollment = db.query(models.Enrollment).filter(
+        models.Enrollment.user_id == current_user.id, models.Enrollment.course_id == quiz.course_id
+    ).first()
+    if not enrollment or not _has_paid_access(enrollment, quiz.course):
+        raise HTTPException(403, "Fee payment required to submit quiz")
     questions = db.query(models.QuizQuestion).filter(models.QuizQuestion.quiz_id == quiz_id).all()
     correct = 0
     result_detail = []
@@ -178,6 +218,7 @@ def get_course_detail(course_id: int, db: Session = Depends(get_db), current_use
         models.Enrollment.course_id == course_id
     ).first()
     enrolled = bool(enrollment)
+    has_access = _has_paid_access(enrollment, course)
     completed_lessons = json.loads(enrollment.completed_lessons) if enrollment else []
     lessons = [
         {
@@ -185,8 +226,8 @@ def get_course_detail(course_id: int, db: Session = Depends(get_db), current_use
             "order": l.order, "has_video": bool(l.video_url),
             "is_free_preview": l.is_free_preview,
             "completed": l.id in completed_lessons,
-            "content": l.content if (enrolled or l.is_free_preview) else None,
-            "video_url": l.video_url if (enrolled or l.is_free_preview) else None,
+            "content": l.content if (has_access or l.is_free_preview) else None,
+            "video_url": l.video_url if (has_access or l.is_free_preview) else None,
         }
         for l in course.lessons
     ]
@@ -206,7 +247,7 @@ def get_course_detail(course_id: int, db: Session = Depends(get_db), current_use
             "id": lc.id, "title": lc.title, "platform": lc.platform,
             "scheduled_at": lc.scheduled_at.isoformat(),
             "duration_minutes": lc.duration_minutes,
-            "meet_link": lc.meet_link if enrolled else None,
+            "meet_link": lc.meet_link if has_access else None,
         }
         for lc in course.live_classes
         if not lc.is_cancelled and lc.scheduled_at > datetime.now()
@@ -217,7 +258,7 @@ def get_course_detail(course_id: int, db: Session = Depends(get_db), current_use
             "id": ml.id,
             "date": ml.date.isoformat(),
             "time": ml.time,
-            "link": ml.link if enrolled else None,
+            "link": ml.link if has_access else None,
             "platform": ml.platform,
             "description": ml.description,
         }
@@ -236,7 +277,7 @@ def get_course_detail(course_id: int, db: Session = Depends(get_db), current_use
         }
         for q in course.quizzes if q.is_published
     ]
-    result = _serialize_course(course, enrolled, enrollment.progress_percent if enrollment else 0)
+    result = _serialize_course(course, enrolled, enrollment.progress_percent if enrollment else 0, enrollment)
     result["lessons"] = lessons
     result["quizzes"] = quizzes_with_schedule
     result["upcoming_live_classes_detail"] = upcoming_classes
@@ -256,10 +297,91 @@ def enroll_course(course_id: int, db: Session = Depends(get_db), current_user: m
     ).first()
     if existing:
         raise HTTPException(400, "Already enrolled")
-    e = models.Enrollment(user_id=current_user.id, course_id=course_id)
+    is_free = course.price == 0
+    e = models.Enrollment(
+        user_id=current_user.id,
+        course_id=course_id,
+        payment_status="paid" if is_free else "pending",
+        amount_paid=course.price if is_free else None,
+        paid_at=datetime.now() if is_free else None,
+    )
     db.add(e)
     course.total_students += 1
     db.commit()
-    return {"message": "Enrolled successfully!", "course_title": course.title}
+    msg = "Enrolled successfully! You have full access." if is_free else "Enrolled! Submit fee payment to unlock classes, quizzes, and meeting links."
+    return {
+        "message": msg,
+        "course_title": course.title,
+        "payment_status": e.payment_status,
+        "has_access": is_free,
+        "fee_required": course.price,
+    }
+
+
+@router.post("/{course_id}/submit-payment")
+def submit_payment(
+    course_id: int,
+    payment_method: str = Body(...),
+    payment_reference: str = Body(...),
+    amount_paid: Optional[float] = Body(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    if course.price == 0:
+        raise HTTPException(400, "This course is free")
+    enrollment = db.query(models.Enrollment).filter(
+        models.Enrollment.user_id == current_user.id,
+        models.Enrollment.course_id == course_id,
+    ).first()
+    if not enrollment:
+        raise HTTPException(400, "Enroll in the course first")
+    if enrollment.payment_status == "paid":
+        raise HTTPException(400, "Fee already paid")
+    enrollment.payment_method = payment_method.strip()
+    enrollment.payment_reference = payment_reference.strip()
+    enrollment.amount_paid = amount_paid if amount_paid is not None else course.price
+    enrollment.payment_status = "submitted"
+    db.commit()
+    return {
+        "message": "Payment submitted! Teacher will verify and unlock your access.",
+        "payment_status": "submitted",
+    }
+
+
+@router.post("/{course_id}/lessons/{lesson_id}/complete")
+def complete_lesson(
+    course_id: int,
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    enrollment = db.query(models.Enrollment).filter(
+        models.Enrollment.user_id == current_user.id,
+        models.Enrollment.course_id == course_id,
+    ).first()
+    if not enrollment:
+        raise HTTPException(403, "Enroll first")
+    if not _has_paid_access(enrollment, course):
+        raise HTTPException(403, "Pay course fee to mark lessons complete")
+    lesson = db.query(models.Lesson).filter(
+        models.Lesson.id == lesson_id, models.Lesson.course_id == course_id
+    ).first()
+    if not lesson:
+        raise HTTPException(404, "Lesson not found")
+    completed = json.loads(enrollment.completed_lessons or "[]")
+    if lesson_id not in completed:
+        completed.append(lesson_id)
+        enrollment.completed_lessons = json.dumps(completed)
+    total = len(course.lessons)
+    enrollment.progress_percent = round(len(completed) / total * 100) if total else 0
+    enrollment.last_accessed = datetime.now()
+    db.commit()
+    return {"progress": enrollment.progress_percent, "completed_lessons": completed}
 
 

@@ -668,6 +668,12 @@ class Enrollment(Base):
     progress_percent: Mapped[int] = mapped_column(Integer, default=0)
     completed_lessons: Mapped[str] = mapped_column(Text, default="[]")  # JSON list of lesson IDs
     last_accessed: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    # Fee / payment: pending → submitted (student sent proof) → paid (teacher approved)
+    payment_status: Mapped[str] = mapped_column(String, default="paid")  # pending, submitted, paid, rejected
+    payment_method: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # JazzCash, Easypaisa, Bank
+    payment_reference: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    amount_paid: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     user: Mapped["User"] = relationship("User")
     course: Mapped["Course"] = relationship("Course", back_populates="enrollments")

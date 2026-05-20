@@ -86,6 +86,11 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
         setIsLoading(true);
         setError("");
         try {
+            if (role === "teacher" && !teacherData.cv_url && !teacherData.cv_file_url) {
+                setError("Please provide either a LinkedIn Profile URL or upload your CV — at least one is required.");
+                setIsLoading(false);
+                return;
+            }
             // Register with role and teacher data if applicable
             await api.auth.register({
                 email: formData.email,
@@ -497,7 +502,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
 
                                     <div className="space-y-2">
                                         <Label htmlFor="linkedinUrl" style={{ color: theme.text }}>
-                                            LinkedIn Profile URL <span className="text-red-500">*</span>
+                                            LinkedIn Profile URL <span className="text-xs text-gray-400 font-normal">(Optional)</span>
                                         </Label>
                                         <Input
                                             id="linkedinUrl"
@@ -507,14 +512,13 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                             onChange={(e) => setTeacherData(prev => ({ ...prev, cv_url: e.target.value }))}
                                             style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
                                             className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
-                                            required={role === "teacher"}
                                         />
-                                        <p className="text-xs text-gray-500">Admin will verify this link before approval</p>
+                                        <p className="text-xs text-gray-500">Provide LinkedIn URL or upload CV — at least one is required</p>
                                     </div>
 
                                     <div className="space-y-2">
                                         <Label htmlFor="cvFile" style={{ color: theme.text }}>
-                                            Upload CV / Resume <span className="text-red-500">*</span>
+                                            Upload CV / Resume <span className="text-xs text-gray-400 font-normal">(Optional)</span>
                                         </Label>
                                         <div className="relative">
                                             <input
@@ -531,7 +535,8 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                                     const formData = new FormData();
                                                     formData.append("file", file);
                                                     try {
-                                                        const res = await fetch("http://localhost:8000/auth/upload-cv", {
+                                                        const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+                                                        const res = await fetch(`${API_BASE}/auth/upload-cv`, {
                                                             method: "POST",
                                                             body: formData,
                                                         });
