@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, Loader2, Play, RefreshCw, ShieldCheck, AlertTriangle, Ban, Clock, Zap, KeyRound, BarChart2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Play, RefreshCw, ShieldCheck, AlertTriangle, Ban, Clock, Zap, KeyRound, BarChart2, CalendarX, Trash2, Archive } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
@@ -41,22 +41,82 @@ export function AutoVerifyDashboard() {
     const [updateRunning, setUpdateRunning] = useState(false);
     const [lastUpdateResult, setLastUpdateResult] = useState<any>(null);
 
+    // Expired Bot state
+    const [expiredCount, setExpiredCount] = useState<number | null>(null);
+    const [cleanupLog, setCleanupLog] = useState<any[]>([]);
+    const [cleanupStats, setCleanupStats] = useState<any>(null);
+    const [isArchiving, setIsArchiving] = useState(false);
+    const [expandedRuns, setExpandedRuns] = useState<Set<number>>(new Set());
+    const [showAllUpdates, setShowAllUpdates] = useState(false);
+
+    const toggleExpand = (i: number) => {
+        setExpandedRuns(prev => {
+            const next = new Set(prev);
+            next.has(i) ? next.delete(i) : next.add(i);
+            return next;
+        });
+    };
+
     const fetchData = async () => {
         try {
-            const [statsData, logData, updateStatusData, updateLogData] = await Promise.all([
+            const [statsData, logData, updateStatusData, updateLogData, expiredData, cleanupData, archivedData] = await Promise.all([
                 api.admin.getAutoVerifyStats(),
                 api.admin.getAutoVerifyLog(50),
                 api.admin.getAutoUpdateStatus(),
                 api.admin.getAutoUpdateLog(),
+                api.admin.getExpiredScholarshipCount(),
+                api.admin.getExpiredCleanupLog(),
+                api.admin.getArchivedScholarships(0, 500),
             ]);
             setStats(statsData);
             setLog(logData.log || []);
             setUpdateStatus(updateStatusData);
-            setUpdateLog(updateLogData.log || []);
+            setExpiredCount(expiredData.expired_count ?? 0);
+
+            // Build URL lookup map from DB by title (works for both archived + active)
+            const urlByTitle: Record<string, string> = {};
+            const urlById: Record<number, string> = {};
+            (archivedData || []).forEach((s: any) => {
+                if (s.id) urlById[s.id] = s.scholarship_url || s.website_url || "";
+                if (s.title) urlByTitle[s.title] = s.scholarship_url || s.website_url || "";
+            });
+
+            // Enrich cleanup log entries with URLs from DB
+            const enrichedLog = (cleanupData.log || []).map((run: any) => ({
+                ...run,
+                scholarships: (run.scholarships || []).map((s: any) => ({
+                    ...s,
+                    scholarship_url: s.scholarship_url || urlById[s.id] || urlByTitle[s.title] || ""
+                }))
+            }));
+            setCleanupLog(enrichedLog);
+            setCleanupStats({ total_runs: cleanupData.total_runs, total_archived_all_time: cleanupData.total_archived_all_time });
+
+            // Enrich update log entries with URLs from DB (by title match)
+            const enrichedUpdateLog = (updateLogData.log || []).map((entry: any) => ({
+                ...entry,
+                scholarship_url: entry.scholarship_url || urlByTitle[entry.title] || urlById[entry.scholarship_id] || ""
+            }));
+            setUpdateLog(enrichedUpdateLog);
         } catch (err: any) {
             toast.error("Failed to load pipeline data");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleArchiveExpired = async () => {
+        if (!window.confirm(`Archive ${expiredCount} expired scholarships? They will be hidden from users and AI recommendations.`)) return;
+        setIsArchiving(true);
+        try {
+            const result = await api.admin.archiveExpiredScholarships();
+            setExpiredCount(0);
+            toast.success(`✅ Done! ${result.archived_count} expired scholarships archived.`);
+            fetchData();
+        } catch {
+            toast.error("Failed to archive expired scholarships.");
+        } finally {
+            setIsArchiving(false);
         }
     };
 
@@ -177,6 +237,129 @@ export function AutoVerifyDashboard() {
                             {item.label}
                         </span>
                     ))}
+                </div>
+            </div>
+
+            {/* ─── EXPIRED BOT SECTION ─────────────────────────── */}
+            <div className="rounded-2xl border-2 p-5 space-y-4 bg-white shadow-sm" style={{ borderColor: expiredCount && expiredCount > 0 ? '#fecaca' : '#bbf7d0' }}>
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <CalendarX size={18} className="text-red-500" /> 🤖 Expired Scholarship Bot
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                            Runs daily at 4:10 AM — auto-archives all past-deadline scholarships from DB
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleArchiveExpired}
+                        disabled={isArchiving || expiredCount === 0}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-bold transition-all disabled:opacity-40 ${
+                            expiredCount && expiredCount > 0 ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed'
+                        }`}
+                    >
+                        <Trash2 size={14} className={isArchiving ? 'animate-pulse' : ''} />
+                        {isArchiving ? 'Archiving...' : expiredCount === 0 ? '✅ DB Clean' : `Archive ${expiredCount} Expired Now`}
+                    </button>
+                </div>
+
+                {/* Status banner */}
+                <div className={`rounded-xl border p-3 flex items-center gap-3 ${
+                    expiredCount && expiredCount > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+                }`}>
+                    <CalendarX size={18} className={expiredCount && expiredCount > 0 ? 'text-red-500 shrink-0' : 'text-green-600 shrink-0'} />
+                    <div className="flex-1">
+                        <p className={`font-bold text-sm ${ expiredCount && expiredCount > 0 ? 'text-red-800' : 'text-green-800' }`}>
+                            {expiredCount === null ? 'Checking...' : expiredCount === 0
+                                ? '✅ No expired scholarships — DB is clean!'
+                                : `⚠️ ${expiredCount} scholarships with passed deadlines still active in DB`
+                            }
+                        </p>
+                        {cleanupStats && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                                Bot runs: <strong>{cleanupStats.total_runs}</strong> &nbsp;|&nbsp;
+                                Total archived all time: <strong className="text-red-600">{cleanupStats.total_archived_all_time}</strong>
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Bot Activity Log */}
+                <div className="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
+                            <Archive size={12} className="text-red-400" /> Bot Activity Log
+                        </h4>
+                        <span className="text-xs text-gray-400">Last 100 runs</span>
+                    </div>
+                    {cleanupLog.length === 0 ? (
+                        <div className="p-4 text-center text-gray-400 text-xs">
+                            No runs yet — bot runs automatically tonight at 4:10 AM.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-gray-100 max-h-52 overflow-y-auto">
+                            {cleanupLog.map((run: any, i: number) => (
+                                <div key={i} className="px-4 py-2.5 hover:bg-white transition-colors">
+                                    <div className="flex items-center justify-between mb-0.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                                run.triggered_by === 'admin_manual'
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                    : 'bg-orange-50 text-orange-700 border-orange-200'
+                                            }`}>
+                                                {run.triggered_by === 'admin_manual' ? '👤 Manual' : '🤖 Auto Bot'}
+                                            </span>
+                                            <span className="text-xs font-black text-red-600">{run.archived_count} removed</span>
+                                        </div>
+                                        <span className="text-[11px] text-gray-400">{new Date(run.run_at).toLocaleString()}</span>
+                                    </div>
+                                    {run.scholarships?.length > 0 && (() => {
+                                        const isExpanded = expandedRuns.has(i);
+                                        const visible = isExpanded ? run.scholarships : run.scholarships.slice(0, 5);
+                                        const hidden = run.scholarships.length - 5;
+                                        return (
+                                            <div className="mt-1.5 space-y-0.5">
+                                                {visible.map((s: any, j: number) => (
+                                                    <div key={j} className="flex items-center justify-between gap-2 py-0.5 px-2 rounded-lg hover:bg-white transition-colors">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            {s.scholarship_url ? (
+                                                                <a
+                                                                    href={s.scholarship_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-[11px] text-blue-600 hover:text-blue-800 hover:underline truncate font-medium flex items-center gap-0.5"
+                                                                    title={s.scholarship_url}
+                                                                >
+                                                                    {s.title} <span className="text-[9px]">↗</span>
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-[11px] text-gray-600 truncate font-medium">{s.title}</span>
+                                                            )}
+                                                            {s.university && (
+                                                                <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">· {s.university}</span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-[11px] text-red-400 shrink-0 font-semibold">{s.deadline}</span>
+                                                    </div>
+                                                ))}
+                                                {hidden > 0 && (
+                                                    <button
+                                                        onClick={() => toggleExpand(i)}
+                                                        className="mt-1 text-[11px] text-indigo-500 hover:text-indigo-700 font-semibold flex items-center gap-1 px-2 py-0.5 rounded hover:bg-indigo-50 transition-colors"
+                                                    >
+                                                        {isExpanded
+                                                            ? `− Show less`
+                                                            : `+ Show ${hidden} more removed scholarships`
+                                                        }
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -325,31 +508,83 @@ export function AutoVerifyDashboard() {
 
                 {/* Change log */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                        <h4 className="text-sm font-bold text-gray-800">Change Log (Most Recent)</h4>
+                    <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                        <h4 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                            <RefreshCw size={14} className="text-indigo-500" /> AI Update Activity Log
+                        </h4>
+                        <span className="text-xs text-gray-400 font-medium">{updateLog.length} total changes</span>
                     </div>
                     {updateLog.length === 0 ? (
-                        <div className="p-6 text-center text-gray-400 text-sm">
+                        <div className="p-8 text-center text-gray-400 text-sm">
                             No changes recorded yet. Run a scan to detect scholarship updates.
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-100 max-h-72 overflow-y-auto">
-                            {updateLog.slice(0, 30).map((entry: any, i: number) => (
-                                <div key={i} className="px-4 py-3 hover:bg-gray-50">
-                                    <div className="flex justify-between gap-2">
-                                        <div>
-                                            <div className="font-semibold text-gray-900 text-sm">{entry.title}</div>
-                                            <div className="text-xs text-gray-400">{entry.university}</div>
+                        <div className="divide-y divide-gray-100">
+                            {(showAllUpdates ? updateLog : updateLog.slice(0, 5)).map((entry: any, i: number) => (
+                                <div key={i} className="px-5 py-4 hover:bg-gray-50 transition-colors">
+                                    {/* Row 1: Title + timestamp */}
+                                    <div className="flex items-start justify-between gap-3 mb-1">
+                                        <div className="min-w-0 flex-1">
+                                            {entry.scholarship_url ? (
+                                                <a
+                                                    href={entry.scholarship_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
+                                                    title={entry.scholarship_url}
+                                                >
+                                                    {entry.title}
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                                </a>
+                                            ) : (
+                                                <span className="text-sm font-bold text-gray-900">{entry.title}</span>
+                                            )}
                                         </div>
-                                        <span className="text-xs text-gray-400 shrink-0">{new Date(entry.updated_at).toLocaleDateString()}</span>
+                                        <span className="text-xs text-gray-400 shrink-0 mt-0.5 whitespace-nowrap">
+                                            {new Date(entry.updated_at).toLocaleString()}
+                                        </span>
                                     </div>
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                        {(entry.changes || []).map((c: string, j: number) => (
-                                            <Badge key={j} className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200 font-normal">{c}</Badge>
-                                        ))}
+                                    {/* Row 2: University · Country · Deadline */}
+                                    <div className="text-xs text-gray-500 mb-2 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                        {entry.university && <span className="font-medium">{entry.university}</span>}
+                                        {entry.country && <span className="text-gray-400">· {entry.country}</span>}
+                                        {entry.deadline && (
+                                            <span className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                                                📅 Deadline: {entry.deadline}
+                                            </span>
+                                        )}
                                     </div>
+                                    {/* Row 3: Change badges */}
+                                    {(entry.changes || []).length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                                            {(entry.changes || []).map((c: string, j: number) => (
+                                                <span key={j} className="inline-block text-[11px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium px-2 py-0.5 rounded-full">
+                                                    {c}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {/* Row 4: AI Notes */}
+                                    {entry.ai_notes && (
+                                        <p className="text-xs text-gray-400 italic mt-1 leading-relaxed">
+                                            💡 {entry.ai_notes}
+                                        </p>
+                                    )}
                                 </div>
                             ))}
+                            {updateLog.length > 5 && (
+                                <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
+                                    <button
+                                        onClick={() => setShowAllUpdates(p => !p)}
+                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1.5 hover:underline transition-colors"
+                                    >
+                                        {showAllUpdates
+                                            ? `▲ Show less`
+                                            : `▼ Show ${updateLog.length - 5} more updated scholarships`
+                                        }
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

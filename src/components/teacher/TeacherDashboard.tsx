@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { toast } from "sonner";
-import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, HelpCircle } from "lucide-react";
+import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, HelpCircle, Settings, ArrowRight, User, Target, FileText, Tag } from "lucide-react";
 
 const TEST_TYPES = ["IELTS", "TOEFL", "GRE", "GMAT", "PTE", "TestDaF", "Duolingo", "SAT"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -16,7 +16,10 @@ const TEST_COLORS: Record<string, string> = {
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "courses" | "students" | "create" | "meetings" | "quizzes" | "fees">("overview");
+  const [tab, setTab] = useState<"overview" | "courses" | "students" | "create" | "meetings" | "quizzes" | "fees">(() => {
+    const savedTab = localStorage.getItem("teacherDashboardTab");
+    return (savedTab as any) || "overview";
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [profile, setProfile] = useState<any>(null);
@@ -47,19 +50,19 @@ export default function TeacherDashboard() {
 
   const fetchAll = async () => {
     try {
-      const p = await api.request("/teacher/profile");
+      const p = await api.teacher.getProfile();
       setProfile(p); setIsTeacher(true); setIsStudent(false);
       const [a, c, s, pending] = await Promise.all([
-        api.request("/teacher/analytics").catch(() => ({ total_courses: 0, total_students: 0, total_quiz_attempts: 0, average_score: 0, pass_rate: 0, pending_payments: 0 })),
-        api.request("/teacher/courses"),
-        api.request("/teacher/students"),
-        api.request("/teacher/payments/pending"),
+        api.teacher.getAnalytics().catch(() => ({ total_courses: 0, total_students: 0, total_quiz_attempts: 0, average_score: 0, pass_rate: 0, pending_payments: 0 })),
+        api.teacher.getCourses(),
+        api.teacher.getStudents(),
+        api.teacher.getPendingPayments(),
       ]);
       setAnalytics(a); setCourses(c); setStudents(s); setPendingPayments(pending);
     } catch {
       // Not a teacher, check if student
       try {
-        const user = await api.request("/users/me");
+        const user = await api.users.getMe();
         if (user.role === "student" || !user.is_teacher) {
           setIsStudent(true);
           setIsTeacher(false);
@@ -87,44 +90,48 @@ export default function TeacherDashboard() {
 
   useEffect(() => { fetchAll(); }, []);
 
+  useEffect(() => {
+    localStorage.setItem("teacherDashboardTab", tab);
+  }, [tab]);
+
   const handleRegister = async () => {
     try {
-      await api.request("/teacher/register", { method: "POST", body: JSON.stringify(registerForm) });
+      await api.teacher.register(registerForm);
       toast.success("Teacher account created!"); fetchAll();
     } catch (e: any) { toast.error(e.message); }
   };
 
   const handleCreateCourse = async () => {
     try {
-      await api.request("/teacher/courses", { method: "POST", body: JSON.stringify(courseForm) });
+      await api.teacher.createCourse(courseForm);
       toast.success("Course created!"); setCourseForm({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: 0 });
-      fetchAll(); setTab("courses");
+      fetchAll(); setTab("overview");
     } catch (e: any) { toast.error(e.message); }
   };
 
   const togglePublish = async (courseId: number, current: boolean) => {
-    await api.request(`/teacher/courses/${courseId}`, { method: "PUT", body: JSON.stringify({ is_published: !current }) });
+    await api.teacher.updateCourse(courseId, { is_published: !current });
     toast.success(!current ? "Course published!" : "Course unpublished"); fetchAll();
   };
 
   const addLesson = async (courseId: number) => {
     try {
-      await api.request(`/teacher/courses/${courseId}/lessons`, { method: "POST", body: JSON.stringify(lessonForm) });
+      await api.teacher.addLesson(courseId, lessonForm);
       toast.success("Lesson added!"); setShowLessonForm(false); setLessonForm({ title: "", content: "", video_url: "", duration_minutes: 30, is_free_preview: false });
-      const updated = await api.request(`/teacher/courses`); setCourses(updated);
+      const updated = await api.teacher.getCourses(); setCourses(updated);
     } catch (e: any) { toast.error(e.message); }
   };
 
   const scheduleLive = async (courseId: number) => {
     try {
-      await api.request(`/teacher/courses/${courseId}/live-classes`, { method: "POST", body: JSON.stringify(liveForm) });
+      await api.teacher.scheduleLiveClass(courseId, liveForm);
       toast.success("Live class scheduled!"); setShowLiveForm(false); fetchAll();
     } catch (e: any) { toast.error(e.message || "Invalid data"); }
   };
 
   const createQuiz = async (courseId: number) => {
     try {
-      await api.request(`/teacher/courses/${courseId}/quizzes`, { method: "POST", body: JSON.stringify(quizForm) });
+      await api.teacher.createQuiz(courseId, quizForm);
       toast.success("Quiz created!");
       setShowQuizForm(false);
       setQuizForm({ title: "", section: "Reading", time_limit_minutes: 30, pass_score: 60, scheduled_at: "" });
@@ -134,7 +141,7 @@ export default function TeacherDashboard() {
 
   const loadQuizQuestions = async (quizId: number) => {
     try {
-      const data = await api.request(`/teacher/quizzes/${quizId}`);
+      const data = await api.teacher.getQuizQuestions(quizId);
       setQuizQuestions(data.questions || []);
       setExpandedQuizId(quizId);
     } catch (e: any) { toast.error(e.message); }
@@ -147,15 +154,12 @@ export default function TeacherDashboard() {
       return;
     }
     try {
-      await api.request(`/teacher/quizzes/${quizId}/questions`, {
-        method: "POST",
-        body: JSON.stringify({
-          question: questionForm.question,
-          options: opts,
-          correct_answer: questionForm.correct_answer,
-          explanation: questionForm.explanation,
-          difficulty: questionForm.difficulty,
-        }),
+      await api.teacher.addQuizQuestion(quizId, {
+        question: questionForm.question,
+        options: opts,
+        correct_answer: questionForm.correct_answer,
+        explanation: questionForm.explanation,
+        difficulty: questionForm.difficulty,
       });
       toast.success("Question added!");
       setQuestionForm({ question: "", options: ["", "", "", ""], correct_answer: "A", explanation: "", difficulty: "Medium" });
@@ -166,7 +170,7 @@ export default function TeacherDashboard() {
 
   const approvePayment = async (enrollmentId: number) => {
     try {
-      await api.request(`/teacher/enrollments/${enrollmentId}/approve-payment`, { method: "POST" });
+      await api.teacher.approvePayment(enrollmentId);
       toast.success("Payment approved — student can access classes!");
       fetchAll();
     } catch (e: any) { toast.error(e.message); }
@@ -174,13 +178,13 @@ export default function TeacherDashboard() {
 
   const rejectPayment = async (enrollmentId: number) => {
     try {
-      await api.request(`/teacher/enrollments/${enrollmentId}/reject-payment`, { method: "POST", body: JSON.stringify({ reason: "Payment not verified" }) });
+      await api.teacher.rejectPayment(enrollmentId, "Payment not verified");
       toast.warning("Payment rejected");
       fetchAll();
     } catch (e: any) { toast.error(e.message); }
   };
 
-  if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-gray-500 text-lg">Loading...</div></div>;
+  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-800 text-lg font-semibold">Loading...</div></div>;
 
   // STUDENT VIEW - Show enrolled courses with meeting links and scheduled quizzes
   if (isStudent && !isTeacher) {
@@ -376,7 +380,7 @@ export default function TeacherDashboard() {
   ];
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: "#f1f5f9" }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: "#ffffff" }}>
       {/* SIDEBAR */}
       <aside className="w-64 flex-shrink-0 flex flex-col sticky top-0 h-screen" style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%)" }}>
         {/* Logo */}
@@ -451,14 +455,14 @@ export default function TeacherDashboard() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-gray-50">
         {/* Top Header */}
         <div className="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
           <div>
             <h1 className="text-xl font-black text-gray-900">
               {navItems.find(n => n.id === tab)?.label || "Dashboard"}
             </h1>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-600">
               {tab === "overview" && "Your teaching summary and quick actions"}
               {tab === "courses" && "Manage courses, lessons, meetings, and quizzes"}
               {tab === "meetings" && "All meeting links and live classes"}
@@ -598,7 +602,7 @@ export default function TeacherDashboard() {
                         if (!confirm(`Delete "${c.title}" permanently?\n\nThis will delete all lessons, quizzes, meeting links and live classes.`)) return;
                         try {
                           console.log("Deleting course:", c.id);
-                          await api.request(`/teacher/courses/${c.id}`, { method: "DELETE" });
+                          await api.teacher.deleteCourse(c.id);
                           toast.success("Course deleted!");
                           fetchAll();
                         } catch (e: any) {
@@ -645,7 +649,7 @@ export default function TeacherDashboard() {
                                   if (!confirm(`Delete lesson "${lesson.title}"?`)) return;
                                   try {
                                     console.log("Deleting lesson:", lesson.id);
-                                    await api.request(`/teacher/lessons/${lesson.id}`, { method: "DELETE" });
+                                    await api.teacher.deleteLesson(lesson.id);
                                     toast.success("Lesson deleted!");
                                     fetchAll();
                                   } catch (e: any) {
@@ -708,7 +712,7 @@ export default function TeacherDashboard() {
                                   onClick={async () => {
                                     if (!confirm("Delete this meeting link?")) return;
                                     try {
-                                      await api.request(`/teacher/meeting-links/${link.id}`, { method: "DELETE" });
+                                      await api.teacher.deleteMeetingLink(link.id);
                                       toast.success("Meeting link deleted!");
                                       fetchAll();
                                     } catch (e: any) { toast.error(e.message); }
@@ -757,7 +761,7 @@ export default function TeacherDashboard() {
                         <button onClick={async () => {
                           if (!meetingForm.date || !meetingForm.link) { toast.error("Date and link are required"); return; }
                           try {
-                            await api.request(`/teacher/courses/${c.id}/meeting-links`, { method: "POST", body: JSON.stringify(meetingForm) });
+                            await api.teacher.addMeetingLink(c.id, meetingForm);
                             toast.success("Meeting link added!");
                             setMeetingForm({ date: "", time: "", link: "", platform: "Google Meet", description: "" });
                             fetchAll();
@@ -795,7 +799,7 @@ export default function TeacherDashboard() {
                                   onClick={async () => {
                                     if (!confirm("Cancel this live class?")) return;
                                     try {
-                                      await api.request(`/teacher/live-classes/${lc.id}`, { method: "DELETE" });
+                                      await api.teacher.deleteLiveClass(lc.id);
                                       toast.success("Live class cancelled!");
                                       fetchAll();
                                     } catch (e: any) { toast.error(e.message); }
@@ -1048,40 +1052,334 @@ export default function TeacherDashboard() {
 
         {/* CREATE COURSE */}
         {tab === "create" && (
-          <div className="max-w-2xl">
-            <div className="bg-white rounded-2xl border shadow-sm p-8">
-              <h2 className="text-xl font-black text-gray-900 mb-6">Create New Course</h2>
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div><label className="text-sm font-bold text-gray-700 block mb-1.5">Course Title *</label>
-                    <input className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. IELTS Band 7+ Complete Course" value={courseForm.title} onChange={e => setCourseForm(p => ({ ...p, title: e.target.value }))} /></div>
-                  <div><label className="text-sm font-bold text-gray-700 block mb-1.5">Subject *</label>
-                    <input className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. English, Math, Science" value={courseForm.subject} onChange={e => setCourseForm(p => ({ ...p, subject: e.target.value }))} /></div>
+          <div className="max-w-6xl mx-auto px-2 sm:px-0">
+            {/* ── Hero Section ── */}
+            <div className="relative rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 shadow-2xl">
+              {/* Background decorations */}
+              <div className="absolute inset-0">
+                <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl" style={{ transform: "translate(30%, -30%)" }} />
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" style={{ transform: "translate(-20%, 30%)" }} />
+              </div>
+              
+              <div className="relative px-8 py-12 text-white">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
+                    <Plus size={28} className="text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-black mb-1">Create Your Course</h1>
+                    <p className="text-white/80 text-lg">Share your expertise with students worldwide</p>
+                  </div>
                 </div>
-                <div><label className="text-sm font-bold text-gray-700 block mb-1.5">Description</label>
-                  <textarea className="w-full border rounded-xl p-3 resize-none h-24 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Is course mein kya sikhaya jaye ga..." value={courseForm.description} onChange={e => setCourseForm(p => ({ ...p, description: e.target.value }))} /></div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div><label className="text-sm font-bold text-gray-700 block mb-1.5">Test Type *</label>
-                    <select className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none" value={courseForm.test_type} onChange={e => setCourseForm(p => ({ ...p, test_type: e.target.value }))}>
-                      {TEST_TYPES.map(t => <option key={t}>{t}</option>)}
-                    </select></div>
-                  <div><label className="text-sm font-bold text-gray-700 block mb-1.5">Level</label>
-                    <select className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none" value={courseForm.level} onChange={e => setCourseForm(p => ({ ...p, level: e.target.value }))}>
-                      {LEVELS.map(l => <option key={l}>{l}</option>)}
-                    </select></div>
-                  <div><label className="text-sm font-bold text-gray-700 block mb-1.5">Fee (PKR) *</label>
-                    <input type="number" min="0" className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. 5000" value={courseForm.price} onChange={e => setCourseForm(p => ({ ...p, price: +e.target.value }))} /></div>
+                
+                {/* Progress Steps */}
+                <div className="flex items-center justify-center gap-6 mt-8">
+                  {[
+                    { step: 1, label: "Details", active: true },
+                    { step: 2, label: "Lessons", active: false },
+                    { step: 3, label: "Quizzes", active: false },
+                    { step: 4, label: "Publish", active: false }
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${
+                        item.active 
+                          ? "bg-white text-purple-600 shadow-lg shadow-white/20" 
+                          : "bg-white/10 text-white/60 border border-white/20"
+                      }`}>
+                        {item.step}
+                      </div>
+                      <span className={`text-sm font-medium transition-all ${
+                        item.active ? "text-white" : "text-white/40"
+                      }`}>
+                        {item.label}
+                      </span>
+                      {i < 3 && <div className="w-8 h-0.5 bg-white/20 mx-2" />}
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-blue-50 rounded-xl p-4 text-sm text-blue-700">
-                  <strong>Next steps after creating:</strong> Add lessons (text + YouTube), schedule live classes, create practice quizzes.
+              </div>
+            </div>
+
+            {/* ── Main Content ── */}
+            <div className="grid lg:grid-cols-[1fr,380px] gap-8 items-start">
+
+              {/* ── FORM SECTION ── */}
+              <div className="space-y-6">
+                {/* Basic Information Card */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+                        <BookOpen size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900">Basic Information</h2>
+                        <p className="text-sm text-gray-600">Essential details about your course</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    {/* Title & Subject Row */}
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          Course Title <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-gray-50 focus:bg-white transition-all"
+                          placeholder="e.g. IELTS Band 7+ Complete Course"
+                          value={courseForm.title}
+                          onChange={e => setCourseForm(p => ({ ...p, title: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          Subject <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-gray-50 focus:bg-white transition-all"
+                          placeholder="e.g. English, Reading, Writing"
+                          value={courseForm.subject}
+                          onChange={e => setCourseForm(p => ({ ...p, subject: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Course Description</label>
+                      <textarea
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base resize-none h-32 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-gray-50 focus:bg-white transition-all leading-relaxed"
+                        placeholder="Describe what students will learn in this course..."
+                        value={courseForm.description}
+                        onChange={e => setCourseForm(p => ({ ...p, description: e.target.value }))}
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                {/* Course Settings Card */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
+                        <Settings size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900">Course Settings</h2>
+                        <p className="text-sm text-gray-600">Configure test type, level, and pricing</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    <div className="grid sm:grid-cols-3 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          Test Type <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-gray-50 focus:bg-white transition-all"
+                          value={courseForm.test_type}
+                          onChange={e => setCourseForm(p => ({ ...p, test_type: e.target.value }))}
+                        >
+                          {TEST_TYPES.map(t => <option key={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700">Difficulty Level</label>
+                        <select
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-gray-50 focus:bg-white transition-all"
+                          value={courseForm.level}
+                          onChange={e => setCourseForm(p => ({ ...p, level: e.target.value }))}
+                        >
+                          {LEVELS.map(l => <option key={l}>{l}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          Course Fee <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₨</span>
+                          <input
+                            type="number" min="0"
+                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl text-base font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-gray-50 focus:bg-white transition-all"
+                            placeholder="0 = Free"
+                            value={courseForm.price}
+                            onChange={e => setCourseForm(p => ({ ...p, price: +e.target.value }))}
+                          />
+                        </div>
+                        {courseForm.price === 0 && (
+                          <div className="flex items-center gap-2 mt-2 text-green-600">
+                            <CheckCircle size={14} />
+                            <span className="text-sm font-medium">This course will be free for students</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Button */}
                 <button
                   onClick={handleCreateCourse}
                   disabled={!courseForm.title || !courseForm.subject}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-xl text-lg transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed hover:shadow-xl active:scale-[0.98]"
+                  style={
+                    courseForm.title && courseForm.subject
+                      ? { background: "linear-gradient(135deg, #4f46e5, #7c3aed)", color: "#fff", boxShadow: "0 8px 30px rgba(99,102,241,0.4)" }
+                      : { background: "#e5e7eb", color: "#9ca3af" }
+                  }
                 >
-                  {courseForm.title && courseForm.subject ? "➕ Create Course →" : "⚠️ Fill Title & Subject First"}
+                  {courseForm.title && courseForm.subject ? (
+                    <>
+                      <Plus size={20} />
+                      Create Course
+                      <ArrowRight size={20} />
+                    </>
+                  ) : (
+                    <>Fill required fields to continue</>
+                  )}
                 </button>
+              </div>
+
+              {/* ── SIDEBAR ── */}
+              <div className="space-y-6 lg:sticky lg:top-6">
+                {/* Live Preview */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-sm font-bold text-gray-700">Live Preview</span>
+                    </div>
+                    <Eye size={16} className="text-gray-400" />
+                  </div>
+                  
+                  <div className="relative">
+                    <div className="h-3 transition-all duration-300" style={{ backgroundColor: TEST_COLORS[courseForm.test_type] || "#6366f1" }} />
+                    <div className="p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-bold px-3 py-1.5 rounded-lg text-white shadow-sm" style={{ backgroundColor: TEST_COLORS[courseForm.test_type] || "#6366f1" }}>
+                          {courseForm.test_type || "Select Type"}
+                        </span>
+                        <span className={`text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm ${
+                          courseForm.price === 0 
+                            ? "bg-green-100 text-green-700 border border-green-200" 
+                            : "bg-gray-100 text-gray-700 border border-gray-200"
+                        }`}>
+                          {courseForm.price === 0 ? "FREE" : `₨${courseForm.price?.toLocaleString()}`}
+                        </span>
+                      </div>
+                      
+                      <h3 className="font-bold text-gray-900 text-base mb-2 leading-tight min-h-[2.5rem]">
+                        {courseForm.title || <span className="text-gray-300 font-normal italic">Your course title will appear here...</span>}
+                      </h3>
+                      
+                      <p className="text-sm text-gray-500 mb-3 line-clamp-3 min-h-[3rem] leading-relaxed">
+                        {courseForm.description || <span className="text-gray-300 italic">Course description preview...</span>}
+                      </p>
+                      
+                      <div className="flex items-center gap-2 flex-wrap mb-4">
+                        {courseForm.subject && (
+                          <span className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-indigo-100">
+                            {courseForm.subject}
+                          </span>
+                        )}
+                        <span className="bg-gray-50 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-md border border-gray-200">
+                          {courseForm.level}
+                        </span>
+                      </div>
+                      
+                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                            <User size={12} className="text-gray-500" />
+                          </div>
+                          <span className="text-xs text-gray-600 font-medium">{profile?.name || "You"}</span>
+                        </div>
+                        <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-200">
+                          Draft
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Completion Checklist */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <CheckCircle size={18} className="text-indigo-600" />
+                    Completion Checklist
+                  </h3>
+                  
+                  <div className="space-y-3 mb-4">
+                    {[
+                      { label: "Course Title", done: !!courseForm.title, icon: BookOpen },
+                      { label: "Subject", done: !!courseForm.subject, icon: Target },
+                      { label: "Description", done: !!courseForm.description, icon: FileText },
+                      { label: "Test Type", done: !!courseForm.test_type, icon: Tag },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
+                          item.done 
+                            ? "bg-green-500 shadow-md shadow-green-200" 
+                            : "bg-gray-100 border border-gray-200"
+                        }`}>
+                          {item.done ? (
+                            <CheckCircle size={14} className="text-white" />
+                          ) : (
+                            <item.icon size={12} className="text-gray-400" />
+                          )}
+                        </div>
+                        <span className={`text-sm font-medium transition-all ${
+                          item.done ? "text-gray-900" : "text-gray-400"
+                        }`}>
+                          {item.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">Progress</span>
+                      <span className="font-bold text-indigo-600">
+                        {[courseForm.title, courseForm.subject, courseForm.description, courseForm.test_type].filter(Boolean).length}/4
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                        style={{ width: `${([courseForm.title, courseForm.subject, courseForm.description, courseForm.test_type].filter(Boolean).length / 4) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pro Tips */}
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg border border-amber-200 p-5">
+                  <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
+                    <Star size={18} className="text-amber-500" fill="currentColor" />
+                    Pro Tips
+                  </h3>
+                  <ul className="space-y-2 text-sm text-amber-800 leading-relaxed">
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-500 mt-1">•</span>
+                      <span>Use specific test names in titles (e.g. "IELTS Writing Task 2")</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-500 mt-1">•</span>
+                      <span>Include target band/score in description</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-500 mt-1">•</span>
+                      <span>Free courses attract more initial students</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>

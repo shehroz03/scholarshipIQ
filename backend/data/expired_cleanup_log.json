@@ -1,0 +1,836 @@
+[
+  {
+    "run_at": "2026-05-22T07:44:14.174977",
+    "archived_count": 92,
+    "scholarships": [
+      {
+        "id": 1,
+        "title": "University of Toronto Scholar Award",
+        "university": "University of Toronto",
+        "country": "Canada",
+        "deadline": "2025-12-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 2,
+        "title": "UBC Graduate Global Leadership Fellowship",
+        "university": "University of British Columbia",
+        "country": "Canada",
+        "deadline": "2025-09-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 15,
+        "title": "Ko\u00e7 University Graduate Scholarship",
+        "university": "Ko\u00e7 University",
+        "country": "Turkey",
+        "deadline": "2026-05-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 16,
+        "title": "Sabanci Graduate Scholarship",
+        "university": "Sabanci University",
+        "country": "Turkey",
+        "deadline": "2026-05-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 24,
+        "title": "Global Talent Scholarship (Postgraduate Taught)",
+        "university": "Queen Mary University of London",
+        "country": "United Kingdom",
+        "deadline": "2026-01-20",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 27,
+        "title": "GREAT Scholarship",
+        "university": "University of Reading",
+        "country": "United Kingdom",
+        "deadline": "2026-05-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 33,
+        "title": "Clarendon Scholarship",
+        "university": "University of Oxford",
+        "country": "United Kingdom",
+        "deadline": "2026-01-10",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 34,
+        "title": "Gates Cambridge Scholarship",
+        "university": "University of Cambridge",
+        "country": "United Kingdom",
+        "deadline": "2026-01-03",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 35,
+        "title": "Imperial Global Excellence Scholarship (Masters)",
+        "university": "Imperial College London",
+        "country": "United Kingdom",
+        "deadline": "2026-03-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 36,
+        "title": "UCL Global Masters Scholarship",
+        "university": "UCL",
+        "country": "United Kingdom",
+        "deadline": "2026-05-07",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 38,
+        "title": "Manchester Global Futures Scholarship (Masters)",
+        "university": "University of Manchester",
+        "country": "United Kingdom",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 42,
+        "title": "Warwick Chancellor\u2019s International Scholarship (Taught)",
+        "university": "University of Warwick",
+        "country": "United Kingdom",
+        "deadline": "2026-03-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 46,
+        "title": "Leeds Masters Scholarships",
+        "university": "University of Leeds",
+        "country": "United Kingdom",
+        "deadline": "2026-03-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 47,
+        "title": "Developing Solutions Masters Scholarship",
+        "university": "University of Nottingham",
+        "country": "United Kingdom",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 48,
+        "title": "Southampton Postgraduate Taught Excellence Scholarship",
+        "university": "University of Southampton",
+        "country": "United Kingdom",
+        "deadline": "2026-01-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 52,
+        "title": "Exeter Global Excellence Scholarship",
+        "university": "University of Exeter",
+        "country": "United Kingdom",
+        "deadline": "2026-03-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 56,
+        "title": "Melbourne Graduate Scholarship",
+        "university": "University of Melbourne",
+        "country": "Australia",
+        "deadline": "2025-10-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 57,
+        "title": "VC International Scholarship",
+        "university": "University of Sydney",
+        "country": "Australia",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 58,
+        "title": "International Student Award",
+        "university": "UNSW Sydney",
+        "country": "Australia",
+        "deadline": "2026-03-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 59,
+        "title": "ANU Chancellor\u2019s International",
+        "university": "Australian National University",
+        "country": "Australia",
+        "deadline": "2025-12-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 60,
+        "title": "Monash International Merit",
+        "university": "Monash University",
+        "country": "Australia",
+        "deadline": "2025-11-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 61,
+        "title": "UQ International Excellence",
+        "university": "University of Queensland",
+        "country": "Australia",
+        "deadline": "2025-11-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 62,
+        "title": "Global Excellence Scholarship",
+        "university": "University of Western Australia",
+        "country": "Australia",
+        "deadline": "2025-12-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 63,
+        "title": "Global Citizens Scholarship",
+        "university": "University of Adelaide",
+        "country": "Australia",
+        "deadline": "2026-01-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 64,
+        "title": "UTS Academic Excellence",
+        "university": "University of Technology Sydney",
+        "country": "Australia",
+        "deadline": "2026-02-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 65,
+        "title": "Future Leaders Scholarship",
+        "university": "RMIT University",
+        "country": "USA",
+        "deadline": "2026-01-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 69,
+        "title": "Edinburgh Global Masters Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 71,
+        "title": "Think Big Postgraduate Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-03-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 72,
+        "title": "Chancellor's International Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-05-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 73,
+        "title": "International Merit Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-05-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 76,
+        "title": "King's International Postgraduate Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 77,
+        "title": "LSE Postgraduate Merit Award",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 82,
+        "title": "Durham Masters Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-04-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 89,
+        "title": "St Leonard's Masters Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 90,
+        "title": "GREAT Scholarship UK (Reading)",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 91,
+        "title": "GREAT Scholarship UK (Swansea)",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 124,
+        "title": "Yale University Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-02",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 125,
+        "title": "Columbia University Merit Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 126,
+        "title": "Princeton Graduate Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 127,
+        "title": "Cornell Graduate School Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 129,
+        "title": "Northwestern Graduate Merit Award",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 130,
+        "title": "Duke University Graduate Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-02",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 131,
+        "title": "Vanderbilt Merit Scholarship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 132,
+        "title": "CMU Graduate Merit Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-10",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 133,
+        "title": "Michigan Graduate Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 134,
+        "title": "Berkeley Fellowship for Graduate Study",
+        "university": "",
+        "country": "USA",
+        "deadline": "2025-12-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 135,
+        "title": "UCLA Graduate Division Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 136,
+        "title": "USC Provost's Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 137,
+        "title": "NYU Global Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-02-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 138,
+        "title": "BU Dean's Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 139,
+        "title": "Georgetown Graduate Merit Award",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 140,
+        "title": "UIUC Graduate College Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 141,
+        "title": "OSU Graduate Fellowship Award",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 142,
+        "title": "UT Austin Graduate School Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 143,
+        "title": "Georgia Tech Graduate Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 144,
+        "title": "Purdue Masters Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 145,
+        "title": "Wisconsin Alumni Research Foundation Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-05",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 146,
+        "title": "ASU University Graduate Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-03-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 147,
+        "title": "Tufts Graduate Merit Award",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 148,
+        "title": "Minnesota Graduate School Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 149,
+        "title": "Penn State Graduate Research Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 150,
+        "title": "UW Graduate School Scholarship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 151,
+        "title": "Rice Graduate Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 152,
+        "title": "Notre Dame Graduate Merit Award",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 153,
+        "title": "Emory Graduate Fellowship",
+        "university": "",
+        "country": "USA",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 154,
+        "title": "RWTH Excellence Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-02-28",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 155,
+        "title": "Heidelberg Excellence Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-01-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 156,
+        "title": "KIT International Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-02-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 158,
+        "title": "Stuttgart International Masters Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-04-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 159,
+        "title": "Frankfurt International Masters Award",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 161,
+        "title": "Cologne International Masters Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 162,
+        "title": "Mannheim Masters Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-03-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 165,
+        "title": "TU Dresden DAAD Excellence Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-01-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 166,
+        "title": "TU Berlin International Graduate Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-04-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 170,
+        "title": "TUHH International Engineering Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-04-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 171,
+        "title": "FAU International Masters Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-04-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 177,
+        "title": "TU Darmstadt Excellence Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-03-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 184,
+        "title": "Melbourne International Undergraduate Scholarship",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-10-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 185,
+        "title": "Graduate Research Scholarship - University of Melbourne",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-08-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 186,
+        "title": "ANU Chancellor's International Scholarship",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-09-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 187,
+        "title": "ANU HDR Fee Remission Merit Scholarship",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-10-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 188,
+        "title": "University of Sydney International Scholarship (USydIS)",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-11-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 189,
+        "title": "Sydney Scholars Australia Scholarship",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-12-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 190,
+        "title": "UQ Masters Scholarship for International Students",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-09-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 191,
+        "title": "UQ Graduate School Scholarship (UQGSS)",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-07-31",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 192,
+        "title": "Monash International Merit Scholarship",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-10-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 193,
+        "title": "Monash Graduate Scholarship (MGS)",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-08-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 194,
+        "title": "UNSW International Scientia Scholarship",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-07-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 195,
+        "title": "UNSW Global Academic Award",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-11-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 196,
+        "title": "UWA Global Excellence Scholarship",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-12-15",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 197,
+        "title": "Adelaide Scholarship International (ASI)",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-09-01",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 198,
+        "title": "University of Adelaide Masters Merit Scholarship",
+        "university": "",
+        "country": "Australia",
+        "deadline": "2025-11-30",
+        "archived_at": "2026-05-22T07:44:14.174977",
+        "reason": "deadline_passed_auto"
+      }
+    ]
+  }
+]

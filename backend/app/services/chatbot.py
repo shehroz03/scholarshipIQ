@@ -8,13 +8,19 @@ from dotenv import load_dotenv
 from pypdf import PdfReader  # PDF parhne ke liye
 from PIL import Image        # Image processing ke liye
 
-load_dotenv()
+load_dotenv(override=True)
 
+def _get_client():
+    """Lazy init OpenAI client - reads key fresh every time"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key or len(api_key) < 10:
+        return None
+    return OpenAI(api_key=api_key)
+
+# Keep module-level client for backwards compat but refresh on use
 api_key = os.getenv("OPENAI_API_KEY")
-client = None
-if api_key:
-    client = OpenAI(api_key=api_key)
-else:
+client = _get_client()
+if not client:
     print("WARNING: OPENAI_API_KEY not found. Chatbot will return fallback responses.")
 
 def process_file(file_data, file_type):
@@ -102,7 +108,9 @@ def get_ai_response(user_message: str, file_data=None, file_type=None, mode: str
     mode: 'student' | 'teacher' | 'admin'
     context: optional dict with live data to inject (e.g. stats for admin)
     """
-    if not client:
+    load_dotenv(override=True)
+    active_client = _get_client()
+    if not active_client:
         return "Chatbot is currently offline (API key missing). Please contact admin."
     try:
         system_instruction = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["student"])
@@ -127,7 +135,7 @@ def get_ai_response(user_message: str, file_data=None, file_type=None, mode: str
 
         messages.append({"role": "user", "content": user_content})
 
-        response = client.chat.completions.create(
+        response = active_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
             max_tokens=700,

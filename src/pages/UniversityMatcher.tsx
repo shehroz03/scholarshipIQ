@@ -95,6 +95,7 @@ function UniversityMarker({ uni, isSelected, onSelect, onNavigate }: {
   onNavigate: (page: string) => void
 }) {
   const markerRef = useRef<L.Marker>(null);
+  const [logoError, setLogoError] = useState(false);
   
   useEffect(() => {
     if (isSelected && markerRef.current) {
@@ -118,11 +119,16 @@ function UniversityMarker({ uni, isSelected, onSelect, onNavigate }: {
           padding: '8px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            {uni.logo_url ? (
-              <img src={uni.logo_url} alt={uni.name} style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px' }} />
+            {uni.logo_url && !logoError ? (
+              <img
+                src={uni.logo_url}
+                alt={uni.name}
+                onError={() => setLogoError(true)}
+                style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px', background: '#f1f5f9', padding: '4px' }}
+              />
             ) : (
-              <div style={{ width: '40px', height: '40px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Building2 size={20} color="#64748b" />
+              <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Building2 size={20} color="white" />
               </div>
             )}
             <div>
@@ -282,7 +288,8 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100vh',
+      overflow: 'hidden',
       background: '#0f172a',
       color: 'white',
       display: 'flex',

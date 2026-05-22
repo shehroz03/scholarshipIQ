@@ -182,6 +182,80 @@ async def auto_update_scholarship_data():
         db.close()
 
 
+# --- 5b. AUTO-ARCHIVE EXPIRED SCHOLARSHIPS (daily at 4:00 AM) ---
+async def auto_archive_expired_scholarships():
+    """
+    Runs daily at 4:00 AM.
+    Finds all scholarships whose deadline has passed, archives them,
+    and writes an activity log for admin review.
+    """
+    print(f"[{datetime.now()}] [ExpiredBot] Starting expired scholarship cleanup...")
+    db: Session = SessionLocal()
+    import json
+    try:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+        expired = db.query(Scholarship).filter(
+            Scholarship.is_archived == False,
+            Scholarship.deadline != None,
+            Scholarship.deadline < now
+        ).all()
+
+        if not expired:
+            print(f"[ExpiredBot] No expired scholarships found. DB is clean.")
+            db.close()
+            return
+
+        archived_entries = []
+        for s in expired:
+            s.is_archived = True
+            s.is_active = False
+            s.archived_at = now
+            s.archive_reason = "deadline_passed_auto"
+            archived_entries.append({
+                "id": s.id,
+                "title": s.title,
+                "university": s.university_name or "",
+                "country": s.country or "",
+                "deadline": str(s.deadline.date()),
+                "scholarship_url": s.scholarship_url or s.website_url or "",
+                "archived_at": now.isoformat(),
+                "reason": "deadline_passed_auto"
+            })
+
+        db.commit()
+
+        # Write to cleanup log
+        log_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "data", "expired_cleanup_log.json"
+        )
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        existing = []
+        if os.path.exists(log_path):
+            try:
+                with open(log_path) as f:
+                    existing = json.load(f)
+            except Exception:
+                existing = []
+
+        run_entry = {
+            "run_at": now.isoformat(),
+            "archived_count": len(archived_entries),
+            "scholarships": archived_entries
+        }
+        existing = ([run_entry] + existing)[:100]  # keep last 100 runs
+        with open(log_path, "w") as f:
+            json.dump(existing, f, indent=2)
+
+        print(f"[ExpiredBot] Done. Archived {len(archived_entries)} expired scholarships.")
+
+    except Exception as e:
+        print(f"[ExpiredBot] Error: {e}")
+    finally:
+        db.close()
+
+
 # --- 6. DAILY PIPELINE ---
 async def daily_scrape_and_import():
     db: Session = SessionLocal()
@@ -246,5 +320,6 @@ def start_scheduler():
     scheduler.add_job(daily_scrape_and_import, 'cron', hour=3, minute=0)
     scheduler.add_job(auto_verify_staged, 'cron', hour=3, minute=30)
     scheduler.add_job(auto_update_scholarship_data, 'interval', days=4, start_date=datetime.now().replace(hour=4, minute=0, second=0, microsecond=0))
+    scheduler.add_job(auto_archive_expired_scholarships, 'cron', hour=4, minute=10)  # daily expired cleanup
     scheduler.start()
-    print("[Scheduler] Started! Deadline@09:00 | Retrain@Sun02:00 | Fraud+Pipeline@03:00 | AutoVerify@03:30 | AutoUpdate every 4 days@04:00 (batch=6)")
+    print("[Scheduler] Started! Deadline@09:00 | Retrain@Sun02:00 | Fraud+Pipeline@03:00 | AutoVerify@03:30 | AutoUpdate every 4 days@04:00 | ExpiredBot@04:10 daily")

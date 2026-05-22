@@ -17,6 +17,8 @@ const apiBase = {
 
     if (response.status === 401) {
       localStorage.removeItem("token");
+      localStorage.removeItem("admin_logged_in");
+      window.dispatchEvent(new Event("admin_session_expired"));
       return Promise.reject(new Error("Session expired. Please login again."));
     }
     if (response.status === 403) {
@@ -409,6 +411,19 @@ export const api = {
     async getAutoUpdateStatus() {
       return apiBase.request("/admin/auto-update/status");
     },
+    // Expired Scholarship Cleanup
+    async getExpiredScholarshipCount() {
+      return apiBase.request("/admin/scholarships/expired-count");
+    },
+    async archiveExpiredScholarships() {
+      return apiBase.request("/admin/scholarships/archive-expired", { method: "POST" });
+    },
+    async getExpiredCleanupLog() {
+      return apiBase.request("/admin/scholarships/cleanup-log");
+    },
+    async getArchivedScholarships(skip = 0, limit = 500) {
+      return apiBase.request(`/admin/scholarships/archived?skip=${skip}&limit=${limit}`);
+    },
     // Verification APIs
     async getVerificationStats() {
       return apiBase.request("/admin/verification/stats");
@@ -552,6 +567,132 @@ export const api = {
     },
     async testAlert() {
       return apiBase.request("/notifications/test-alert", { method: "POST" });
+    }
+  },
+
+  teacher: {
+    // Profile & Analytics
+    async getProfile() {
+      return apiBase.request("/teacher/profile");
+    },
+    async register(data: any) {
+      return apiBase.request("/teacher/register", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    async getAnalytics() {
+      return apiBase.request("/teacher/analytics");
+    },
+    
+    // Course Management
+    async getCourses() {
+      return apiBase.request("/teacher/courses");
+    },
+    async createCourse(data: any) {
+      return apiBase.request("/teacher/courses", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    async updateCourse(courseId: number, data: any) {
+      return apiBase.request(`/teacher/courses/${courseId}`, {
+        method: "PUT",
+        body: JSON.stringify(data)
+      });
+    },
+    async deleteCourse(courseId: number) {
+      return apiBase.request(`/teacher/courses/${courseId}`, {
+        method: "DELETE"
+      });
+    },
+    
+    // Lesson Management
+    async addLesson(courseId: number, data: any) {
+      return apiBase.request(`/teacher/courses/${courseId}/lessons`, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    async deleteLesson(lessonId: number) {
+      return apiBase.request(`/teacher/lessons/${lessonId}`, {
+        method: "DELETE"
+      });
+    },
+    
+    // Live Classes
+    async getLiveClasses(courseId: number) {
+      return apiBase.request(`/teacher/courses/${courseId}/live-classes`);
+    },
+    async scheduleLiveClass(courseId: number, data: any) {
+      return apiBase.request(`/teacher/courses/${courseId}/live-classes`, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    async deleteLiveClass(classId: number) {
+      return apiBase.request(`/teacher/live-classes/${classId}`, {
+        method: "DELETE"
+      });
+    },
+    
+    // Quiz Management
+    async getQuizzes(courseId: number) {
+      return apiBase.request(`/teacher/courses/${courseId}/quizzes`);
+    },
+    async createQuiz(courseId: number, data: any) {
+      return apiBase.request(`/teacher/courses/${courseId}/quizzes`, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    async deleteQuiz(quizId: number) {
+      return apiBase.request(`/teacher/quizzes/${quizId}`, {
+        method: "DELETE"
+      });
+    },
+    async getQuizQuestions(quizId: number) {
+      return apiBase.request(`/teacher/quizzes/${quizId}`);
+    },
+    async addQuizQuestion(quizId: number, data: any) {
+      return apiBase.request(`/teacher/quizzes/${quizId}/questions`, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    
+    // Meeting Links
+    async addMeetingLink(courseId: number, data: any) {
+      return apiBase.request(`/teacher/courses/${courseId}/meeting-links`, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    async deleteMeetingLink(linkId: number) {
+      return apiBase.request(`/teacher/meeting-links/${linkId}`, {
+        method: "DELETE"
+      });
+    },
+    
+    // Student Management
+    async getStudents() {
+      return apiBase.request("/teacher/students");
+    },
+    
+    // Payment Management
+    async getPendingPayments() {
+      return apiBase.request("/teacher/payments/pending");
+    },
+    async approvePayment(enrollmentId: number) {
+      return apiBase.request(`/teacher/enrollments/${enrollmentId}/approve-payment`, {
+        method: "POST"
+      });
+    },
+    async rejectPayment(enrollmentId: number, reason: string) {
+      return apiBase.request(`/teacher/enrollments/${enrollmentId}/reject-payment`, {
+        method: "POST",
+        body: JSON.stringify({ reason })
+      });
     }
   }
 };

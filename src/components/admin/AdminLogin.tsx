@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Lock, Loader2 } from "lucide-react";
+import { Lock, Loader2, Zap } from "lucide-react";
 import { api } from "../../api";
 
 interface AdminLoginProps {
@@ -10,28 +10,32 @@ interface AdminLoginProps {
 }
 
 export function AdminLogin({ onLogin }: AdminLoginProps) {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("admin");
+    const [password, setPassword] = useState("password123");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const doLogin = async (u: string, p: string) => {
         setIsLoading(true);
         setError("");
-        
-        // Clear any existing stale token before trying to log in as admin
         localStorage.removeItem("token");
-
         try {
-            await api.admin.login({ username, password });
+            await api.admin.login({ username: u, password: p });
             onLogin();
         } catch (err: any) {
-            console.error("Admin login error:", err);
             setError(err.message || "Invalid admin credentials");
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await doLogin(username, password);
+    };
+
+    const handleQuickLogin = async () => {
+        await doLogin("admin", "password123");
     };
 
     return (
@@ -77,6 +81,15 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
                         >
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                             Authenticate
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleQuickLogin}
+                            disabled={isLoading}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 font-bold flex items-center justify-center gap-2"
+                        >
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                            Quick Login (Dev)
                         </Button>
                         <div className="text-center text-xs text-gray-500 mt-4">
                             Authorized personnel only. All activities are monitored.

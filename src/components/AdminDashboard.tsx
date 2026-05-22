@@ -20,13 +20,24 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
-  const { isDark } = useTheme();
-  const theme = isDark ? darkTheme : lightTheme;
+  const { isDark: _isDark } = useTheme();
+  const isDark = false; // Admin panel uses light theme
+  const theme = lightTheme;
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const token = localStorage.getItem("token");
     const adminFlag = localStorage.getItem("admin_logged_in");
     return !!token && adminFlag === "true";
   });
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setIsLoggedIn(false);
+      localStorage.removeItem("token");
+      localStorage.removeItem("admin_logged_in");
+    };
+    window.addEventListener("admin_session_expired", handleUnauthorized);
+    return () => window.removeEventListener("admin_session_expired", handleUnauthorized);
+  }, []);
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem("admin_active_tab") || "dashboard");
 
   useEffect(() => {
@@ -80,7 +91,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   return (
     <div className="flex h-screen font-sans" style={{ backgroundColor: theme.bg, color: theme.text }}>
       {/* Sidebar */}
-      <aside className="w-64 border-r flex flex-col" style={{ backgroundColor: isDark ? theme.bgSecondary : '#0f172a', borderColor: theme.border }}>
+      <aside className="w-64 border-r flex flex-col" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
         <div className="p-6 border-b" style={{ borderColor: theme.border }}>
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
             ScholarIQ Admin
@@ -100,7 +111,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id
                   ? "bg-blue-600 text-white shadow-lg"
-                  : "hover:bg-white/5"
+                  : "hover:bg-gray-100"
                   }`}
                 style={{ color: activeTab === item.id ? 'white' : theme.textSecondary }}
               >
@@ -135,7 +146,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
           </h2>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border" style={{ backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : '#f0fdf4', borderColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#bbf7d0' }}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border" style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }}>
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-xs font-medium text-green-700">System Online</span>
             </div>
@@ -144,7 +155,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
             </div>
           </div>
         </header>
-        <div className="p-8">
+        <div className={activeTab === "aichat" ? "p-4 h-[calc(100vh-64px)]" : "p-8"}>
           {renderContent()}
         </div>
       </main>

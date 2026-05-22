@@ -175,7 +175,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Full Name</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Full Name</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -184,7 +184,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Email Address</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Email Address</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -193,7 +193,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Nationality</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Nationality</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -202,7 +202,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Phone Number</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Phone Number</Label>
                   <Input
                     className="h-12 rounded-xl"
                     placeholder="+92 300 1234567"
@@ -237,7 +237,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="md:col-span-2 lg:col-span-2 space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">University / College</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>University / College</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -246,7 +246,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Degree Level</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Degree Level</Label>
                   <Select value={profile.current_degree} onValueChange={(v) => setProfile({ ...profile, current_degree: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -260,7 +260,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="md:col-span-2 space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Major / Field of Study</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Major / Field of Study</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -269,7 +269,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">CGPA</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>CGPA</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -280,7 +280,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">CGPA Scale</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>CGPA Scale</Label>
                   <Select value={profile.cgpa_scale} onValueChange={(v) => setProfile({ ...profile, cgpa_scale: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -294,7 +294,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Graduation Year</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Graduation Year</Label>
                   <Input
                     type="number"
                     className="h-12 rounded-xl"
@@ -328,7 +328,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             </CardHeader>
             <CardContent className="p-8 space-y-8">
               <div className="max-w-md space-y-2">
-                <Label className="text-xs font-black uppercase tracking-wider opacity-60">Test Type</Label>
+                <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Test Type</Label>
                 <Select value={profile.english_test_type} onValueChange={(v) => setProfile({ ...profile, english_test_type: v })}>
                   <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                     <SelectValue />
@@ -352,19 +352,19 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold">Listening</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Listening</Label>
                     <Input type="number" step="0.5" className="h-10 rounded-lg" value={profile.ielts_listening} onChange={(e) => setProfile({ ...profile, ielts_listening: parseFloat(e.target.value) })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold">Reading</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Reading</Label>
                     <Input type="number" step="0.5" className="h-10 rounded-lg" value={profile.ielts_reading} onChange={(e) => setProfile({ ...profile, ielts_reading: parseFloat(e.target.value) })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold">Writing</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Writing</Label>
                     <Input type="number" step="0.5" className="h-10 rounded-lg" value={profile.ielts_writing} onChange={(e) => setProfile({ ...profile, ielts_writing: parseFloat(e.target.value) })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold">Speaking</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Speaking</Label>
                     <Input type="number" step="0.5" className="h-10 rounded-lg" value={profile.ielts_speaking} onChange={(e) => setProfile({ ...profile, ielts_speaking: parseFloat(e.target.value) })} />
                   </div>
                 </div>
@@ -379,19 +379,19 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold">Reading</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Reading</Label>
                     <Input type="number" max="30" className="h-10 rounded-lg" value={profile.toefl_reading} onChange={(e) => setProfile({ ...profile, toefl_reading: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold">Listening</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Listening</Label>
                     <Input type="number" max="30" className="h-10 rounded-lg" value={profile.toefl_listening} onChange={(e) => setProfile({ ...profile, toefl_listening: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold">Writing</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Writing</Label>
                     <Input type="number" max="30" className="h-10 rounded-lg" value={profile.toefl_writing} onChange={(e) => setProfile({ ...profile, toefl_writing: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold">Speaking</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Speaking</Label>
                     <Input type="number" max="30" className="h-10 rounded-lg" value={profile.toefl_speaking} onChange={(e) => setProfile({ ...profile, toefl_speaking: parseInt(e.target.value) || 0 })} />
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
 
               {(profile.english_test_type === "PTE" || profile.english_test_type === "Duolingo") && (
                 <div className="max-w-xs space-y-2">
-                  <Label className="text-xs font-bold">Total Score</Label>
+                  <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Total Score</Label>
                   <Input type="number" className="h-12 rounded-xl" value={profile.english_test_type === "PTE" ? profile.pte_score : profile.duolingo_score} onChange={(e) => setProfile({ ...profile, [profile.english_test_type === "PTE" ? "pte_score" : "duolingo_score"]: parseInt(e.target.value) })} />
                 </div>
               )}
@@ -428,7 +428,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Target Degree</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Target Degree</Label>
                   <Select value={profile.target_degree} onValueChange={(v) => setProfile({ ...profile, target_degree: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -442,7 +442,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="md:col-span-2 space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Preferred Field of Study</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Preferred Field of Study</Label>
                   <Input
                     className="h-12 rounded-xl"
                     placeholder="e.g. Artificial Intelligence, Public Health"
@@ -452,7 +452,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Target Country</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Target Country</Label>
                   <Select value={profile.target_country} onValueChange={(v) => setProfile({ ...profile, target_country: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -468,7 +468,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Target Intake Year</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Target Intake Year</Label>
                   <Input
                     type="number"
                     className="h-12 rounded-xl"
@@ -478,7 +478,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Study Mode</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Study Mode</Label>
                   <Select value={profile.study_mode} onValueChange={(v) => setProfile({ ...profile, study_mode: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -516,7 +516,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Monthly Family Income</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Monthly Family Income</Label>
                   <Select value={profile.monthly_family_income} onValueChange={(v) => setProfile({ ...profile, monthly_family_income: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -530,7 +530,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Personal Budget (Total Savings/Support)</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Personal Budget (Total Savings/Support)</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40" />
                     <Input
@@ -551,7 +551,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   <Switch checked={profile.can_afford_partial} onCheckedChange={(v) => setProfile({ ...profile, can_afford_partial: v })} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Scholarship Preference</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Scholarship Preference</Label>
                   <Select value={profile.scholarship_type_pref} onValueChange={(v) => setProfile({ ...profile, scholarship_type_pref: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -589,7 +589,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8 space-y-8">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Work Experience (Years)</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Work Experience (Years)</Label>
                   <Select value={profile.work_experience_years} onValueChange={(v) => setProfile({ ...profile, work_experience_years: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -603,7 +603,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider opacity-60">Industry Type</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Industry Type</Label>
                   <Select value={profile.work_experience_type} onValueChange={(v) => setProfile({ ...profile, work_experience_type: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -630,7 +630,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-black uppercase tracking-wider opacity-60">Leadership & Extracurriculars</Label>
+                <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Leadership & Extracurriculars</Label>
                 <Textarea
                   className="rounded-2xl min-h-[100px]"
                   placeholder="Tell us about your leadership roles, volunteer work, or clubs..."

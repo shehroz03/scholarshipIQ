@@ -44,17 +44,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 messages_limit: data.messages_limit,
                 full_name: data.full_name
             });
-        } catch (err) {
-            console.error("Failed to fetch user status", err);
-            setStatus({
-                plan: "free",
-                is_premium: false,
-                is_pro: false,
-                subscription_expires: null,
-                messages_remaining: 0,
-                messages_limit: 0,
-                full_name: null
-            });
+        } catch (err: any) {
+            // 403 = admin token used on user endpoint, treat as not logged in silently
+            if (err?.message?.includes("forbidden") || err?.message?.includes("403")) {
+                setStatus(null);
+            } else {
+                setStatus({
+                    plan: "free",
+                    is_premium: false,
+                    is_pro: false,
+                    subscription_expires: null,
+                    messages_remaining: 0,
+                    messages_limit: 0,
+                    full_name: null
+                });
+            }
         } finally {
             setLoading(false);
         }

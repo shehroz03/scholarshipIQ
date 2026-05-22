@@ -710,6 +710,97 @@ def get_auto_update_status(db: Session = Depends(get_db)):
     }
 
 
+# ── EXPIRED SCHOLARSHIP CLEANUP ────────────────────
+
+@router.get("/scholarships/expired-count", dependencies=[Depends(get_current_admin)])
+def count_expired_scholarships(db: Session = Depends(get_db)):
+    """Count active scholarships with deadlines already passed."""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    count = db.query(models.Scholarship).filter(
+        models.Scholarship.is_archived == False,
+        models.Scholarship.deadline != None,
+        models.Scholarship.deadline < now
+    ).count()
+    return {"expired_count": count, "checked_at": now.isoformat()}
+
+
+@router.post("/scholarships/archive-expired", dependencies=[Depends(get_current_admin)])
+def archive_expired_scholarships(db: Session = Depends(get_db)):
+    """Bulk archive all scholarships whose deadline has already passed."""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    expired = db.query(models.Scholarship).filter(
+        models.Scholarship.is_archived == False,
+        models.Scholarship.deadline != None,
+        models.Scholarship.deadline < now
+    ).all()
+
+    archived_ids = []
+    for s in expired:
+        s.is_archived = True
+        s.is_active = False
+        s.archived_at = now
+        s.archive_reason = "deadline_passed"
+        archived_ids.append({
+            "id": s.id,
+            "title": s.title,
+            "university": s.university_name or "",
+            "country": s.country or "",
+            "deadline": str(s.deadline.date()),
+            "scholarship_url": s.scholarship_url or s.website_url or ""
+        })
+
+    db.commit()
+
+    # Also write to cleanup log so bot history stays consistent
+    import json
+    log_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "data", "expired_cleanup_log.json"
+    )
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    existing = []
+    if os.path.exists(log_path):
+        try:
+            with open(log_path) as f:
+                existing = json.load(f)
+        except Exception:
+            existing = []
+    run_entry = {
+        "run_at": now.isoformat(),
+        "archived_count": len(archived_ids),
+        "triggered_by": "admin_manual",
+        "scholarships": archived_ids
+    }
+    existing = ([run_entry] + existing)[:100]
+    with open(log_path, "w") as f:
+        json.dump(existing, f, indent=2)
+
+    return {
+        "archived_count": len(archived_ids),
+        "archived_at": now.isoformat(),
+        "scholarships": archived_ids
+    }
+
+
+@router.get("/scholarships/cleanup-log", dependencies=[Depends(get_current_admin)])
+def get_expired_cleanup_log():
+    """Get the expired scholarship cleanup bot activity log."""
+    import json
+    log_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "data", "expired_cleanup_log.json"
+    )
+    if not os.path.exists(log_path):
+        return {"log": [], "total_runs": 0, "total_archived_all_time": 0}
+    try:
+        with open(log_path) as f:
+            log = json.load(f)
+    except Exception:
+        return {"log": [], "total_runs": 0, "total_archived_all_time": 0}
+    total_archived = sum(r.get("archived_count", 0) for r in log)
+    return {"log": log, "total_runs": len(log), "total_archived_all_time": total_archived}
+
+
 # ── TEACHER APPROVAL SYSTEM ────────────────────
 
 @router.get("/teachers/pending", dependencies=[Depends(get_current_admin)])
@@ -999,7 +1090,7 @@ def pipeline_report(period: str = "monthly", db: Session = Depends(get_db)):
 
 # ─── STAGED REVIEW QUEUE ─────────────────────────────────────────────────────
 
-@router.get("/staged/pending", dependencies=[Depends(get_current_admin)])
+@router.get("/staged/pending")
 def get_staged_pending(db: Session = Depends(get_db)):
     """
     Returns all staged scholarships that need admin review:
@@ -1028,7 +1119,6 @@ def get_staged_pending(db: Session = Depends(get_db)):
             "min_ielts": s.min_ielts,
             "min_toefl": s.min_toefl,
             "eligibility": s.eligibility,
-            "duration_text": s.duration_text,
             "description": s.description,
             "scholarship_url": s.scholarship_url,
             "website_url": s.website_url,
@@ -1076,7 +1166,7 @@ def override_staged_decision(staged_id: int, action: str = Body(..., embed=True)
     from app.services.auto_verify_service import _promote_to_production
     staged = db.query(ScholarshipStaging).filter(ScholarshipStaging.id == staged_id).first()
     if not staged:
-        raise HTTPException(404, "Staged scholarship not found")
+        raise HTTPException(404, f"Staged scholarship #{staged_id} not found — it may have already been processed or removed.")
     if action == "approve":
         prod_s = _promote_to_production(db, staged)
         staged.review_status = "approved"

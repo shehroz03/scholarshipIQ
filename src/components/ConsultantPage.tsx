@@ -193,13 +193,30 @@ const toNum = (val: any): number => {
   return 0;
 };
 
+function isDeadlinePassed(deadlineStr: string): boolean {
+  if (!deadlineStr) return false;
+  // handle formats like "Oct 2025", "2025-10-31", "October 31, 2025"
+  const parsed = new Date(deadlineStr);
+  if (isNaN(parsed.getTime())) return false;
+  return parsed < new Date();
+}
+
 const ScholarshipMiniCard = ({ title, university, deadline, country, funding }: any) => {
-  const { isDark } = useTheme();
+  const passed = isDeadlinePassed(deadline);
   return (
-    <div className="my-4 p-5 rounded-2xl border bg-white/5 border-white/5 hover:border-indigo-500/30 transition-all group/card shadow-xl">
+    <div className={`my-4 p-5 rounded-2xl border hover:border-indigo-500/30 transition-all group/card shadow-xl ${
+      passed ? 'bg-red-950/20 border-red-900/30' : 'bg-white/5 border-white/5'
+    }`}>
       <div className="flex justify-between items-start mb-3">
         <h4 className="font-black text-white text-base group-hover/card:text-indigo-400 transition-colors line-clamp-1">{title}</h4>
-        <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 text-[8px] font-black uppercase tracking-widest">{funding}</Badge>
+        <div className="flex items-center gap-2">
+          {passed && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">
+              ⚠️ Deadline Passed
+            </span>
+          )}
+          <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 text-[8px] font-black uppercase tracking-widest">{funding}</Badge>
+        </div>
       </div>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
@@ -211,7 +228,9 @@ const ScholarshipMiniCard = ({ title, university, deadline, country, funding }: 
             <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
               <Globe size={10} /> {country}
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] font-black text-amber-500 uppercase tracking-widest">
+            <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest ${
+              passed ? 'text-red-400 line-through' : 'text-amber-500'
+            }`}>
               <Clock size={10} /> {deadline}
             </div>
           </div>
@@ -283,6 +302,7 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
            {isFinancial ? (
              <FinancialPlanResult content={content} />
            ) : (
+             <>
              <ReactMarkdown 
                remarkPlugins={[remarkGfm]}
                components={{
@@ -343,6 +363,17 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
              >
                {content}
              </ReactMarkdown>
+             {/* Deadline + Source disclaimer — shown on scholarship-related responses */}
+             {(content.toLowerCase().includes('deadline') || content.toLowerCase().includes('scholarship')) && (
+               <div className="mt-6 flex items-start gap-3 px-4 py-3 rounded-2xl"
+                 style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)' }}>
+                 <span className="text-amber-400 text-base shrink-0 mt-0.5">⚠️</span>
+                 <p className="text-[12px] leading-relaxed" style={{ color: '#fbbf24' }}>
+                   <strong>Important:</strong> Deadlines shown are AI-matched estimates. Please verify current deadlines and eligibility on the official university or scholarship website before applying.
+                 </p>
+               </div>
+             )}
+             </>
            )}
         </div>
       </div>
@@ -593,9 +624,29 @@ export function ConsultantPage() {
 
     const handleSend = async (e?: React.FormEvent, directMsg?: string) => {
         if (e) e.preventDefault();
-        const text = directMsg || input.trim();
+        let text = directMsg || input.trim();
         if (!text || chatLoading) return;
         if (!directMsg) setInput("");
+
+        // CGPA scale detection — covers all common patterns
+        const cgpaPatterns = [
+            /(?:cgpa|gpa)\s*(?:is|of|:)?\s*([0-9]+(?:\.[0-9]+)?)/i,  // cgpa is X, cgpa: X, gpa X
+            /([0-9]+(?:\.[0-9]+)?)\s*\/\s*5(?:\.[0-9]+)?\b/i,         // X/5 or X/5.0
+            /([0-9]+(?:\.[0-9]+)?)\s+out\s+of\s+5/i,                  // X out of 5
+            /(?:my|have|got)\s+(?:a\s+)?(?:cgpa|gpa)\s+(?:of\s+)?([0-9]+(?:\.[0-9]+)?)/i, // my cgpa 3.8, have a gpa of 3.9
+        ];
+        let detectedCGPA: number | null = null;
+        for (const pattern of cgpaPatterns) {
+            const m = text.match(pattern);
+            if (m) {
+                const val = parseFloat(m[1] ?? m[2]);
+                if (!isNaN(val)) { detectedCGPA = val; break; }
+            }
+        }
+        if (detectedCGPA !== null && detectedCGPA > 4.0) {
+            text = text + `\n\n[System Note: User mentioned CGPA of ${detectedCGPA}. This appears to be on a 5.0 scale (common in Pakistani universities). Please ask the user to confirm their grading scale (4.0 or 5.0), convert to 4.0 equivalent if needed (${detectedCGPA}/5 × 4 = ${((detectedCGPA / 5) * 4).toFixed(2)}/4.0), and use the converted value for international scholarship matching.]`;
+        }
+
         await sendMessage(text);
         fetchStatus();
     };

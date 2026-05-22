@@ -205,6 +205,9 @@ async def auto_update_scholarships(db: Session, batch_size: int = BATCH_SIZE) ->
                         "scholarship_id": s.id,
                         "title": s.title,
                         "university": uni_name,
+                        "country": s.country or "",
+                        "deadline": str(s.deadline.date()) if s.deadline else "",
+                        "scholarship_url": s.scholarship_url or s.website_url or "",
                         "changes": change_notes,
                         "ai_notes": changes.get("notes", ""),
                         "updated_at": datetime.now().isoformat()

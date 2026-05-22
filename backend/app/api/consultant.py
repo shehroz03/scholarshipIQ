@@ -855,10 +855,13 @@ def get_relevant_scholarships(
     limit: int = 5
 ):
     """Fetch scholarships based on user query intent (e.g. budget)."""
+    today = datetime.now(timezone.utc).replace(tzinfo=None)
     query = db.query(models.Scholarship).filter(
         models.Scholarship.is_archived == False,
         models.Scholarship.is_active == True,
-        models.Scholarship.is_suspicious == False
+        models.Scholarship.is_suspicious == False,
+        # Only show scholarships with future deadlines or no deadline set
+        (models.Scholarship.deadline == None) | (models.Scholarship.deadline > today)
     )
     
     # Budget filter
