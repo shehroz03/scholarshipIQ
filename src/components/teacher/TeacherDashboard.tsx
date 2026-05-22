@@ -47,6 +47,12 @@ export default function TeacherDashboard() {
   const [questionForm, setQuestionForm] = useState({
     question: "", options: ["", "", "", ""], correct_answer: "A", explanation: "", difficulty: "Medium"
   });
+  const [showAiGenerator, setShowAiGenerator] = useState<number | null>(null);
+  const [aiNotes, setAiNotes] = useState("");
+  const [aiQuestionCount, setAiQuestionCount] = useState(5);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiGeneratedQuestions, setAiGeneratedQuestions] = useState<any[]>([]);
+  const [aiApproved, setAiApproved] = useState<boolean[]>([]);
 
   const fetchAll = async () => {
     try {
@@ -166,6 +172,52 @@ export default function TeacherDashboard() {
       loadQuizQuestions(quizId);
       fetchAll();
     } catch (e: any) { toast.error(e.message); }
+  };
+
+  const generateAiQuiz = async () => {
+    if (!aiNotes.trim()) { toast.error("Please write your notes or topic first"); return; }
+    setAiLoading(true);
+    setAiGeneratedQuestions([]);
+    try {
+      const prompt = `You are a professional test-prep quiz creator. Generate exactly ${aiQuestionCount} MCQ questions based on the following notes/topic. Return ONLY a valid JSON array, no extra text. Format:
+[{"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct_answer":"A","explanation":"...","difficulty":"Medium"}]
+
+Notes/Topic: ${aiNotes}`;
+      const res = await api.chatbot.sendTeacherMessage(prompt);
+      const text = res?.response || res?.message || res?.reply || "";
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) { toast.error("AI could not generate questions. Please try again."); return; }
+      const parsed = JSON.parse(jsonMatch[0]);
+      setAiGeneratedQuestions(parsed);
+      setAiApproved(parsed.map(() => true));
+      toast.success(`${parsed.length} questions generated!`);
+    } catch (e: any) {
+      toast.error("AI generation failed. Try rephrasing your notes.");
+    } finally { setAiLoading(false); }
+  };
+
+  const addApprovedAiQuestions = async (quizId: number) => {
+    const approved = aiGeneratedQuestions.filter((_, i) => aiApproved[i]);
+    if (approved.length === 0) { toast.error("Please approve at least 1 question"); return; }
+    let added = 0;
+    for (const q of approved) {
+      try {
+        const opts = (q.options || []).map((o: string) => o.replace(/^[A-D]\.\s*/, ""));
+        await api.teacher.addQuizQuestion(quizId, {
+          question: q.question,
+          options: opts,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation || "",
+          difficulty: q.difficulty || "Medium",
+        });
+        added++;
+      } catch {}
+    }
+    toast.success(`${added} questions added to quiz!`);
+    setShowAiGenerator(null);
+    setAiNotes(""); setAiGeneratedQuestions([]); setAiApproved([]);
+    loadQuizQuestions(quizId);
+    fetchAll();
   };
 
   const approvePayment = async (enrollmentId: number) => {
@@ -455,36 +507,42 @@ export default function TeacherDashboard() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 overflow-auto bg-gray-50">
+      <div className="flex-1 overflow-auto" style={{ background: "#f8fafc" }}>
         {/* Top Header */}
-        <div className="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-          <div>
-            <h1 className="text-xl font-black text-gray-900">
-              {navItems.find(n => n.id === tab)?.label || "Dashboard"}
-            </h1>
-            <p className="text-sm text-gray-600">
-              {tab === "overview" && "Your teaching summary and quick actions"}
-              {tab === "courses" && "Manage courses, lessons, meetings, and quizzes"}
-              {tab === "meetings" && "All meeting links and live classes"}
-              {tab === "quizzes" && "Manage quizzes and questions"}
-              {tab === "fees" && "Approve student fee payments"}
-              {tab === "students" && "View enrolled students and progress"}
-              {tab === "create" && "Create a new test-prep course with fee"}
-            </p>
+        <div className="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-10 rounded-full" style={{ background: navItems.find(n => n.id === tab)?.color || "#6366f1" }} />
+            <div>
+              <h1 className="text-xl font-black text-gray-900 leading-tight">
+                {navItems.find(n => n.id === tab)?.label || "Dashboard"}
+              </h1>
+              <p className="text-xs text-gray-400 font-medium">
+                {tab === "overview" && "Your teaching summary and quick actions"}
+                {tab === "courses" && "Manage courses, lessons, meetings, and quizzes"}
+                {tab === "meetings" && "All meeting links and live classes"}
+                {tab === "quizzes" && "Manage quizzes and questions"}
+                {tab === "fees" && "Approve student fee payments"}
+                {tab === "students" && "View enrolled students and progress"}
+                {tab === "create" && "Create a new test-prep course with fee"}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-500">Welcome back, <strong className="text-gray-800">{profile?.name?.split(" ")[0]}</strong></span>
+            <div className="hidden md:flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2 border">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>{profile?.name?.charAt(0)?.toUpperCase() || "T"}</div>
+              <span className="text-sm font-semibold text-gray-700">{profile?.name?.split(" ")[0]}</span>
+            </div>
             <button
               onClick={() => setTab("create")}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
               style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
             >
-              <Plus size={16} /> New Course
+              <Plus size={15} /> New Course
             </button>
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-6">
 
         {/* OVERVIEW */}
         {tab === "overview" && analytics && (
@@ -492,50 +550,63 @@ export default function TeacherDashboard() {
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Total Courses", value: analytics.total_courses, icon: BookOpen, bg: "#eef2ff", iconColor: "#6366f1", border: "#c7d2fe" },
-                { label: "Total Students", value: analytics.total_students, icon: Users, bg: "#eff6ff", iconColor: "#2563eb", border: "#bfdbfe" },
-                { label: "Pending Fees", value: analytics.pending_payments ?? 0, icon: DollarSign, bg: "#f0fdf4", iconColor: "#059669", border: "#bbf7d0" },
-                { label: "Quiz Attempts", value: analytics.total_quiz_attempts, icon: Zap, bg: "#f5f3ff", iconColor: "#7c3aed", border: "#ddd6fe" },
+                { label: "Total Courses", value: analytics.total_courses, icon: BookOpen, grad: "linear-gradient(135deg,#6366f1,#818cf8)", light: "#eef2ff" },
+                { label: "Total Students", value: analytics.total_students, icon: Users, grad: "linear-gradient(135deg,#2563eb,#60a5fa)", light: "#eff6ff" },
+                { label: "Pending Fees", value: analytics.pending_payments ?? 0, icon: DollarSign, grad: "linear-gradient(135deg,#d97706,#fbbf24)", light: "#fffbeb" },
+                { label: "Quiz Attempts", value: analytics.total_quiz_attempts, icon: Zap, grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", light: "#f5f3ff" },
               ].map(s => (
-                <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: `1px solid ${s.border}` }}>
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: s.bg }}>
-                    <s.icon size={22} style={{ color: s.iconColor }} />
+                <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm" style={{ background: s.grad }}>
+                      <s.icon size={22} color="white" />
+                    </div>
+                    <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Total</span>
                   </div>
-                  <div className="text-3xl font-black text-gray-900">{s.value}</div>
-                  <div className="text-sm text-gray-500 mt-0.5 font-medium">{s.label}</div>
+                  <div className="text-4xl font-black text-gray-900 mb-1">{s.value}</div>
+                  <div className="text-sm text-gray-500 font-semibold">{s.label}</div>
+                  <div className="mt-3 h-1 rounded-full" style={{ background: s.light }}>
+                    <div className="h-full rounded-full w-3/4" style={{ background: s.grad }} />
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Pass Rate + Quick Actions */}
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp size={20} style={{ color: "#059669" }} />
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-5" style={{ background: "#059669", transform: "translate(30%,-30%)" }} />
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#059669,#34d399)" }}>
+                    <TrendingUp size={18} color="white" />
+                  </div>
                   <h3 className="font-black text-gray-900">Student Pass Rate</h3>
                 </div>
-                <div className="text-5xl font-black mb-2" style={{ color: "#059669" }}>{analytics.pass_rate}%</div>
-                <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#f0fdf4" }}>
-                  <div className="h-full rounded-full transition-all" style={{ width: `${analytics.pass_rate}%`, background: "linear-gradient(90deg, #059669, #34d399)" }} />
+                <div className="text-6xl font-black mb-3" style={{ color: "#059669" }}>{analytics.pass_rate}<span className="text-3xl">%</span></div>
+                <div className="h-3 rounded-full overflow-hidden bg-gray-100">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${analytics.pass_rate}%`, background: "linear-gradient(90deg,#059669,#34d399)" }} />
                 </div>
-                <p className="text-xs text-gray-400 mt-2">{analytics.total_quiz_attempts} total quiz attempts</p>
+                <p className="text-xs text-gray-400 mt-3 font-medium">{analytics.total_quiz_attempts} total quiz attempts · avg score {analytics.average_score}%</p>
               </div>
 
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-black text-gray-900 mb-4">Quick Actions</h3>
-                <div className="space-y-3">
-                  <button onClick={() => setTab("create")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#eef2ff", color: "#6366f1" }}>
-                    <Plus size={16} /> Create New Course
-                  </button>
-                  <button onClick={() => setTab("courses")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
-                    <BookOpen size={16} /> Manage Courses
-                  </button>
-                  <button onClick={() => setTab("students")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#f0fdf4", color: "#059669" }}>
-                    <Users size={16} /> View All Students
-                  </button>
+                <div className="space-y-2">
+                  {[
+                    { label: "Create New Course", icon: Plus, bg: "#eef2ff", color: "#6366f1", tab: "create" },
+                    { label: "Manage Courses", icon: BookOpen, bg: "#eff6ff", color: "#2563eb", tab: "courses" },
+                    { label: "View All Students", icon: Users, bg: "#f0fdf4", color: "#059669", tab: "students" },
+                  ].map(a => (
+                    <button key={a.tab} onClick={() => setTab(a.tab as any)} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01]" style={{ backgroundColor: a.bg, color: a.color }}>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: a.color, opacity: 0.15 }}></div>
+                      <a.icon size={16} style={{ marginLeft: -28 }} />
+                      <span style={{ marginLeft: 4 }}>{a.label}</span>
+                      <ArrowRight size={14} className="ml-auto opacity-40" />
+                    </button>
+                  ))}
                   {(analytics.pending_payments ?? 0) > 0 && (
                     <button onClick={() => setTab("fees")} className="w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-sm transition-all" style={{ backgroundColor: "#fffbeb", color: "#d97706" }}>
                       <DollarSign size={16} /> {analytics.pending_payments} Pending Payment(s)
+                      <span className="ml-auto text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-bold">Action needed</span>
                     </button>
                   )}
                 </div>
@@ -545,23 +616,30 @@ export default function TeacherDashboard() {
             {/* Recent Courses */}
             {courses.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="font-black text-gray-900">Recent Courses</h3>
-                  <button onClick={() => setTab("courses")} className="text-sm font-semibold" style={{ color: "#6366f1" }}>View All →</button>
+                <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={18} style={{ color: "#6366f1" }} />
+                    <h3 className="font-black text-gray-900">Recent Courses</h3>
+                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">{courses.length}</span>
+                  </div>
+                  <button onClick={() => setTab("courses")} className="text-sm font-bold flex items-center gap-1" style={{ color: "#6366f1" }}>View All <ArrowRight size={14} /></button>
                 </div>
                 <div className="divide-y divide-gray-50">
                   {courses.slice(0, 3).map(c => (
-                    <div key={c.id} className="px-6 py-4 flex items-center justify-between">
+                    <div key={c.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: TEST_COLORS[c.test_type] || "#6366f1" }}>{c.test_type}</div>
+                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-xs font-black shadow-sm" style={{ background: `linear-gradient(135deg, ${TEST_COLORS[c.test_type] || "#6366f1"}, ${TEST_COLORS[c.test_type] || "#8b5cf6"}99)` }}>{c.test_type}</div>
                         <div>
-                          <p className="font-semibold text-gray-900 text-sm">{c.title}</p>
-                          <p className="text-xs text-gray-400">{c.enrolled_students} students · {c.total_lessons} lessons</p>
+                          <p className="font-bold text-gray-900 text-sm">{c.title}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{c.level} · <strong className="text-gray-600">{c.enrolled_students}</strong> students · {c.total_lessons} lessons</p>
                         </div>
                       </div>
-                      <span className="text-xs font-bold px-2 py-1 rounded-full" style={c.is_published ? { backgroundColor: "#d1fae5", color: "#065f46" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }}>
-                        {c.is_published ? "Published" : "Draft"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={c.is_published ? { backgroundColor: "#d1fae5", color: "#065f46" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }}>
+                          {c.is_published ? "● Live" : "○ Draft"}
+                        </span>
+                        <button onClick={() => setTab("courses")} className="text-xs text-indigo-600 font-bold px-3 py-1.5 bg-indigo-50 rounded-lg hover:bg-indigo-100">Manage</button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -574,28 +652,37 @@ export default function TeacherDashboard() {
         {tab === "courses" && (
           <div className="space-y-4">
             {courses.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-2xl border">
-                <BookOpen className="mx-auto text-gray-300 mb-4" size={48} />
-                <p className="text-gray-500 font-semibold">No courses yet.</p>
-                <button onClick={() => setTab("create")} className="mt-4 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm">Create First Course</button>
+              <div className="text-center py-24 bg-white rounded-2xl border border-dashed border-gray-200">
+                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="text-indigo-400" size={32} />
+                </div>
+                <p className="text-gray-700 font-bold text-lg mb-1">No courses yet</p>
+                <p className="text-gray-400 text-sm mb-5">Create your first course to start teaching</p>
+                <button onClick={() => setTab("create")} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700">+ Create First Course</button>
               </div>
             ) : courses.map(c => (
-              <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all">
                 <div className="p-5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-sm" style={{ backgroundColor: TEST_COLORS[c.test_type] || "#6366f1" }}>{c.test_type}</div>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-md" style={{ background: `linear-gradient(135deg, ${TEST_COLORS[c.test_type] || "#6366f1"}, ${TEST_COLORS[c.test_type] || "#8b5cf6"}cc)` }}>{c.test_type}</div>
                     <div>
-                      <div className="font-black text-gray-900">{c.title}</div>
-                      <div className="text-sm text-gray-400">{c.level} · {c.enrolled_students} students · {c.total_lessons} lessons · {c.total_quizzes} quizzes</div>
+                      <div className="font-black text-gray-900 text-base">{c.title}</div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold">{c.level}</span>
+                        <span className="text-xs text-gray-500">👥 {c.enrolled_students} students</span>
+                        <span className="text-xs text-gray-500">📖 {c.total_lessons} lessons</span>
+                        <span className="text-xs text-gray-500">📝 {c.total_quizzes} quizzes</span>
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">PKR {c.price > 0 ? c.price.toLocaleString() : "Free"}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${c.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>{c.is_published ? "Published" : "Draft"}</span>
-                    <button onClick={() => togglePublish(c.id, c.is_published)} className="p-2 rounded-xl hover:bg-gray-100" title={c.is_published ? "Unpublish" : "Publish"}>
+                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${c.is_published ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{c.is_published ? "● Live" : "○ Draft"}</span>
+                    <button onClick={() => togglePublish(c.id, c.is_published)} className="p-2 rounded-xl hover:bg-gray-100 border border-gray-200" title={c.is_published ? "Unpublish" : "Publish"}>
                       {c.is_published ? <EyeOff size={16} className="text-gray-400" /> : <Eye size={16} className="text-indigo-500" />}
                     </button>
-                    <button onClick={() => setSelectedCourse(selectedCourse?.id === c.id ? null : c)} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${selectedCourse?.id === c.id ? "bg-indigo-600 text-white" : "bg-gray-50 hover:bg-gray-100 text-gray-700"}`}>
-                      {selectedCourse?.id === c.id ? "Close" : "Manage"}
+                    <button onClick={() => setSelectedCourse(selectedCourse?.id === c.id ? null : c)} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${selectedCourse?.id === c.id ? "bg-indigo-600 text-white" : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700"}`}>
+                      {selectedCourse?.id === c.id ? "✕ Close" : "⚙ Manage"}
                     </button>
                     <button
                       onClick={async () => {
@@ -737,7 +824,7 @@ export default function TeacherDashboard() {
                         <div className="grid grid-cols-3 gap-3">
                           <div>
                             <label className="text-xs font-medium text-gray-500 mb-1 block">Date *</label>
-                            <input type="date" className="w-full border rounded-lg p-2 text-sm" value={meetingForm.date} onChange={e => setMeetingForm(p => ({ ...p, date: e.target.value }))} />
+                            <input type="date" className="w-full border rounded-lg p-2 text-sm" min={new Date().toISOString().split('T')[0]} value={meetingForm.date} onChange={e => setMeetingForm(p => ({ ...p, date: e.target.value }))} />
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500 mb-1 block">Time</label>
@@ -823,7 +910,7 @@ export default function TeacherDashboard() {
                             <select className="border rounded-lg p-2.5 text-sm" value={liveForm.platform} onChange={e => setLiveForm(p => ({ ...p, platform: e.target.value }))}>
                               {PLATFORMS.map(pl => <option key={pl}>{pl}</option>)}
                             </select>
-                            <input type="datetime-local" className="border rounded-lg p-2.5 text-sm" value={liveForm.scheduled_at} onChange={e => setLiveForm(p => ({ ...p, scheduled_at: e.target.value }))} />
+                            <input type="datetime-local" className="border rounded-lg p-2.5 text-sm" min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)} value={liveForm.scheduled_at} onChange={e => setLiveForm(p => ({ ...p, scheduled_at: e.target.value }))} />
                           </div>
                           <div className="flex gap-3 items-center">
                             <input type="number" className="w-32 border rounded-lg p-2.5 text-sm" placeholder="Duration (min)" value={liveForm.duration_minutes} onChange={e => setLiveForm(p => ({ ...p, duration_minutes: +e.target.value }))} />
@@ -841,77 +928,272 @@ export default function TeacherDashboard() {
                         <button onClick={() => setShowQuizForm(!showQuizForm)} className="text-xs bg-purple-100 text-purple-700 font-bold px-3 py-1.5 rounded-xl hover:bg-purple-200"><Plus size={12} className="inline mr-1" />Create Quiz</button>
                       </div>
 
-                      {/* Existing Quizzes with Schedule */}
+                      {/* Create Quiz Form */}
+                      {showQuizForm && (
+                        <div className="bg-purple-50 rounded-xl border border-purple-200 p-4 space-y-3 mb-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">1</div>
+                            <span className="font-bold text-sm text-purple-800">Step 1: Quiz Settings</span>
+                          </div>
+                          <input className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" placeholder="Quiz title* e.g. IELTS Reading Practice Test" value={quizForm.title} onChange={e => setQuizForm(p => ({ ...p, title: e.target.value }))} />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 mb-1 block">Section</label>
+                              <select className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" value={quizForm.section} onChange={e => setQuizForm(p => ({ ...p, section: e.target.value }))}>
+                                {["Reading", "Listening", "Writing", "Speaking", "Vocabulary", "Quantitative", "Verbal", "General"].map(s => <option key={s}>{s}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 mb-1 block">Schedule Date & Time</label>
+                              <input type="datetime-local" className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)} value={quizForm.scheduled_at} onChange={e => setQuizForm(p => ({ ...p, scheduled_at: e.target.value }))} />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 mb-1 block">Time Limit (minutes)</label>
+                              <input type="number" className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" placeholder="e.g. 30" value={quizForm.time_limit_minutes} onChange={e => setQuizForm(p => ({ ...p, time_limit_minutes: +e.target.value }))} />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-gray-600 mb-1 block">Passing Score (%)</label>
+                              <input type="number" className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" placeholder="e.g. 60" value={quizForm.pass_score} onChange={e => setQuizForm(p => ({ ...p, pass_score: +e.target.value }))} />
+                            </div>
+                          </div>
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
+                            💡 <strong>After creating the quiz</strong>, you will add MCQ questions with 4 options (A, B, C, D) and mark the correct answer.
+                          </div>
+                          <button onClick={() => createQuiz(c.id)} className="w-full bg-purple-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-purple-700">Create Quiz & Add Questions →</button>
+                        </div>
+                      )}
+
+                      {/* Existing Quizzes */}
                       {c.quizzes?.length > 0 && (
-                        <div className="space-y-2 mb-4">
+                        <div className="space-y-3 mb-2">
                           {c.quizzes.map((q: any) => (
-                            <div key={q.id} className="bg-white rounded-lg border p-3 space-y-3">
-                              <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold text-sm text-gray-900">{q.title}</p>
-                                <p className="text-xs text-gray-500">{q.section} · {q.time_limit_minutes}min · Pass: {q.pass_score}% · {q.question_count ?? 0} Qs</p>
-                                {q.scheduled_at && (
-                                  <p className="text-xs text-amber-600 mt-1">
-                                    📅 Scheduled: {new Date(q.scheduled_at).toLocaleString()}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex gap-2">
-                              <button onClick={() => loadQuizQuestions(q.id)} className="text-xs bg-purple-100 text-purple-700 px-2 py-1.5 rounded-lg font-bold">+ Questions</button>
-                              <button
-                                onClick={async () => {
-                                  if (!confirm("Delete this quiz permanently?")) return;
-                                  try {
-                                    await api.request(`/teacher/quizzes/${q.id}`, { method: "DELETE" });
-                                    toast.success("Quiz deleted!");
-                                    fetchAll();
-                                  } catch (e: any) { toast.error(e.message); }
-                                }}
-                                className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                                title="Delete Quiz"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                              </div>
-                              </div>
-                              {expandedQuizId === q.id && (
-                                <div className="border-t pt-3 space-y-2">
-                                  {quizQuestions.map((qq: any, qi: number) => (
-                                    <div key={qq.id} className="text-xs bg-gray-50 p-2 rounded">{qi + 1}. {qq.question}</div>
-                                  ))}
-                                  <textarea className="w-full border rounded-lg p-2 text-sm" rows={2} placeholder="Question*" value={questionForm.question} onChange={e => setQuestionForm(p => ({ ...p, question: e.target.value }))} />
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {questionForm.options.map((opt, i) => (
-                                      <input key={i} className="border rounded p-2 text-sm" placeholder={`Opt ${["A","B","C","D"][i]}`} value={opt} onChange={e => { const o = [...questionForm.options]; o[i] = e.target.value; setQuestionForm(p => ({ ...p, options: o })); }} />
-                                    ))}
+                            <div key={q.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                              {/* Quiz Header */}
+                              <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
+                                <div className="flex items-start justify-between gap-2 mb-3">
+                                  <div>
+                                    <p className="font-bold text-sm text-gray-900">📝 {q.title || "Untitled Quiz"}</p>
+                                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">{q.section}</span>
+                                      <span className="text-xs text-gray-500">⏱ {q.time_limit_minutes}min</span>
+                                      <span className="text-xs text-gray-500">✅ Pass: {q.pass_score}%</span>
+                                      <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">{q.question_count ?? 0} MCQs</span>
+                                    </div>
+                                    {q.scheduled_at && (
+                                      <p className="text-xs text-amber-600 mt-1">📅 {new Date(q.scheduled_at).toLocaleString()}</p>
+                                    )}
                                   </div>
-                                  <div className="flex gap-2 items-center">
-                                    <select className="border rounded p-2 text-sm" value={questionForm.correct_answer} onChange={e => setQuestionForm(p => ({ ...p, correct_answer: e.target.value }))}>
-                                      {["A","B","C","D"].map(x => <option key={x}>{x}</option>)}
-                                    </select>
-                                    <button onClick={() => addQuizQuestion(q.id)} className="ml-auto bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-bold">Save</button>
+                                  <button
+                                    onClick={async () => {
+                                      if (!confirm("Delete this quiz permanently?")) return;
+                                      try {
+                                        await api.teacher.deleteQuiz(q.id);
+                                        toast.success("Quiz deleted!");
+                                        fetchAll();
+                                      } catch (e: any) { toast.error(e.message); }
+                                    }}
+                                    className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 border border-red-100 flex-shrink-0"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                                {/* Action Buttons - clearly visible */}
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => loadQuizQuestions(q.id)}
+                                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold border-2 transition-all"
+                                    style={expandedQuizId === q.id
+                                      ? { background: "#6366f1", color: "#fff", borderColor: "#6366f1" }
+                                      : { background: "#fff", color: "#6366f1", borderColor: "#6366f1" }}
+                                  >
+                                    <Plus size={13} /> {expandedQuizId === q.id ? "Close Questions" : "Add MCQ Questions"}
+                                  </button>
+                                  <button
+                                    onClick={() => { loadQuizQuestions(q.id); setShowAiGenerator(q.id); }}
+                                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold border-2 transition-all"
+                                    style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", color: "#fff", borderColor: "transparent" }}
+                                  >
+                                    <span>✨</span> Generate with AI
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* MCQ Question Editor */}
+                              {expandedQuizId === q.id && (
+                                <div className="p-4 space-y-4">
+
+                                  {/* AI QUIZ GENERATOR */}
+                                  <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-xl overflow-hidden">
+                                    <button
+                                      onClick={() => setShowAiGenerator(showAiGenerator === q.id ? null : q.id)}
+                                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-violet-100 transition-colors"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black">AI</div>
+                                        <span className="font-bold text-sm text-violet-800">✨ Generate MCQs with AI</span>
+                                        <span className="text-xs bg-violet-200 text-violet-700 px-2 py-0.5 rounded-full font-semibold">New</span>
+                                      </div>
+                                      <span className="text-violet-500 text-xs font-bold">{showAiGenerator === q.id ? "▲ Close" : "▼ Open"}</span>
+                                    </button>
+
+                                    {showAiGenerator === q.id && (
+                                      <div className="px-4 pb-4 space-y-4 border-t border-violet-200">
+                                        <p className="text-xs text-violet-600 pt-3">📝 Apne notes, topic ya idea likhein — AI automatically MCQ questions generate karega</p>
+
+                                        {/* Notes Input */}
+                                        <div>
+                                          <label className="text-xs font-bold text-gray-700 mb-1 block">Your Notes / Topic / Idea *</label>
+                                          <textarea
+                                            className="w-full border border-violet-200 rounded-xl p-3 text-sm bg-white resize-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+                                            rows={4}
+                                            placeholder={"e.g.\n- IELTS Reading: True/False/Not Given questions\n- Students should identify writer's claims\n- Focus on skimming and scanning techniques\n\nYa simply: TOEFL Listening comprehension practice"}
+                                            value={aiNotes}
+                                            onChange={e => setAiNotes(e.target.value)}
+                                          />
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                          <div>
+                                            <label className="text-xs font-bold text-gray-700 mb-1 block">Questions Count</label>
+                                            <select className="border border-violet-200 rounded-lg p-2 text-sm bg-white" value={aiQuestionCount} onChange={e => setAiQuestionCount(+e.target.value)}>
+                                              {[3, 5, 8, 10, 15].map(n => <option key={n} value={n}>{n} questions</option>)}
+                                            </select>
+                                          </div>
+                                          <button
+                                            onClick={generateAiQuiz}
+                                            disabled={aiLoading || !aiNotes.trim()}
+                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            style={{ background: aiLoading ? "#a78bfa" : "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+                                          >
+                                            {aiLoading ? (
+                                              <><span className="animate-spin">⟳</span> AI Generating...</>
+                                            ) : (
+                                              <>✨ Generate Questions</>
+                                            )}
+                                          </button>
+                                        </div>
+
+                                        {/* AI Generated Questions Review */}
+                                        {aiGeneratedQuestions.length > 0 && (
+                                          <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                              <p className="text-sm font-bold text-gray-800">📋 Review Generated Questions</p>
+                                              <div className="flex gap-2">
+                                                <button onClick={() => setAiApproved(aiApproved.map(() => true))} className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-lg font-bold">Approve All</button>
+                                                <button onClick={() => setAiApproved(aiApproved.map(() => false))} className="text-xs text-red-700 bg-red-100 px-2 py-1 rounded-lg font-bold">Reject All</button>
+                                              </div>
+                                            </div>
+
+                                            {aiGeneratedQuestions.map((aq, idx) => (
+                                              <div key={idx} className={`border-2 rounded-xl p-3 transition-all ${aiApproved[idx] ? "border-green-300 bg-green-50" : "border-red-200 bg-red-50 opacity-60"}`}>
+                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                  <p className="text-sm font-semibold text-gray-800 flex-1">Q{idx + 1}. {aq.question}</p>
+                                                  <button
+                                                    onClick={() => { const a = [...aiApproved]; a[idx] = !a[idx]; setAiApproved(a); }}
+                                                    className={`flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold border transition-all ${aiApproved[idx] ? "bg-green-500 text-white border-green-500" : "bg-white text-red-500 border-red-300"}`}
+                                                  >
+                                                    {aiApproved[idx] ? "✓ Approved" : "✗ Rejected"}
+                                                  </button>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-1 mb-1">
+                                                  {(aq.options || []).map((opt: string, oi: number) => (
+                                                    <p key={oi} className={`text-xs px-2 py-1 rounded-lg ${aq.correct_answer === ["A","B","C","D"][oi] ? "bg-green-200 text-green-800 font-bold" : "bg-white text-gray-600"}`}>
+                                                      {opt} {aq.correct_answer === ["A","B","C","D"][oi] && "✓"}
+                                                    </p>
+                                                  ))}
+                                                </div>
+                                                {aq.explanation && <p className="text-xs text-blue-600 italic mt-1">💡 {aq.explanation}</p>}
+                                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${aq.difficulty === "Hard" ? "bg-red-100 text-red-600" : aq.difficulty === "Easy" ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-700"}`}>{aq.difficulty}</span>
+                                              </div>
+                                            ))}
+
+                                            <button
+                                              onClick={() => addApprovedAiQuestions(q.id)}
+                                              className="w-full py-3 rounded-xl text-sm font-bold text-white"
+                                              style={{ background: "linear-gradient(135deg, #059669, #10b981)" }}
+                                            >
+                                              ✅ Add {aiApproved.filter(Boolean).length} Approved Questions to Quiz
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Existing Questions Preview */}
+                                  {quizQuestions.length > 0 && (
+                                    <div className="space-y-2">
+                                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Existing Questions ({quizQuestions.length})</p>
+                                      {quizQuestions.map((qq: any, qi: number) => (
+                                        <div key={qq.id} className="bg-gray-50 border rounded-lg p-3">
+                                          <p className="text-sm font-semibold text-gray-800">Q{qi + 1}. {qq.question}</p>
+                                          <div className="grid grid-cols-2 gap-1 mt-2">
+                                            {(qq.options || []).map((opt: string, oi: number) => (
+                                              <p key={oi} className={`text-xs px-2 py-1 rounded ${qq.correct_answer === ["A","B","C","D"][oi] ? "bg-green-100 text-green-700 font-bold" : "text-gray-500"}`}>
+                                                {["A","B","C","D"][oi]}. {opt} {qq.correct_answer === ["A","B","C","D"][oi] && "✓"}
+                                              </p>
+                                            ))}
+                                          </div>
+                                          {qq.explanation && <p className="text-xs text-blue-600 mt-1 italic">💡 {qq.explanation}</p>}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Add New MCQ Question */}
+                                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">2</div>
+                                      <span className="font-bold text-sm text-purple-800">Add MCQ Question</span>
+                                    </div>
+
+                                    <div>
+                                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Question *</label>
+                                      <textarea className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" rows={2} placeholder="e.g. According to the passage, what is the main reason for...?" value={questionForm.question} onChange={e => setQuestionForm(p => ({ ...p, question: e.target.value }))} />
+                                    </div>
+
+                                    <div>
+                                      <label className="text-xs font-semibold text-gray-600 mb-2 block">Answer Options (4 options)</label>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        {questionForm.options.map((opt, i) => (
+                                          <div key={i} className="flex items-center gap-2">
+                                            <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 ${questionForm.correct_answer === ["A","B","C","D"][i] ? "bg-green-500 text-white" : "bg-gray-200 text-gray-600"}`}>{["A","B","C","D"][i]}</span>
+                                            <input className="flex-1 border border-purple-200 rounded-lg p-2 text-sm bg-white" placeholder={`Option ${["A","B","C","D"][i]}*`} value={opt} onChange={e => { const o = [...questionForm.options]; o[i] = e.target.value; setQuestionForm(p => ({ ...p, options: o })); }} />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <label className="text-xs font-semibold text-gray-600 mb-1 block">✅ Correct Answer</label>
+                                        <select className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white font-bold text-green-700" value={questionForm.correct_answer} onChange={e => setQuestionForm(p => ({ ...p, correct_answer: e.target.value }))}>
+                                          {["A","B","C","D"].map(x => <option key={x} value={x}>Option {x}</option>)}
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Difficulty</label>
+                                        <select className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" value={questionForm.difficulty} onChange={e => setQuestionForm(p => ({ ...p, difficulty: e.target.value }))}>
+                                          {["Easy","Medium","Hard"].map(d => <option key={d}>{d}</option>)}
+                                        </select>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Explanation (optional - shown after student answers)</label>
+                                      <input className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" placeholder="e.g. The answer is A because the passage states..." value={questionForm.explanation} onChange={e => setQuestionForm(p => ({ ...p, explanation: e.target.value }))} />
+                                    </div>
+
+                                    <button onClick={() => addQuizQuestion(q.id)} className="w-full bg-purple-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-purple-700">
+                                      + Save Question
+                                    </button>
                                   </div>
                                 </div>
                               )}
                             </div>
                           ))}
-                        </div>
-                      )}
-
-                      {showQuizForm && (
-                        <div className="bg-white rounded-xl border p-4 space-y-3">
-                          <input className="w-full border rounded-lg p-2.5 text-sm" placeholder="Quiz title*" value={quizForm.title} onChange={e => setQuizForm(p => ({ ...p, title: e.target.value }))} />
-                          <div className="grid grid-cols-2 gap-3">
-                            <select className="border rounded-lg p-2.5 text-sm" value={quizForm.section} onChange={e => setQuizForm(p => ({ ...p, section: e.target.value }))}>
-                              {["Reading", "Listening", "Writing", "Speaking", "Vocabulary", "Quantitative", "Verbal", "General"].map(s => <option key={s}>{s}</option>)}
-                            </select>
-                            <input type="datetime-local" className="border rounded-lg p-2.5 text-sm" value={quizForm.scheduled_at} onChange={e => setQuizForm(p => ({ ...p, scheduled_at: e.target.value }))} />
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <input type="number" className="border rounded-lg p-2.5 text-sm" placeholder="Time limit (min)" value={quizForm.time_limit_minutes} onChange={e => setQuizForm(p => ({ ...p, time_limit_minutes: +e.target.value }))} />
-                            <input type="number" className="border rounded-lg p-2.5 text-sm" placeholder="Pass score %" value={quizForm.pass_score} onChange={e => setQuizForm(p => ({ ...p, pass_score: +e.target.value }))} />
-                          </div>
-                          <button onClick={() => createQuiz(c.id)} className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Create Quiz</button>
                         </div>
                       )}
                     </div>
