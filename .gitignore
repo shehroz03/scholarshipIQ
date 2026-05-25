@@ -30,3 +30,25 @@ Thumbs.db
 
 # User uploads
 backend/uploads/
+
+# Mobile App (separate project - not part of web app)
+ScholarIQApp/
+
+# Backend log & data files
+backend/*.log
+backend/data/
+backend/scratch/
+
+# Scratch / temp files
+scratch/
+
+# Build outputs
+build/
+
+# Large PDF assets
+*.pdf
+
+# Backend venv variants
+backend/venv/
+backend/venv_new/
+backend/.venv/
