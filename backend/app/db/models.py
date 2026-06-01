@@ -469,6 +469,7 @@ class ScholarshipStaging(Base):
     amount: Mapped[Optional[str]] = mapped_column(String)
     deadline: Mapped[Optional[datetime]] = mapped_column(DateTime)
     eligibility: Mapped[Optional[str]] = mapped_column(Text)
+    duration_text: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     tuition_fee_per_year: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     tuition_fee_numeric: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
@@ -526,6 +527,7 @@ class TeacherProfile(Base):
     institution: Mapped[Optional[str]] = mapped_column(String, nullable=True) # Where they studied
     cv_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)      # LinkedIn profile URL
     cv_file_url: Mapped[Optional[str]] = mapped_column(String, nullable=True) # Uploaded CV document path
+    profile_picture_url: Mapped[Optional[str]] = mapped_column(String, nullable=True) # Profile picture URL
     # Admin approval workflow: pending → approved / rejected
     approval_status: Mapped[str] = mapped_column(String, default="pending")   # pending, approved, rejected
     rejection_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)

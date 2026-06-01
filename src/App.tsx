@@ -28,6 +28,7 @@ import VisaGuidanceLandingPage from './components/VisaGuidance/VisaGuidanceLandi
 import TeacherDashboard from './components/teacher/TeacherDashboard';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import TeacherProfilePage from './pages/TeacherProfilePage';
 import VisaProfileFormPage from "./components/VisaGuidance/VisaProfileFormPage";
 import VisaChecklistResultPage from "./components/VisaGuidance/VisaChecklistResultPage";
 
@@ -119,6 +120,7 @@ export default function App() {
             <Route path="/teacher" element={<TeacherDashboard />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/courses/:id" element={<CourseDetailPage />} />
+            <Route path="/teachers/:teacherId" element={<TeacherProfilePage />} />
 
             {/* Visa Guidance AI Routes */}
             <Route path="/visa" element={<VisaGuidanceLandingPage />} />

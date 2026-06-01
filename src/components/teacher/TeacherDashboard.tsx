@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { toast } from "sonner";
-import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, HelpCircle, Settings, ArrowRight, User, Target, FileText, Tag } from "lucide-react";
+import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, X, HelpCircle, Settings, ArrowRight, User, Target, FileText, Tag } from "lucide-react";
 
 const TEST_TYPES = ["IELTS", "TOEFL", "GRE", "GMAT", "PTE", "TestDaF", "Duolingo", "SAT"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -34,7 +34,10 @@ export default function TeacherDashboard() {
   const [courseForm, setCourseForm] = useState({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: 0 });
   const [meetingForm, setMeetingForm] = useState({ date: "", time: "", link: "", platform: "Google Meet", description: "" });
   const [showMeetingForm, setShowMeetingForm] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [selectedCourse, setSelectedCourse] = useState<any>(() => {
+    const saved = localStorage.getItem("teacherSelectedCourse");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [lessonForm, setLessonForm] = useState({ title: "", content: "", video_url: "", duration_minutes: 30, is_free_preview: false });
   const [liveForm, setLiveForm] = useState({ title: "", description: "", meet_link: "", platform: "Google Meet", scheduled_at: "", duration_minutes: 60, max_students: 30 });
   const [quizForm, setQuizForm] = useState({ title: "", section: "Reading", time_limit_minutes: 30, pass_score: 60, scheduled_at: "" });
@@ -48,6 +51,7 @@ export default function TeacherDashboard() {
     question: "", options: ["", "", "", ""], correct_answer: "A", explanation: "", difficulty: "Medium"
   });
   const [showAiGenerator, setShowAiGenerator] = useState<number | null>(null);
+  const [manageTab, setManageTab] = useState<"lessons" | "meetings" | "classes" | "quizzes">("lessons");
   const [aiNotes, setAiNotes] = useState("");
   const [aiQuestionCount, setAiQuestionCount] = useState(5);
   const [aiLoading, setAiLoading] = useState(false);
@@ -65,6 +69,15 @@ export default function TeacherDashboard() {
         api.teacher.getPendingPayments(),
       ]);
       setAnalytics(a); setCourses(c); setStudents(s); setPendingPayments(pending);
+      
+      // Restore selected course from localStorage with fresh data
+      const savedCourseId = localStorage.getItem("teacherSelectedCourseId");
+      if (savedCourseId && c && c.length > 0) {
+        const found = c.find((course: any) => course.id === parseInt(savedCourseId));
+        if (found) {
+          setSelectedCourse(found);
+        }
+      }
     } catch {
       // Not a teacher, check if student
       try {
@@ -99,6 +112,13 @@ export default function TeacherDashboard() {
   useEffect(() => {
     localStorage.setItem("teacherDashboardTab", tab);
   }, [tab]);
+
+  // Persist selected course ID
+  useEffect(() => {
+    if (selectedCourse?.id) {
+      localStorage.setItem("teacherSelectedCourseId", selectedCourse.id.toString());
+    }
+  }, [selectedCourse]);
 
   const handleRegister = async () => {
     try {
@@ -179,28 +199,101 @@ export default function TeacherDashboard() {
     setAiLoading(true);
     setAiGeneratedQuestions([]);
     try {
-      const prompt = `You are a professional test-prep quiz creator. Generate exactly ${aiQuestionCount} MCQ questions based on the following notes/topic. Return ONLY a valid JSON array, no extra text. Format:
+      const prompt = `You are a professional test-prep quiz creator. Generate exactly ${aiQuestionCount} MCQ questions based on the following notes/topic. Return ONLY a valid JSON array, no extra text, no markdown code blocks. Format:
 [{"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct_answer":"A","explanation":"...","difficulty":"Medium"}]
 
 Notes/Topic: ${aiNotes}`;
       const res = await api.chatbot.sendTeacherMessage(prompt);
-      const text = res?.response || res?.message || res?.reply || "";
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) { toast.error("AI could not generate questions. Please try again."); return; }
-      const parsed = JSON.parse(jsonMatch[0]);
-      setAiGeneratedQuestions(parsed);
-      setAiApproved(parsed.map(() => true));
-      toast.success(`${parsed.length} questions generated!`);
+      const text = res?.response || res?.message || res?.reply || res?.content || "";
+      console.log("AI Response:", text);
+      
+      if (!text || text.trim().length < 10) {
+        toast.error("AI returned empty response. Please try again.");
+        return;
+      }
+      
+      // Try to extract JSON - look for array pattern or code blocks
+      let jsonText = text;
+      let parsed: any[] = [];
+      
+      try {
+        // Remove markdown code blocks if present
+        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (codeBlockMatch) {
+          jsonText = codeBlockMatch[1].trim();
+        }
+        
+        // Remove any text before [ and after ]
+        const startIdx = jsonText.indexOf('[');
+        const endIdx = jsonText.lastIndexOf(']');
+        if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+          jsonText = jsonText.substring(startIdx, endIdx + 1);
+        }
+        
+        // Clean up common JSON issues
+        jsonText = jsonText
+          .replace(/\n/g, ' ')
+          .replace(/\r/g, ' ')
+          .replace(/\t/g, ' ')
+          .replace(/,\s*]/g, ']')
+          .replace(/,\s*}/g, '}');
+        
+        // Parse JSON
+        parsed = JSON.parse(jsonText);
+      } catch (parseError: any) {
+        console.error("AI JSON Parse Error:", parseError.message, "Text:", jsonText);
+        toast.error("AI could not generate valid questions. Try with simpler notes or fewer questions.");
+        return;
+      }
+      
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        toast.error("AI returned empty questions. Please try again.");
+        return;
+      }
+      
+      // Validate each question has required fields
+      const validQuestions = parsed.filter((q: any) => 
+        q.question && Array.isArray(q.options) && q.options.length === 4 && q.correct_answer
+      );
+      
+      if (validQuestions.length === 0) {
+        toast.error("AI generated invalid question format. Please try again.");
+        return;
+      }
+      
+      setAiGeneratedQuestions(validQuestions);
+      setAiApproved(validQuestions.map(() => true));
+      toast.success(`${validQuestions.length} questions generated!`);
     } catch (e: any) {
-      toast.error("AI generation failed. Try rephrasing your notes.");
+      console.error("AI Generation Error:", e);
+      toast.error(e?.message || "AI generation failed. Check console for details.");
     } finally { setAiLoading(false); }
   };
 
   const addApprovedAiQuestions = async (quizId: number) => {
     const approved = aiGeneratedQuestions.filter((_, i) => aiApproved[i]);
     if (approved.length === 0) { toast.error("Please approve at least 1 question"); return; }
+    
+    // Validate questions have required fields
+    const validQuestions = approved.filter(q => 
+      q.question && q.question.trim() && 
+      Array.isArray(q.options) && q.options.length === 4 &&
+      q.correct_answer && ["A","B","C","D"].includes(q.correct_answer)
+    );
+    
+    const invalidCount = approved.length - validQuestions.length;
+    if (invalidCount > 0) {
+      toast.warning(`${invalidCount} questions have invalid format and will be skipped`);
+    }
+    
+    if (validQuestions.length === 0) {
+      toast.error("No valid questions to add. Each question needs: question text, 4 options, and correct answer (A/B/C/D)");
+      return;
+    }
+    
     let added = 0;
-    for (const q of approved) {
+    let failed = 0;
+    for (const q of validQuestions) {
       try {
         const opts = (q.options || []).map((o: string) => o.replace(/^[A-D]\.\s*/, ""));
         await api.teacher.addQuizQuestion(quizId, {
@@ -211,9 +304,16 @@ Notes/Topic: ${aiNotes}`;
           difficulty: q.difficulty || "Medium",
         });
         added++;
-      } catch {}
+      } catch (e: any) {
+        console.error("Failed to add question:", q, "Error:", e);
+        failed++;
+      }
     }
-    toast.success(`${added} questions added to quiz!`);
+    if (failed > 0) {
+      toast.warning(`${added} questions added, ${failed} failed. Check console for details.`);
+    } else {
+      toast.success(`${added} questions added to quiz!`);
+    }
     setShowAiGenerator(null);
     setAiNotes(""); setAiGeneratedQuestions([]); setAiApproved([]);
     loadQuizQuestions(quizId);
@@ -228,9 +328,9 @@ Notes/Topic: ${aiNotes}`;
     } catch (e: any) { toast.error(e.message); }
   };
 
-  const rejectPayment = async (enrollmentId: number) => {
+  const rejectPayment = async (enrollmentId: number, reason: string = "Payment not verified") => {
     try {
-      await api.teacher.rejectPayment(enrollmentId, "Payment not verified");
+      await api.teacher.rejectPayment(enrollmentId, reason);
       toast.warning("Payment rejected");
       fetchAll();
     } catch (e: any) { toast.error(e.message); }
@@ -423,6 +523,7 @@ Notes/Topic: ${aiNotes}`;
 
   const navItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard, color: "#6366f1" },
+    { id: "profile", label: "My Profile", icon: User, color: "#f43f5e" },
     { id: "courses", label: "My Courses", icon: BookOpen, color: "#2563eb" },
     { id: "meetings", label: "Classes & Links", icon: Video, color: "#0891b2" },
     { id: "quizzes", label: "Quizzes", icon: Zap, color: "#7c3aed" },
@@ -432,12 +533,12 @@ Notes/Topic: ${aiNotes}`;
   ];
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: "#ffffff" }}>
+    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#ffffff" }}>
       {/* SIDEBAR */}
-      <aside className="w-64 flex-shrink-0 flex flex-col sticky top-0 h-screen" style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%)" }}>
+      <aside style={{ width: "256px", minWidth: "256px", flexShrink: 0, display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", background: "linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%)", overflowY: "auto" }}>
         {/* Logo */}
-        <div className="px-6 py-6 border-b" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-          <div className="flex items-center gap-3">
+        <div style={{ padding: "24px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
               <GraduationCap size={22} style={{ color: "#a5b4fc" }} />
             </div>
@@ -449,10 +550,61 @@ Notes/Topic: ${aiNotes}`;
         </div>
 
         {/* Teacher Profile */}
-        <div className="px-6 py-5 border-b" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-lg" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
-              {profile?.name?.charAt(0)?.toUpperCase() || "T"}
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* Profile Picture Upload */}
+            <div className="relative group">
+              <input
+                type="file"
+                id="profile-picture-input"
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  
+                  // Validate file size (5MB max)
+                  if (file.size > 5 * 1024 * 1024) {
+                    toast.error("File too large. Max 5MB allowed.");
+                    return;
+                  }
+                  
+                  try {
+                    toast.loading("Uploading profile picture...");
+                    const result = await api.teacher.uploadProfilePicture(file);
+                    toast.dismiss();
+                    toast.success("Profile picture uploaded!");
+                    setProfile({ ...profile, profile_picture_url: result.profile_picture_url });
+                  } catch (err: any) {
+                    toast.dismiss();
+                    toast.error(err.message || "Failed to upload picture");
+                  }
+                }}
+              />
+              <label
+                htmlFor="profile-picture-input"
+                className="w-14 h-14 rounded-full flex items-center justify-center text-white font-black text-lg cursor-pointer overflow-hidden transition-all hover:ring-2 hover:ring-white/50"
+                style={{ 
+                  background: profile?.profile_picture_url ? "transparent" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                }}
+              >
+                {profile?.profile_picture_url ? (
+                  <img 
+                    src={`http://localhost:8000${profile.profile_picture_url}`} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  profile?.name?.charAt(0)?.toUpperCase() || "T"
+                )}
+              </label>
+              {/* Hover overlay */}
+              <label 
+                htmlFor="profile-picture-input"
+                className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+              >
+                <span className="text-[10px] text-white font-bold text-center leading-tight">Change<br/>Photo</span>
+              </label>
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-white text-sm truncate">{profile?.name || "Teacher"}</p>
@@ -465,49 +617,69 @@ Notes/Topic: ${aiNotes}`;
               <span className="text-xs font-bold" style={{ color: "#6ee7b7" }}>Verified Teacher</span>
             </div>
           )}
+          {profile?.profile_picture_url && (
+            <button
+              onClick={async () => {
+                try {
+                  await api.teacher.removeProfilePicture();
+                  toast.success("Profile picture removed");
+                  setProfile({ ...profile, profile_picture_url: null });
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to remove picture");
+                }
+              }}
+              className="mt-2 text-xs text-violet-300 hover:text-white transition-colors"
+            >
+              Remove photo
+            </button>
+          )}
         </div>
 
         {/* Nav Links */}
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+        <nav style={{ flex: 1, padding: "16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
           {navItems.map(({ id, label, icon: Icon, color }) => (
             <button
               key={id}
               onClick={() => setTab(id as any)}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all"
-              style={tab === id
-                ? { backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff", borderLeft: `3px solid ${color}` }
-                : { color: "#c7d2fe", borderLeft: "3px solid transparent" }
-              }
+              style={tab === id ? {
+                width: "100%", display: "flex", alignItems: "center", gap: "12px",
+                padding: "10px 14px", borderRadius: "12px", fontSize: "14px", fontWeight: 600,
+                transition: "all 0.15s", cursor: "pointer", border: "none",
+                backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff", borderLeft: `3px solid ${color}`, paddingLeft: "11px"
+              } : {
+                width: "100%", display: "flex", alignItems: "center", gap: "12px",
+                padding: "10px 14px", borderRadius: "12px", fontSize: "14px", fontWeight: 600,
+                transition: "all 0.15s", cursor: "pointer", border: "none",
+                backgroundColor: "transparent", color: "#c7d2fe", borderLeft: "3px solid transparent"
+              }}
             >
-              <Icon size={18} style={{ color: tab === id ? color : "#a5b4fc" }} />
-              {label}
+              <Icon size={18} style={{ color: tab === id ? color : "#a5b4fc", flexShrink: 0 }} />
+              <span>{label}</span>
             </button>
           ))}
         </nav>
 
         {/* Bottom actions */}
-        <div className="px-4 py-4 border-t space-y-2" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+        <div style={{ padding: "16px", borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", gap: "8px" }}>
           <button
             onClick={() => navigate("/courses")}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-            style={{ color: "#c7d2fe" }}
+            style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", borderRadius: "12px", fontSize: "14px", fontWeight: 600, color: "#c7d2fe", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
           >
-            <Eye size={16} style={{ color: "#a5b4fc" }} />
-            View as Student
+            <Eye size={16} style={{ color: "#a5b4fc", flexShrink: 0 }} />
+            <span>View as Student</span>
           </button>
           <button
             onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("userRole"); navigate("/teacher-login"); }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-            style={{ color: "#fca5a5" }}
+            style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", borderRadius: "12px", fontSize: "14px", fontWeight: 600, color: "#fca5a5", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
           >
-            <LogOut size={16} style={{ color: "#fca5a5" }} />
-            Logout
+            <LogOut size={16} style={{ color: "#fca5a5", flexShrink: 0 }} />
+            <span>Logout</span>
           </button>
         </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 overflow-auto" style={{ background: "#f8fafc" }}>
+      <div style={{ flex: 1, overflowY: "auto", background: "#f8fafc", minWidth: 0 }}>
         {/* Top Header */}
         <div className="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
           <div className="flex items-center gap-3">
@@ -518,6 +690,7 @@ Notes/Topic: ${aiNotes}`;
               </h1>
               <p className="text-xs text-gray-400 font-medium">
                 {tab === "overview" && "Your teaching summary and quick actions"}
+                {tab === "profile" && "Manage your public profile and details"}
                 {tab === "courses" && "Manage courses, lessons, meetings, and quizzes"}
                 {tab === "meetings" && "All meeting links and live classes"}
                 {tab === "quizzes" && "Manage quizzes and questions"}
@@ -543,6 +716,140 @@ Notes/Topic: ${aiNotes}`;
         </div>
 
         <div className="p-6">
+
+        {/* PROFILE */}
+        {tab === "profile" && profile && (
+          <div className="max-w-4xl space-y-6">
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+              <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                <User size={24} className="text-rose-500" /> Public Profile Info
+              </h2>
+              
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Name (User Model) */}
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">Full Name</label>
+                    <input
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      value={profile.name || ""}
+                      onChange={e => setProfile({ ...profile, name: e.target.value })}
+                      placeholder="e.g. John Doe"
+                    />
+                  </div>
+
+                  {/* Specializations */}
+                  <div>
+                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">Specializations (comma separated)</label>
+                    <input
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      value={profile.specializations?.join(", ") || ""}
+                      onChange={e => setProfile({ ...profile, specializations: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
+                      placeholder="e.g. IELTS, TOEFL"
+                    />
+                  </div>
+
+                  {/* Experience */}
+                  <div>
+                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">Experience (Years)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      value={profile.experience_years || 0}
+                      onChange={e => setProfile({ ...profile, experience_years: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+
+                  {/* Qualification/Certifications */}
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">Certifications</label>
+                    <input
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      value={profile.qualification || ""}
+                      onChange={e => setProfile({ ...profile, qualification: e.target.value })}
+                      placeholder="e.g. CELTA, TEFL"
+                    />
+                  </div>
+
+                  {/* Degree */}
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">Degree</label>
+                    <input
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      value={profile.degree || ""}
+                      onChange={e => setProfile({ ...profile, degree: e.target.value })}
+                      placeholder="e.g. MA English Literature"
+                    />
+                  </div>
+
+                  {/* Institution */}
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">Institution</label>
+                    <input
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      value={profile.institution || ""}
+                      onChange={e => setProfile({ ...profile, institution: e.target.value })}
+                      placeholder="e.g. Oxford University"
+                    />
+                  </div>
+
+                  {/* CV/LinkedIn URL */}
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">LinkedIn / CV URL</label>
+                    <input
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      value={profile.cv_url || ""}
+                      onChange={e => setProfile({ ...profile, cv_url: e.target.value })}
+                      placeholder="https://linkedin.com/in/..."
+                    />
+                  </div>
+
+                  {/* Bio */}
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">About Me (Bio)</label>
+                    <textarea
+                      rows={4}
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50 resize-none"
+                      value={profile.bio || ""}
+                      onChange={e => setProfile({ ...profile, bio: e.target.value })}
+                      placeholder="Write a brief introduction about yourself and your teaching style..."
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 flex justify-end">
+                  <button
+                    onClick={async () => {
+                      try {
+                        toast.loading("Updating profile...");
+                        await api.teacher.updateProfile({
+                          name: profile.name,
+                          bio: profile.bio,
+                          specializations: profile.specializations.join(","),
+                          experience_years: profile.experience_years,
+                          qualification: profile.qualification,
+                          degree: profile.degree,
+                          institution: profile.institution,
+                          cv_url: profile.cv_url,
+                        });
+                        toast.dismiss();
+                        toast.success("Profile updated successfully!");
+                        fetchAll(); // Refresh data
+                      } catch (err: any) {
+                        toast.dismiss();
+                        toast.error(err.message || "Failed to update profile");
+                      }
+                    }}
+                    className="bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors shadow-sm shadow-rose-200 flex items-center gap-2"
+                  >
+                    Save Changes <CheckCircle size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* OVERVIEW */}
         {tab === "overview" && analytics && (
@@ -650,104 +957,148 @@ Notes/Topic: ${aiNotes}`;
 
         {/* MY COURSES */}
         {tab === "courses" && (
-          <div className="space-y-4">
-            {courses.length === 0 ? (
-              <div className="text-center py-24 bg-white rounded-2xl border border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <BookOpen className="text-indigo-400" size={32} />
+          <div className="space-y-6">
+            {/* Header Section */}
+            <div style={{ position: "relative", borderRadius: "24px", overflow: "hidden", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)", padding: "32px" }}>
+              <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E\")" }} />
+              <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <h1 style={{ color: "#ffffff", fontSize: "28px", fontWeight: 800, margin: 0 }}>My Courses</h1>
+                  <p style={{ color: "#94a3b8", fontSize: "14px", marginTop: "4px" }}>Manage your courses, lessons, and student engagement</p>
                 </div>
-                <p className="text-gray-700 font-bold text-lg mb-1">No courses yet</p>
-                <p className="text-gray-400 text-sm mb-5">Create your first course to start teaching</p>
-                <button onClick={() => setTab("create")} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700">+ Create First Course</button>
+                <button onClick={() => setTab("create")} style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#ffffff", padding: "12px 24px", borderRadius: "12px", fontWeight: 700, fontSize: "14px", border: "none", cursor: "pointer", boxShadow: "0 4px 20px rgba(99, 102, 241, 0.3)", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Plus size={18} /> New Course
+                </button>
+              </div>
+              {/* Stats Row */}
+              <div style={{ position: "relative", display: "flex", gap: "24px", marginTop: "24px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(99, 102, 241, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <BookOpen size={20} color="#818cf8" />
+                  </div>
+                  <div>
+                    <p style={{ color: "#ffffff", fontSize: "20px", fontWeight: 700, margin: 0 }}>{courses.length}</p>
+                    <p style={{ color: "#94a3b8", fontSize: "12px", margin: 0 }}>Total Courses</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Users size={20} color="#34d399" />
+                  </div>
+                  <div>
+                    <p style={{ color: "#ffffff", fontSize: "20px", fontWeight: 700, margin: 0 }}>{courses.reduce((acc, c) => acc + (c.enrolled_students || 0), 0)}</p>
+                    <p style={{ color: "#94a3b8", fontSize: "12px", margin: 0 }}>Total Students</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Video size={20} color="#fbbf24" />
+                  </div>
+                  <div>
+                    <p style={{ color: "#ffffff", fontSize: "20px", fontWeight: 700, margin: 0 }}>{courses.reduce((acc, c) => acc + (c.total_live_classes || 0), 0)}</p>
+                    <p style={{ color: "#94a3b8", fontSize: "12px", margin: 0 }}>Live Classes</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {courses.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "80px 24px", background: "#ffffff", borderRadius: "24px", border: "2px dashed #e2e8f0" }}>
+                <div style={{ width: "80px", height: "80px", background: "linear-gradient(135deg, #eef2ff, #e0e7ff)", borderRadius: "24px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+                  <BookOpen size={40} color="#6366f1" />
+                </div>
+                <h3 style={{ color: "#1e293b", fontSize: "20px", fontWeight: 700, marginBottom: "8px" }}>No courses yet</h3>
+                <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "24px" }}>Create your first course to start teaching students</p>
+                <button onClick={() => setTab("create")} style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#ffffff", padding: "14px 28px", borderRadius: "14px", fontWeight: 700, fontSize: "15px", border: "none", cursor: "pointer", boxShadow: "0 4px 20px rgba(99, 102, 241, 0.3)" }}>+ Create First Course</button>
               </div>
             ) : courses.map(c => (
-              <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all">
-                <div className="p-5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-md" style={{ background: `linear-gradient(135deg, ${TEST_COLORS[c.test_type] || "#6366f1"}, ${TEST_COLORS[c.test_type] || "#8b5cf6"}cc)` }}>{c.test_type}</div>
-                    <div>
-                      <div className="font-black text-gray-900 text-base">{c.title}</div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold">{c.level}</span>
-                        <span className="text-xs text-gray-500">👥 {c.enrolled_students} students</span>
-                        <span className="text-xs text-gray-500">📖 {c.total_lessons} lessons</span>
-                        <span className="text-xs text-gray-500">📝 {c.total_quizzes} quizzes</span>
+              <div key={c.id} style={{ background: "#ffffff", borderRadius: "20px", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.08)", border: "1px solid #f1f5f9" }}>
+                {/* Course Card Header */}
+                <div style={{ padding: "24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", borderBottom: selectedCourse?.id === c.id ? "1px solid #f1f5f9" : "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1 }}>
+                    {/* Course Icon */}
+                    <div style={{ width: "56px", height: "56px", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 800, color: "#ffffff", flexShrink: 0, background: `linear-gradient(135deg, ${TEST_COLORS[c.test_type] || "#6366f1"}, ${TEST_COLORS[c.test_type] || "#8b5cf6"}cc)`, boxShadow: "0 4px 12px rgba(99, 102, 241, 0.25)" }}>
+                      {c.test_type}
+                    </div>
+                    {/* Course Info */}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
+                        <h3 style={{ color: "#1e293b", fontSize: "18px", fontWeight: 700, margin: 0 }}>{c.title}</h3>
+                        <span style={{ fontSize: "11px", fontWeight: 700, padding: "4px 10px", borderRadius: "20px", background: c.is_published ? "#dcfce7" : "#fef3c7", color: c.is_published ? "#166534" : "#92400e", display: "flex", alignItems: "center", gap: "4px" }}>
+                          {c.is_published ? <><span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22c55e" }}></span> Live</> : <><span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#f59e0b" }}></span> Draft</>}
+                        </span>
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">PKR {c.price > 0 ? c.price.toLocaleString() : "Free"}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ background: "#f1f5f9", padding: "2px 8px", borderRadius: "6px", fontWeight: 600, color: "#475569" }}>{c.level}</span>
+                        </span>
+                        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Users size={14} /> {c.enrolled_students || 0} students
+                        </span>
+                        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <BookOpen size={14} /> {c.total_lessons || 0} lessons
+                        </span>
+                        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Target size={14} /> {c.total_quizzes || 0} quizzes
+                        </span>
+                        <span style={{ fontSize: "12px", fontWeight: 700, color: c.price > 0 ? "#059669" : "#64748b" }}>
+                          {c.price > 0 ? `PKR ${c.price.toLocaleString()}` : "Free"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${c.is_published ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{c.is_published ? "● Live" : "○ Draft"}</span>
-                    <button onClick={() => togglePublish(c.id, c.is_published)} className="p-2 rounded-xl hover:bg-gray-100 border border-gray-200" title={c.is_published ? "Unpublish" : "Publish"}>
-                      {c.is_published ? <EyeOff size={16} className="text-gray-400" /> : <Eye size={16} className="text-indigo-500" />}
+                  {/* Action Buttons */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                    <button onClick={() => togglePublish(c.id, c.is_published)} style={{ padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title={c.is_published ? "Unpublish" : "Publish"}>
+                      {c.is_published ? <EyeOff size={18} color="#94a3b8" /> : <Eye size={18} color="#6366f1" />}
                     </button>
-                    <button onClick={() => setSelectedCourse(selectedCourse?.id === c.id ? null : c)} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${selectedCourse?.id === c.id ? "bg-indigo-600 text-white" : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700"}`}>
-                      {selectedCourse?.id === c.id ? "✕ Close" : "⚙ Manage"}
+                    <button onClick={() => setSelectedCourse(selectedCourse?.id === c.id ? null : c)} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: selectedCourse?.id === c.id ? "#6366f1" : "#f1f5f9", color: selectedCourse?.id === c.id ? "#ffffff" : "#475569", fontSize: "13px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                      {selectedCourse?.id === c.id ? <><X size={16} /> Close</> : <><Settings size={16} /> Manage</>}
                     </button>
-                    <button
-                      onClick={async () => {
-                        if (!confirm(`Delete "${c.title}" permanently?\n\nThis will delete all lessons, quizzes, meeting links and live classes.`)) return;
-                        try {
-                          console.log("Deleting course:", c.id);
-                          await api.teacher.deleteCourse(c.id);
-                          toast.success("Course deleted!");
-                          fetchAll();
-                        } catch (e: any) {
-                          console.error("Delete course error:", e);
-                          toast.error(e.message || "Failed to delete course");
-                        }
-                      }}
-                      className="p-2 rounded-xl hover:bg-red-50 text-red-500"
-                      title="Delete Course"
-                    >
-                      <Trash2 size={16} />
+                    <button onClick={async () => {
+                      if (!confirm(`Delete "${c.title}" permanently?\n\nThis will delete all lessons, quizzes, meeting links and live classes.`)) return;
+                      try { await api.teacher.deleteCourse(c.id); toast.success("Course deleted!"); fetchAll(); } catch (e: any) { toast.error(e.message || "Failed to delete course"); }
+                    }} style={{ padding: "10px", borderRadius: "10px", border: "none", background: "#fef2f2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Delete Course">
+                      <Trash2 size={18} color="#dc2626" />
                     </button>
                   </div>
                 </div>
 
                 {selectedCourse?.id === c.id && (
-                  <div className="border-t bg-gray-50 p-5 space-y-5">
+                  <div style={{ background: "#f8fafc", padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
                     {/* ADD LESSON */}
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-bold text-gray-800 text-sm">📚 Lessons ({c.total_lessons})</h4>
-                        <button onClick={() => setShowLessonForm(!showLessonForm)} className="text-xs bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl hover:bg-indigo-200"><Plus size={12} className="inline mr-1" />Add Lesson</button>
+                    <div style={{ background: "#ffffff", borderRadius: "16px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Play size={18} color="#ffffff" />
+                          </div>
+                          <h4 style={{ color: "#1e293b", fontSize: "15px", fontWeight: 700, margin: 0 }}>Lessons ({c.total_lessons || 0})</h4>
+                        </div>
+                        <button onClick={() => setShowLessonForm(!showLessonForm)} style={{ padding: "8px 14px", borderRadius: "8px", border: "none", background: showLessonForm ? "#f1f5f9" : "#6366f1", color: showLessonForm ? "#475569" : "#ffffff", fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Plus size={14} /> {showLessonForm ? "Cancel" : "Add Lesson"}
+                        </button>
                       </div>
 
                       {/* Existing Lessons List */}
                       {c.lessons?.length > 0 && (
-                        <div className="space-y-2 mb-4">
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
                           {c.lessons.map((lesson: any) => (
-                            <div key={lesson.id} className="bg-white rounded-lg border p-3 flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                  <Play size={14} className="text-indigo-600" />
+                            <div key={lesson.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #f1f5f9" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "linear-gradient(135deg, #e0e7ff, #c7d2fe)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  <Play size={16} color="#6366f1" />
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-sm text-gray-900">{lesson.title}</p>
-                                  <p className="text-xs text-gray-500">
-                                    {lesson.duration_minutes}min · {lesson.is_free_preview ? "Free Preview" : "Paid"}
+                                  <p style={{ color: "#1e293b", fontSize: "14px", fontWeight: 600, margin: 0 }}>{lesson.title}</p>
+                                  <p style={{ color: "#64748b", fontSize: "12px", margin: "2px 0 0" }}>
+                                    {lesson.duration_minutes} min · {lesson.is_free_preview ? <span style={{ color: "#059669" }}>Free Preview</span> : <span>Paid</span>}
                                     {lesson.video_url && " · Has Video"}
                                   </p>
                                 </div>
                               </div>
-                              <button
-                                onClick={async () => {
-                                  if (!confirm(`Delete lesson "${lesson.title}"?`)) return;
-                                  try {
-                                    console.log("Deleting lesson:", lesson.id);
-                                    await api.teacher.deleteLesson(lesson.id);
-                                    toast.success("Lesson deleted!");
-                                    fetchAll();
-                                  } catch (e: any) {
-                                    console.error("Delete lesson error:", e);
-                                    toast.error(e.message || "Failed to delete lesson");
-                                  }
-                                }}
-                                className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                                title="Delete Lesson"
-                              >
-                                <Trash2 size={14} />
+                              <button onClick={async () => { if (!confirm(`Delete lesson "${lesson.title}"?`)) return; try { await api.teacher.deleteLesson(lesson.id); toast.success("Lesson deleted!"); fetchAll(); } catch (e: any) { toast.error(e.message || "Failed to delete lesson"); } }} style={{ padding: "8px", borderRadius: "8px", border: "none", background: "#fef2f2", cursor: "pointer" }} title="Delete Lesson">
+                                <Trash2 size={16} color="#dc2626" />
                               </button>
                             </div>
                           ))}
@@ -755,59 +1106,60 @@ Notes/Topic: ${aiNotes}`;
                       )}
 
                       {showLessonForm && (
-                        <div className="bg-white rounded-xl border p-4 space-y-3 mb-3">
-                          <input className="w-full border rounded-lg p-2.5 text-sm" placeholder="Lesson title*" value={lessonForm.title} onChange={e => setLessonForm(p => ({ ...p, title: e.target.value }))} />
-                          <textarea className="w-full border rounded-lg p-2.5 text-sm resize-none h-20" placeholder="Lesson content / notes..." value={lessonForm.content} onChange={e => setLessonForm(p => ({ ...p, content: e.target.value }))} />
-                          <input className="w-full border rounded-lg p-2.5 text-sm" placeholder="YouTube video URL (optional)" value={lessonForm.video_url} onChange={e => setLessonForm(p => ({ ...p, video_url: e.target.value }))} />
-                          <div className="flex gap-3">
-                            <input type="number" className="w-32 border rounded-lg p-2.5 text-sm" placeholder="Duration (min)" value={lessonForm.duration_minutes} onChange={e => setLessonForm(p => ({ ...p, duration_minutes: +e.target.value }))} />
-                            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" checked={lessonForm.is_free_preview} onChange={e => setLessonForm(p => ({ ...p, is_free_preview: e.target.checked }))} /><span>Free preview</span></label>
-                            <button onClick={() => addLesson(c.id)} className="ml-auto bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Save Lesson</button>
+                        <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "16px", border: "1px solid #e2e8f0" }}>
+                          <input style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", marginBottom: "12px" }} placeholder="Lesson title *" value={lessonForm.title} onChange={e => setLessonForm(p => ({ ...p, title: e.target.value }))} />
+                          <textarea style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", minHeight: "80px", resize: "none", marginBottom: "12px" }} placeholder="Lesson content / notes..." value={lessonForm.content} onChange={e => setLessonForm(p => ({ ...p, content: e.target.value }))} />
+                          <input style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", marginBottom: "12px" }} placeholder="YouTube video URL (optional)" value={lessonForm.video_url} onChange={e => setLessonForm(p => ({ ...p, video_url: e.target.value }))} />
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                            <input type="number" style={{ width: "120px", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} placeholder="Duration (min)" value={lessonForm.duration_minutes} onChange={e => setLessonForm(p => ({ ...p, duration_minutes: +e.target.value }))} />
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "#475569", cursor: "pointer" }}>
+                              <input type="checkbox" checked={lessonForm.is_free_preview} onChange={e => setLessonForm(p => ({ ...p, is_free_preview: e.target.checked }))} style={{ width: "16px", height: "16px" }} />
+                              <span>Free preview</span>
+                            </label>
+                            <button onClick={() => addLesson(c.id)} style={{ marginLeft: "auto", padding: "10px 20px", borderRadius: "8px", border: "none", background: "#6366f1", color: "#ffffff", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>Save Lesson</button>
                           </div>
                         </div>
                       )}
                     </div>
 
                     {/* DAILY MEETING LINKS - For Paid Students */}
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-bold text-gray-800 text-sm">🔗 Daily Meeting Links ({c.meeting_links?.length || 0})</h4>
-                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">Paid Students Only</span>
+                    <div style={{ background: "#ffffff", borderRadius: "16px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #f59e0b, #fbbf24)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Video size={18} color="#ffffff" />
+                          </div>
+                          <div>
+                            <h4 style={{ color: "#1e293b", fontSize: "15px", fontWeight: 700, margin: 0 }}>Daily Meeting Links ({c.meeting_links?.length || 0})</h4>
+                            <p style={{ color: "#64748b", fontSize: "12px", margin: "2px 0 0" }}>Only visible to paid students</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setShowMeetingForm(!showMeetingForm)} style={{ padding: "8px 14px", borderRadius: "8px", border: "none", background: showMeetingForm ? "#f1f5f9" : "#f59e0b", color: showMeetingForm ? "#475569" : "#ffffff", fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Plus size={14} /> {showMeetingForm ? "Cancel" : "Add Link"}
+                        </button>
                       </div>
-                      <p className="text-xs text-gray-500 mb-3">Daily class links for enrolled students who paid. These links are only visible to paid students.</p>
 
                       {/* Existing Meeting Links */}
                       {c.meeting_links?.length > 0 && (
-                        <div className="space-y-2 mb-4">
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
                           {c.meeting_links.map((link: any, idx: number) => (
-                            <div key={idx} className="bg-white rounded-lg border p-3 flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                  <Video size={16} className="text-indigo-600" />
+                            <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #f1f5f9" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "linear-gradient(135deg, #fef3c7, #fde68a)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  <Video size={16} color="#f59e0b" />
                                 </div>
                                 <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-sm text-gray-900">{new Date(link.date).toLocaleDateString()}</p>
-                                    {link.time && <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{link.time}</span>}
+                                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <p style={{ color: "#1e293b", fontSize: "14px", fontWeight: 600, margin: 0 }}>{new Date(link.date).toLocaleDateString()}</p>
+                                    {link.time && <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "6px", background: "#e0e7ff", color: "#4338ca" }}>{link.time}</span>}
                                   </div>
-                                  <p className="text-xs text-gray-500">{link.platform} · {link.description || "Daily Class"}</p>
+                                  <p style={{ color: "#64748b", fontSize: "12px", margin: "2px 0 0" }}>{link.platform} · {link.description || "Daily Class"}</p>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <a href={link.link} target="_blank" rel="noopener noreferrer" className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">Join Link</a>
-                                <button
-                                  onClick={async () => {
-                                    if (!confirm("Delete this meeting link?")) return;
-                                    try {
-                                      await api.teacher.deleteMeetingLink(link.id);
-                                      toast.success("Meeting link deleted!");
-                                      fetchAll();
-                                    } catch (e: any) { toast.error(e.message); }
-                                  }}
-                                  className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={14} />
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <a href={link.link} target="_blank" rel="noopener noreferrer" style={{ padding: "8px 14px", borderRadius: "8px", background: "#f59e0b", color: "#ffffff", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>Join</a>
+                                <button onClick={async () => { if (!confirm("Delete this meeting link?")) return; try { await api.teacher.deleteMeetingLink(link.id); toast.success("Meeting link deleted!"); fetchAll(); } catch (e: any) { toast.error(e.message); } }} style={{ padding: "8px", borderRadius: "8px", border: "none", background: "#fef2f2", cursor: "pointer" }} title="Delete">
+                                  <Trash2 size={16} color="#dc2626" />
                                 </button>
                               </div>
                             </div>
@@ -816,85 +1168,69 @@ Notes/Topic: ${aiNotes}`;
                       )}
 
                       {/* Add New Meeting Link Form */}
-                      <div className="bg-white rounded-xl border p-4 space-y-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Plus size={16} className="text-indigo-600" />
-                          <span className="font-semibold text-sm text-gray-800">Add New Meeting Link</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
+                      <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "16px", border: "1px solid #e2e8f0" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "12px" }}>
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Date *</label>
-                            <input type="date" className="w-full border rounded-lg p-2 text-sm" min={new Date().toISOString().split('T')[0]} value={meetingForm.date} onChange={e => setMeetingForm(p => ({ ...p, date: e.target.value }))} />
+                            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Date *</label>
+                            <input type="date" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} min={new Date().toISOString().split('T')[0]} value={meetingForm.date} onChange={e => setMeetingForm(p => ({ ...p, date: e.target.value }))} />
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Time</label>
-                            <input type="time" className="w-full border rounded-lg p-2 text-sm" value={meetingForm.time} onChange={e => setMeetingForm(p => ({ ...p, time: e.target.value }))} />
+                            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Time</label>
+                            <input type="time" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} value={meetingForm.time} onChange={e => setMeetingForm(p => ({ ...p, time: e.target.value }))} />
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Platform *</label>
-                            <select className="w-full border rounded-lg p-2 text-sm" value={meetingForm.platform} onChange={e => setMeetingForm(p => ({ ...p, platform: e.target.value }))}>
+                            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Platform *</label>
+                            <select style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} value={meetingForm.platform} onChange={e => setMeetingForm(p => ({ ...p, platform: e.target.value }))}>
                               {PLATFORMS.map(pl => <option key={pl}>{pl}</option>)}
                             </select>
                           </div>
                         </div>
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">Meeting Link *</label>
-                          <input className="w-full border rounded-lg p-2.5 text-sm" placeholder="https://meet.google.com/... or https://zoom.us/j/..." value={meetingForm.link} onChange={e => setMeetingForm(p => ({ ...p, link: e.target.value }))} />
+                        <div style={{ marginBottom: "12px" }}>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Meeting Link *</label>
+                          <input style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} placeholder="https://meet.google.com/... or https://zoom.us/j/..." value={meetingForm.link} onChange={e => setMeetingForm(p => ({ ...p, link: e.target.value }))} />
                         </div>
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">Description</label>
-                          <input className="w-full border rounded-lg p-2.5 text-sm" placeholder="e.g. Speaking Practice Session, Reading Test Discussion" value={meetingForm.description} onChange={e => setMeetingForm(p => ({ ...p, description: e.target.value }))} />
+                        <div style={{ marginBottom: "12px" }}>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Description</label>
+                          <input style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} placeholder="e.g. Speaking Practice Session" value={meetingForm.description} onChange={e => setMeetingForm(p => ({ ...p, description: e.target.value }))} />
                         </div>
-                        <button onClick={async () => {
-                          if (!meetingForm.date || !meetingForm.link) { toast.error("Date and link are required"); return; }
-                          try {
-                            await api.teacher.addMeetingLink(c.id, meetingForm);
-                            toast.success("Meeting link added!");
-                            setMeetingForm({ date: "", time: "", link: "", platform: "Google Meet", description: "" });
-                            fetchAll();
-                          } catch (e: any) { toast.error(e.message); }
-                        }} className="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-indigo-700">Add Meeting Link</button>
+                        <button onClick={async () => { if (!meetingForm.date || !meetingForm.link) { toast.error("Date and link are required"); return; } try { await api.teacher.addMeetingLink(c.id, meetingForm); toast.success("Meeting link added!"); setMeetingForm({ date: "", time: "", link: "", platform: "Google Meet", description: "" }); fetchAll(); } catch (e: any) { toast.error(e.message); } }} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "none", background: "#f59e0b", color: "#ffffff", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>Add Meeting Link</button>
                       </div>
                     </div>
 
                     {/* SCHEDULE LIVE CLASS */}
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-bold text-gray-800 text-sm">📹 Scheduled Live Classes ({c.total_live_classes})</h4>
-                        <button onClick={() => setShowLiveForm(!showLiveForm)} className="text-xs bg-green-100 text-green-700 font-bold px-3 py-1.5 rounded-xl hover:bg-green-200"><Calendar size={12} className="inline mr-1" />Schedule Class</button>
+                    <div style={{ background: "#ffffff", borderRadius: "16px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #10b981, #34d399)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Calendar size={18} color="#ffffff" />
+                          </div>
+                          <h4 style={{ color: "#1e293b", fontSize: "15px", fontWeight: 700, margin: 0 }}>Scheduled Live Classes ({c.total_live_classes || 0})</h4>
+                        </div>
+                        <button onClick={() => setShowLiveForm(!showLiveForm)} style={{ padding: "8px 14px", borderRadius: "8px", border: "none", background: showLiveForm ? "#f1f5f9" : "#10b981", color: showLiveForm ? "#475569" : "#ffffff", fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Plus size={14} /> {showLiveForm ? "Cancel" : "Schedule Class"}
+                        </button>
                       </div>
 
                       {/* Existing Live Classes List */}
                       {c.live_classes?.length > 0 && (
-                        <div className="space-y-2 mb-4">
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
                           {c.live_classes.map((lc: any) => (
-                            <div key={lc.id} className="bg-white rounded-lg border p-3 flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                  <Calendar size={16} className="text-green-600" />
+                            <div key={lc.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #f1f5f9" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "linear-gradient(135deg, #d1fae5, #a7f3d0)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  <Calendar size={16} color="#10b981" />
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-sm text-gray-900">{lc.title}</p>
-                                  <p className="text-xs text-gray-500">
-                                    📅 {new Date(lc.scheduled_at).toLocaleString()} · {lc.platform} · {lc.duration_minutes}min
+                                  <p style={{ color: "#1e293b", fontSize: "14px", fontWeight: 600, margin: 0 }}>{lc.title}</p>
+                                  <p style={{ color: "#64748b", fontSize: "12px", margin: "2px 0 0" }}>
+                                    {new Date(lc.scheduled_at).toLocaleString()} · {lc.platform} · {lc.duration_minutes} min
                                   </p>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <a href={lc.meet_link} target="_blank" rel="noopener noreferrer" className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700">Join</a>
-                                <button
-                                  onClick={async () => {
-                                    if (!confirm("Cancel this live class?")) return;
-                                    try {
-                                      await api.teacher.deleteLiveClass(lc.id);
-                                      toast.success("Live class cancelled!");
-                                      fetchAll();
-                                    } catch (e: any) { toast.error(e.message); }
-                                  }}
-                                  className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                                  title="Cancel Class"
-                                >
-                                  <Trash2 size={14} />
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <a href={lc.meet_link} target="_blank" rel="noopener noreferrer" style={{ padding: "8px 14px", borderRadius: "8px", background: "#10b981", color: "#ffffff", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>Join</a>
+                                <button onClick={async () => { if (!confirm("Cancel this live class?")) return; try { await api.teacher.deleteLiveClass(lc.id); toast.success("Live class cancelled!"); fetchAll(); } catch (e: any) { toast.error(e.message); } }} style={{ padding: "8px", borderRadius: "8px", border: "none", background: "#fef2f2", cursor: "pointer" }} title="Cancel Class">
+                                  <Trash2 size={16} color="#dc2626" />
                                 </button>
                               </div>
                             </div>
@@ -903,19 +1239,19 @@ Notes/Topic: ${aiNotes}`;
                       )}
 
                       {showLiveForm && (
-                        <div className="bg-white rounded-xl border p-4 space-y-3 mb-3">
-                          <input className="w-full border rounded-lg p-2.5 text-sm" placeholder="Class title*" value={liveForm.title} onChange={e => setLiveForm(p => ({ ...p, title: e.target.value }))} />
-                          <input className="w-full border rounded-lg p-2.5 text-sm" placeholder="Zoom / Google Meet link*" value={liveForm.meet_link} onChange={e => setLiveForm(p => ({ ...p, meet_link: e.target.value }))} />
-                          <div className="grid grid-cols-2 gap-3">
-                            <select className="border rounded-lg p-2.5 text-sm" value={liveForm.platform} onChange={e => setLiveForm(p => ({ ...p, platform: e.target.value }))}>
+                        <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "16px", border: "1px solid #e2e8f0" }}>
+                          <input style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", marginBottom: "12px" }} placeholder="Class title *" value={liveForm.title} onChange={e => setLiveForm(p => ({ ...p, title: e.target.value }))} />
+                          <input style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", marginBottom: "12px" }} placeholder="Zoom / Google Meet link *" value={liveForm.meet_link} onChange={e => setLiveForm(p => ({ ...p, meet_link: e.target.value }))} />
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "12px" }}>
+                            <select style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} value={liveForm.platform} onChange={e => setLiveForm(p => ({ ...p, platform: e.target.value }))}>
                               {PLATFORMS.map(pl => <option key={pl}>{pl}</option>)}
                             </select>
-                            <input type="datetime-local" className="border rounded-lg p-2.5 text-sm" min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)} value={liveForm.scheduled_at} onChange={e => setLiveForm(p => ({ ...p, scheduled_at: e.target.value }))} />
+                            <input type="datetime-local" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)} value={liveForm.scheduled_at} onChange={e => setLiveForm(p => ({ ...p, scheduled_at: e.target.value }))} />
                           </div>
-                          <div className="flex gap-3 items-center">
-                            <input type="number" className="w-32 border rounded-lg p-2.5 text-sm" placeholder="Duration (min)" value={liveForm.duration_minutes} onChange={e => setLiveForm(p => ({ ...p, duration_minutes: +e.target.value }))} />
-                            <input type="number" className="w-32 border rounded-lg p-2.5 text-sm" placeholder="Max students" value={liveForm.max_students} onChange={e => setLiveForm(p => ({ ...p, max_students: +e.target.value }))} />
-                            <button onClick={() => scheduleLive(c.id)} className="ml-auto bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Schedule</button>
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                            <input type="number" style={{ width: "100px", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} placeholder="Duration (min)" value={liveForm.duration_minutes} onChange={e => setLiveForm(p => ({ ...p, duration_minutes: +e.target.value }))} />
+                            <input type="number" style={{ width: "100px", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px" }} placeholder="Max students" value={liveForm.max_students} onChange={e => setLiveForm(p => ({ ...p, max_students: +e.target.value }))} />
+                            <button onClick={() => scheduleLive(c.id)} style={{ marginLeft: "auto", padding: "10px 20px", borderRadius: "8px", border: "none", background: "#10b981", color: "#ffffff", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>Schedule Class</button>
                           </div>
                         </div>
                       )}
@@ -935,7 +1271,7 @@ Notes/Topic: ${aiNotes}`;
                             <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">1</div>
                             <span className="font-bold text-sm text-purple-800">Step 1: Quiz Settings</span>
                           </div>
-                          <input className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" placeholder="Quiz title* e.g. IELTS Reading Practice Test" value={quizForm.title} onChange={e => setQuizForm(p => ({ ...p, title: e.target.value }))} />
+                          <input className="w-full border-2 border-purple-300 rounded-lg p-3 text-sm bg-white text-gray-800 font-medium focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all" placeholder="Quiz title* e.g. IELTS Reading Practice Test" value={quizForm.title} onChange={e => setQuizForm(p => ({ ...p, title: e.target.value }))} style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)" }} />
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="text-xs font-semibold text-gray-600 mb-1 block">Section</label>
@@ -1057,9 +1393,15 @@ Notes/Topic: ${aiNotes}`;
                                         <div className="flex items-center gap-3">
                                           <div>
                                             <label className="text-xs font-bold text-gray-700 mb-1 block">Questions Count</label>
-                                            <select className="border border-violet-200 rounded-lg p-2 text-sm bg-white" value={aiQuestionCount} onChange={e => setAiQuestionCount(+e.target.value)}>
-                                              {[3, 5, 8, 10, 15].map(n => <option key={n} value={n}>{n} questions</option>)}
-                                            </select>
+                                            <input
+                                              type="number"
+                                              min={1}
+                                              max={50}
+                                              className="w-24 border border-violet-200 rounded-lg p-2 text-sm bg-white"
+                                              value={aiQuestionCount}
+                                              onChange={e => setAiQuestionCount(Math.min(50, Math.max(1, +e.target.value || 1)))}
+                                              placeholder="5"
+                                            />
                                           </div>
                                           <button
                                             onClick={generateAiQuiz}
@@ -1143,51 +1485,64 @@ Notes/Topic: ${aiNotes}`;
                                   )}
 
                                   {/* Add New MCQ Question */}
-                                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">2</div>
-                                      <span className="font-bold text-sm text-purple-800">Add MCQ Question</span>
+                                  <div style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e9d5ff" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid #f3e8ff" }}>
+                                      <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "linear-gradient(135deg, #7c3aed, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                        <Plus size={18} color="#ffffff" />
+                                      </div>
+                                      <h4 style={{ color: "#1e293b", fontSize: "16px", fontWeight: 700, margin: 0 }}>Add MCQ Question</h4>
                                     </div>
 
-                                    <div>
-                                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Question *</label>
-                                      <textarea className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" rows={2} placeholder="e.g. According to the passage, what is the main reason for...?" value={questionForm.question} onChange={e => setQuestionForm(p => ({ ...p, question: e.target.value }))} />
+                                    {/* Question Field */}
+                                    <div style={{ marginBottom: "20px" }}>
+                                      <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#475569", marginBottom: "8px" }}>Question *</label>
+                                      <textarea style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "14px", minHeight: "70px", resize: "vertical", background: "#ffffff" }} placeholder="e.g. According to the passage, what is the main reason for...?" value={questionForm.question} onChange={e => setQuestionForm(p => ({ ...p, question: e.target.value }))} />
                                     </div>
 
-                                    <div>
-                                      <label className="text-xs font-semibold text-gray-600 mb-2 block">Answer Options (4 options)</label>
-                                      <div className="grid grid-cols-2 gap-2">
-                                        {questionForm.options.map((opt, i) => (
-                                          <div key={i} className="flex items-center gap-2">
-                                            <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 ${questionForm.correct_answer === ["A","B","C","D"][i] ? "bg-green-500 text-white" : "bg-gray-200 text-gray-600"}`}>{["A","B","C","D"][i]}</span>
-                                            <input className="flex-1 border border-purple-200 rounded-lg p-2 text-sm bg-white" placeholder={`Option ${["A","B","C","D"][i]}*`} value={opt} onChange={e => { const o = [...questionForm.options]; o[i] = e.target.value; setQuestionForm(p => ({ ...p, options: o })); }} />
-                                          </div>
-                                        ))}
+                                    {/* Answer Options */}
+                                    <div style={{ marginBottom: "20px" }}>
+                                      <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#475569", marginBottom: "12px" }}>Answer Options (4 options)</label>
+                                      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
+                                        {questionForm.options.map((opt, i) => {
+                                          const letter = ["A","B","C","D"][i];
+                                          const isCorrect = questionForm.correct_answer === letter;
+                                          return (
+                                            <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: isCorrect ? "#f0fdf4" : "#f8fafc", borderRadius: "10px", border: isCorrect ? "1px solid #86efac" : "1px solid #e2e8f0" }}>
+                                              <span style={{ width: "28px", height: "28px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 800, flexShrink: 0, background: isCorrect ? "#22c55e" : "#e2e8f0", color: isCorrect ? "#ffffff" : "#64748b" }}>{letter}</span>
+                                              <input style={{ flex: 1, border: "none", background: "transparent", fontSize: "14px", padding: "4px 0", outline: "none" }} placeholder={`Option ${letter} *`} value={opt} onChange={e => { const o = [...questionForm.options]; o[i] = e.target.value; setQuestionForm(p => ({ ...p, options: o })); }} />
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-3">
+                                    {/* Correct Answer & Difficulty */}
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", marginBottom: "20px" }}>
                                       <div>
-                                        <label className="text-xs font-semibold text-gray-600 mb-1 block">✅ Correct Answer</label>
-                                        <select className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white font-bold text-green-700" value={questionForm.correct_answer} onChange={e => setQuestionForm(p => ({ ...p, correct_answer: e.target.value }))}>
-                                          {["A","B","C","D"].map(x => <option key={x} value={x}>Option {x}</option>)}
+                                        <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#475569", marginBottom: "8px" }}>Correct Answer *</label>
+                                        <select style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "14px", background: "#ffffff", color: "#16a34a", fontWeight: 600 }} value={questionForm.correct_answer} onChange={e => setQuestionForm(p => ({ ...p, correct_answer: e.target.value }))}>
+                                          {["A","B","C","D"].map(x => <option key={x} value={x}>Option {x} is correct</option>)}
                                         </select>
                                       </div>
                                       <div>
-                                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Difficulty</label>
-                                        <select className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" value={questionForm.difficulty} onChange={e => setQuestionForm(p => ({ ...p, difficulty: e.target.value }))}>
-                                          {["Easy","Medium","Hard"].map(d => <option key={d}>{d}</option>)}
+                                        <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#475569", marginBottom: "8px" }}>Difficulty Level</label>
+                                        <select style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "14px", background: "#ffffff" }} value={questionForm.difficulty} onChange={e => setQuestionForm(p => ({ ...p, difficulty: e.target.value }))}>
+                                          <option value="Easy">🟢 Easy</option>
+                                          <option value="Medium">🟡 Medium</option>
+                                          <option value="Hard">🔴 Hard</option>
                                         </select>
                                       </div>
                                     </div>
 
-                                    <div>
-                                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Explanation (optional - shown after student answers)</label>
-                                      <input className="w-full border border-purple-200 rounded-lg p-2.5 text-sm bg-white" placeholder="e.g. The answer is A because the passage states..." value={questionForm.explanation} onChange={e => setQuestionForm(p => ({ ...p, explanation: e.target.value }))} />
+                                    {/* Explanation */}
+                                    <div style={{ marginBottom: "20px" }}>
+                                      <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#475569", marginBottom: "8px" }}>Explanation <span style={{ fontWeight: 400, color: "#94a3b8" }}>(shown after student answers)</span></label>
+                                      <input style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "14px" }} placeholder="e.g. The answer is A because the passage states..." value={questionForm.explanation} onChange={e => setQuestionForm(p => ({ ...p, explanation: e.target.value }))} />
                                     </div>
 
-                                    <button onClick={() => addQuizQuestion(q.id)} className="w-full bg-purple-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-purple-700">
-                                      + Save Question
+                                    {/* Save Button */}
+                                    <button onClick={() => addQuizQuestion(q.id)} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #7c3aed, #8b5cf6)", color: "#ffffff", fontSize: "15px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)" }}>
+                                      💾 Save Question
                                     </button>
                                   </div>
                                 </div>
@@ -1292,41 +1647,88 @@ Notes/Topic: ${aiNotes}`;
 
         {/* STUDENTS */}
         {tab === "students" && (
-          <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-            <div className="p-5 border-b">
-              <h3 className="font-black text-gray-900">Enrolled Students ({students.length})</h3>
+          <div className="space-y-6">
+            {/* Header Section */}
+            <div style={{ position: "relative", borderRadius: "24px", overflow: "hidden", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)", padding: "32px" }}>
+              <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E\")" }} />
+              <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <h1 style={{ color: "#ffffff", fontSize: "28px", fontWeight: 800, margin: 0 }}>My Students</h1>
+                  <p style={{ color: "#94a3b8", fontSize: "14px", marginTop: "4px" }}>View enrolled students, their progress, and payment status</p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 20px", background: "rgba(255,255,255,0.1)", borderRadius: "12px", backdropFilter: "blur(10px)" }}>
+                  <Users size={20} color="#ffffff" />
+                  <span style={{ color: "#ffffff", fontSize: "18px", fontWeight: 700 }}>{students.length}</span>
+                  <span style={{ color: "#94a3b8", fontSize: "14px" }}>enrolled</span>
+                </div>
+              </div>
             </div>
+
+            {/* Students List */}
             {students.length === 0 ? (
-              <div className="text-center py-16 text-gray-400">No students enrolled yet</div>
+              <div style={{ background: "#ffffff", borderRadius: "20px", padding: "60px 40px", textAlign: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                <div style={{ width: "80px", height: "80px", borderRadius: "24px", background: "linear-gradient(135deg, #e0e7ff, #c7d2fe)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+                  <Users size={40} color="#6366f1" />
+                </div>
+                <h3 style={{ color: "#1e293b", fontSize: "20px", fontWeight: 700, margin: "0 0 8px" }}>No Students Enrolled Yet</h3>
+                <p style={{ color: "#64748b", fontSize: "14px", maxWidth: "400px", margin: "0 auto" }}>Students will appear here once they enroll in your courses and complete payment.</p>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>{["Student", "Course", "Test", "Fee Status", "Progress", "Avg Score", "Actions"].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide">{h}</th>
-                    ))}</tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {students.map((s, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-semibold text-gray-900">{s.student_name}</td>
-                        <td className="px-4 py-3 text-gray-600">{s.course_title}</td>
-                        <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: TEST_COLORS[s.test_type] || "#6366f1" }}>{s.test_type}</span></td>
-                        <td className="px-4 py-3"><span className="text-xs font-bold">{s.course_price > 0 ? s.payment_status : "free"}</span></td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full" style={{ width: `${s.progress}%` }} /></div>
-                            <span className="text-xs text-gray-500">{s.progress}%</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-bold text-indigo-600">{s.avg_score}%</td>
-                        <td className="px-4 py-3">
-                          {s.payment_status === "submitted" && <button onClick={() => approvePayment(s.enrollment_id)} className="text-xs bg-green-600 text-white px-2 py-1 rounded font-bold">Approve</button>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div style={{ display: "grid", gap: "16px" }}>
+                {students.map((s, i) => (
+                  <div key={i} style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+                    {/* Student Avatar */}
+                    <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <User size={28} color="#ffffff" />
+                    </div>
+
+                    {/* Student Info */}
+                    <div style={{ flex: 1, minWidth: "200px" }}>
+                      <h4 style={{ color: "#1e293b", fontSize: "16px", fontWeight: 700, margin: "0 0 4px" }}>{s.student_name}</h4>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <span style={{ color: "#64748b", fontSize: "13px" }}>{s.course_title}</span>
+                        <span style={{ padding: "2px 8px", borderRadius: "6px", background: TEST_COLORS[s.test_type] || "#6366f1", color: "#ffffff", fontSize: "11px", fontWeight: 700 }}>{s.test_type}</span>
+                      </div>
+                    </div>
+
+                    {/* Progress */}
+                    <div style={{ minWidth: "140px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span style={{ color: "#64748b", fontSize: "12px" }}>Progress</span>
+                        <span style={{ color: "#1e293b", fontSize: "13px", fontWeight: 700 }}>{s.progress || 0}%</span>
+                      </div>
+                      <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "3px", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${s.progress || 0}%`, background: "linear-gradient(90deg, #6366f1, #8b5cf6)", borderRadius: "3px" }} />
+                      </div>
+                    </div>
+
+                    {/* Average Score */}
+                    <div style={{ minWidth: "80px", textAlign: "center" }}>
+                      <div style={{ color: "#64748b", fontSize: "11px", marginBottom: "2px" }}>Avg Score</div>
+                      <div style={{ color: "#7c3aed", fontSize: "20px", fontWeight: 800 }}>{s.avg_score || 0}%</div>
+                    </div>
+
+                    {/* Payment Status */}
+                    <div style={{ minWidth: "100px" }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "10px", background: s.payment_status === "approved" ? "#dcfce7" : s.payment_status === "submitted" ? "#fef3c7" : "#f1f5f9", color: s.payment_status === "approved" ? "#166534" : s.payment_status === "submitted" ? "#92400e" : "#64748b", fontSize: "12px", fontWeight: 700 }}>
+                        {s.payment_status === "approved" ? <CheckCircle size={14} /> : s.payment_status === "submitted" ? <Clock size={14} /> : <DollarSign size={14} />}
+                        {s.payment_status || "Free"}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    {s.payment_status === "submitted" && (
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button onClick={() => approvePayment(s.enrollment_id)} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: "#22c55e", color: "#ffffff", fontSize: "13px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                          <CheckCircle size={16} /> Approve
+                        </button>
+                        <button onClick={() => rejectPayment(s.enrollment_id, "Payment verification failed")} style={{ padding: "10px", borderRadius: "10px", border: "none", background: "#fef2f2", cursor: "pointer" }}>
+                          <X size={16} color="#dc2626" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1336,48 +1738,67 @@ Notes/Topic: ${aiNotes}`;
         {tab === "create" && (
           <div className="max-w-6xl mx-auto px-2 sm:px-0">
             {/* ── Hero Section ── */}
-            <div className="relative rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 shadow-2xl">
-              {/* Background decorations */}
-              <div className="absolute inset-0">
-                <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl" style={{ transform: "translate(30%, -30%)" }} />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" style={{ transform: "translate(-20%, 30%)" }} />
-              </div>
-              
-              <div className="relative px-8 py-12 text-white">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
-                    <Plus size={28} className="text-white" />
+            <div style={{ position: "relative", borderRadius: "24px", overflow: "hidden", marginBottom: "32px", background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4f46e5 60%, #6366f1 100%)", boxShadow: "0 25px 50px -12px rgba(30,27,75,0.4)" }}>
+              {/* Grid pattern overlay */}
+              <div style={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")", pointerEvents: "none" }} />
+              {/* Gradient orbs */}
+              <div style={{ position: "absolute", top: "-60px", right: "-40px", width: "280px", height: "280px", borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", bottom: "-80px", left: "20%", width: "320px", height: "320px", borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", top: "20px", left: "60%", width: "150px", height: "150px", borderRadius: "50%", background: "radial-gradient(circle, rgba(167,139,250,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+              <div style={{ position: "relative", padding: "40px 40px 36px" }}>
+                {/* Top row: Icon + Title + Badge */}
+                <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "32px" }}>
+                  <div style={{ width: "64px", height: "64px", borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.1)" }}>
+                    <Plus size={26} color="#a5b4fc" />
                   </div>
-                  <div>
-                    <h1 className="text-3xl font-black mb-1">Create Your Course</h1>
-                    <p className="text-white/80 text-lg">Share your expertise with students worldwide</p>
+                  <div style={{ flex: 1 }}>
+                    <h1 style={{ color: "#ffffff", fontSize: "28px", fontWeight: 900, letterSpacing: "-0.5px", margin: 0, lineHeight: 1.2 }}>Create Your Course</h1>
+                    <p style={{ color: "rgba(165,180,252,0.9)", fontSize: "15px", marginTop: "4px", fontWeight: 500 }}>Design, publish & share your expertise with students worldwide</p>
+                  </div>
+                  <div style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", padding: "8px 16px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px rgba(52,211,153,0.5)" }} />
+                    <span style={{ color: "#d1fae5", fontSize: "12px", fontWeight: 700 }}>Step 1 of 4</span>
                   </div>
                 </div>
-                
-                {/* Progress Steps */}
-                <div className="flex items-center justify-center gap-6 mt-8">
-                  {[
-                    { step: 1, label: "Details", active: true },
-                    { step: 2, label: "Lessons", active: false },
-                    { step: 3, label: "Quizzes", active: false },
-                    { step: 4, label: "Publish", active: false }
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${
-                        item.active 
-                          ? "bg-white text-purple-600 shadow-lg shadow-white/20" 
-                          : "bg-white/10 text-white/60 border border-white/20"
-                      }`}>
-                        {item.step}
+
+                {/* Stepper - Glass Card */}
+                <div style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(16px)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.12)", padding: "20px 32px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    {[
+                      { step: 1, label: "Course Details", icon: "📝", active: true },
+                      { step: 2, label: "Add Lessons", icon: "📚", active: false },
+                      { step: 3, label: "Add Quizzes", icon: "✍️", active: false },
+                      { step: 4, label: "Publish", icon: "🚀", active: false }
+                    ].map((item, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", flex: i < 3 ? 1 : "none" }}>
+                        {/* Step circle + label */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div style={item.active ? {
+                            width: "44px", height: "44px", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "15px", fontWeight: 800, background: "#ffffff", color: "#4f46e5", boxShadow: "0 4px 20px rgba(255,255,255,0.3)"
+                          } : {
+                            width: "44px", height: "44px", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "15px", fontWeight: 800, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.15)"
+                          }}>
+                            {item.active ? item.icon : item.step}
+                          </div>
+                          <div>
+                            <p style={{ color: item.active ? "#ffffff" : "rgba(255,255,255,0.5)", fontSize: "13px", fontWeight: 700, margin: 0 }}>{item.label}</p>
+                            <p style={{ color: item.active ? "rgba(165,180,252,0.9)" : "rgba(255,255,255,0.3)", fontSize: "11px", fontWeight: 500, margin: "2px 0 0" }}>
+                              {item.active ? "In progress" : "Upcoming"}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Connector line */}
+                        {i < 3 && (
+                          <div style={{ flex: 1, height: "2px", margin: "0 16px", borderRadius: "2px", background: "rgba(255,255,255,0.1)", position: "relative", overflow: "hidden" }}>
+                            {item.active && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "30%", borderRadius: "2px", background: "linear-gradient(90deg, rgba(165,180,252,0.8), rgba(165,180,252,0.2))" }} />}
+                          </div>
+                        )}
                       </div>
-                      <span className={`text-sm font-medium transition-all ${
-                        item.active ? "text-white" : "text-white/40"
-                      }`}>
-                        {item.label}
-                      </span>
-                      {i < 3 && <div className="w-8 h-0.5 bg-white/20 mx-2" />}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

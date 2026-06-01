@@ -5,7 +5,11 @@ Endpoints for teacher registration, course/lesson/quiz/live-class management.
 import json
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, File, UploadFile
+from fastapi.responses import JSONResponse
+import os
+import uuid
+from pathlib import Path
 from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -63,18 +67,26 @@ def get_teacher_profile(db: Session = Depends(get_db), current_user: models.User
         "specializations": teacher.specializations.split(",") if teacher.specializations else [],
         "experience_years": teacher.experience_years,
         "qualification": teacher.qualification,
+        "degree": teacher.degree,
+        "institution": teacher.institution,
+        "cv_url": teacher.cv_url,
         "is_verified": teacher.is_verified,
         "courses_count": courses_count,
         "total_students": total_students,
+        "profile_picture_url": teacher.profile_picture_url,
     }
 
 
 @router.put("/profile")
 def update_teacher_profile(
+    name: Optional[str] = Body(None),
     bio: Optional[str] = Body(None),
     specializations: Optional[str] = Body(None),
     experience_years: Optional[int] = Body(None),
     qualification: Optional[str] = Body(None),
+    degree: Optional[str] = Body(None),
+    institution: Optional[str] = Body(None),
+    cv_url: Optional[str] = Body(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -83,8 +95,74 @@ def update_teacher_profile(
     if specializations is not None: teacher.specializations = specializations
     if experience_years is not None: teacher.experience_years = experience_years
     if qualification is not None: teacher.qualification = qualification
+    if degree is not None: teacher.degree = degree
+    if institution is not None: teacher.institution = institution
+    if cv_url is not None: teacher.cv_url = cv_url
+    
+    if name is not None:
+        current_user.full_name = name
+
     db.commit()
     return {"message": "Profile updated"}
+
+
+@router.post("/profile/picture")
+def upload_profile_picture(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Upload teacher profile picture"""
+    teacher = get_teacher(db, current_user.id)
+    
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(400, "Only image files (JPEG, PNG, WebP) are allowed")
+    
+    # Create uploads directory if not exists
+    uploads_dir = Path("uploads/profile_pictures")
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate unique filename
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"teacher_{teacher.id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = uploads_dir / filename
+    
+    # Save file
+    content = file.file.read()
+    if len(content) > 5 * 1024 * 1024:  # 5MB limit
+        raise HTTPException(400, "File size too large. Max 5MB allowed.")
+    
+    with open(filepath, "wb") as f:
+        f.write(content)
+    
+    # Update teacher profile with new picture URL
+    file_url = f"/uploads/profile_pictures/{filename}"
+    teacher.profile_picture_url = file_url
+    db.commit()
+    
+    return {"message": "Profile picture uploaded successfully", "profile_picture_url": file_url}
+
+
+@router.delete("/profile/picture")
+def remove_profile_picture(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Remove teacher profile picture"""
+    teacher = get_teacher(db, current_user.id)
+    
+    if teacher.profile_picture_url:
+        # Delete file if exists
+        old_file = Path(".") / teacher.profile_picture_url.lstrip("/")
+        if old_file.exists():
+            old_file.unlink()
+        
+        teacher.profile_picture_url = None
+        db.commit()
+    
+    return {"message": "Profile picture removed"}
 
 
 # ── COURSES ────────────────────────────────────
@@ -617,6 +695,45 @@ def approve_payment(enrollment_id: int, db: Session = Depends(get_db), current_u
     return {"message": "Payment approved. Student now has full access.", "payment_status": "paid"}
 
 
+@router.post("/enrollments/{enrollment_id}/approve-payment")
+def approve_payment(
+    enrollment_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Teacher approves a student's submitted payment - grants access."""
+    teacher = get_teacher(db, current_user.id)
+    if not teacher:
+        raise HTTPException(403, "Not a teacher")
+
+    enrollment = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not enrollment:
+        raise HTTPException(404, "Enrollment not found")
+
+    # Verify this enrollment is for one of this teacher's courses
+    course = db.query(models.Course).filter(
+        models.Course.id == enrollment.course_id,
+        models.Course.teacher_id == teacher.id
+    ).first()
+    if not course:
+        raise HTTPException(403, "This enrollment is not for your course")
+
+    if enrollment.payment_status != "submitted":
+        raise HTTPException(400, "Payment must be submitted before approval")
+
+    # Approve payment
+    enrollment.payment_status = "paid"
+    enrollment.paid_at = datetime.now()
+    db.commit()
+
+    return {
+        "message": "Payment approved! Student now has full access to the course.",
+        "enrollment_id": enrollment.id,
+        "payment_status": "paid",
+        "course_title": course.title,
+    }
+
+
 @router.post("/enrollments/{enrollment_id}/reject-payment")
 def reject_payment(
     enrollment_id: int,
@@ -682,20 +799,36 @@ def teacher_ai_chat(
 ):
     """Teacher-specific AI assistant with teacher context injected."""
     from app.services.chatbot import get_ai_response
+    from fastapi import HTTPException
 
-    teacher = db.query(models.TeacherProfile).filter(
-        models.TeacherProfile.user_id == current_user.id
-    ).first()
+    try:
+        teacher = db.query(models.TeacherProfile).filter(
+            models.TeacherProfile.user_id == current_user.id
+        ).first()
 
-    context = {}
-    if teacher:
-        total_courses = db.query(models.Course).filter(models.Course.teacher_id == teacher.id).count()
-        context = {
-            "Teacher Name": current_user.full_name or current_user.email,
-            "Approval Status": teacher.approval_status,
-            "Specialization": teacher.specialization or "Not set",
-            "Total Courses Created": total_courses,
-        }
+        context = {}
+        if teacher:
+            total_courses = db.query(models.Course).filter(models.Course.teacher_id == teacher.id).count()
+            context = {
+                "Teacher Name": current_user.full_name or current_user.email,
+                "Approval Status": getattr(teacher, 'approval_status', 'pending'),
+                "Specialization": getattr(teacher, 'specializations', None) or "Not set",
+                "Total Courses Created": total_courses,
+            }
 
-    reply = get_ai_response(body.message, mode="teacher", context=context if context else None)
-    return {"reply": reply}
+        reply = get_ai_response(body.message, mode="teacher", context=context if context else None)
+        
+        # Check if reply indicates an error
+        if reply and ("offline" in reply.lower() or "trouble" in reply.lower() or "error" in reply.lower()):
+            print(f"[teacher_ai_chat] AI service returned error message: {reply}")
+            return JSONResponse(
+                status_code=503,
+                content={"error": "AI service temporarily unavailable", "reply": reply}
+            )
+        
+        return {"reply": reply}
+    except Exception as e:
+        print(f"[teacher_ai_chat] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")

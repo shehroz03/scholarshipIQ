@@ -229,7 +229,9 @@ async def auto_update_scholarships(db: Session, batch_size: int = BATCH_SIZE) ->
 
     db.commit()
 
-    # Save update log to file
+    run_at = datetime.now().isoformat()
+
+    # Save update log to file (only entries with changes)
     if update_log:
         log_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -246,11 +248,36 @@ async def auto_update_scholarships(db: Session, batch_size: int = BATCH_SIZE) ->
         with open(log_path, "w") as f:
             json.dump(existing, f, indent=2)
 
+    # Always save every run to bot_run_log.json (for admin stats)
+    run_log_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "data", "bot_run_log.json"
+    )
+    os.makedirs(os.path.dirname(run_log_path), exist_ok=True)
+    existing_runs = []
+    if os.path.exists(run_log_path):
+        try:
+            with open(run_log_path) as f:
+                existing_runs = json.load(f)
+        except Exception:
+            existing_runs = []
+    run_entry = {
+        "run_number": len(existing_runs) + 1,
+        "run_at": run_at,
+        "checked": checked,
+        "updated": updated,
+        "errors": errors,
+        "updates": update_log
+    }
+    existing_runs = ([run_entry] + existing_runs)[:500]  # keep last 500 runs
+    with open(run_log_path, "w") as f:
+        json.dump(existing_runs, f, indent=2)
+
     result = {
         "checked": checked,
         "updated": updated,
         "errors": errors,
-        "run_at": datetime.now().isoformat(),
+        "run_at": run_at,
         "log": update_log
     }
     print(f"[AutoUpdater] Done. Checked: {checked} | Updated: {updated} | Errors: {errors}")

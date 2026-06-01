@@ -128,7 +128,22 @@ export default function CourseDetailPage() {
             </div>
             <div className="bg-white rounded-2xl p-6 text-gray-900 min-w-52 shadow-xl">
               <div className="text-2xl font-black mb-1" style={{ color: accent }}>{course.is_free ? "FREE" : `PKR ${course.price}`}</div>
-              <div className="text-sm text-gray-500 mb-4">by {course.teacher_name}</div>
+              
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 overflow-hidden shrink-0">
+                  {course.teacher_profile_picture_url ? (
+                    <img 
+                      src={`http://localhost:8000${course.teacher_profile_picture_url}`} 
+                      alt={course.teacher_name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    course.teacher_name?.charAt(0).toUpperCase() || "T"
+                  )}
+                </div>
+                <div className="text-sm text-gray-500">by <span className="font-semibold text-gray-700">{course.teacher_name}</span></div>
+              </div>
+
               {course.enrolled ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-green-600 font-bold text-sm"><CheckCircle size={16} />Enrolled</div>

@@ -21,6 +21,7 @@ interface Teacher {
     rejection_reason?: string;
     approved_at?: string;
     applied_at: string;
+    profile_picture_url?: string;
 }
 
 export function TeacherApprovals() {
@@ -194,9 +195,22 @@ export function TeacherApprovals() {
                                 {/* Left: Teacher Info */}
                                 <div className="flex-1">
                                     <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-900">{teacher.name}</h3>
-                                            <p className="text-sm text-gray-500">{teacher.email}</p>
+                                        <div className="flex items-center gap-4">
+                                            {teacher.profile_picture_url ? (
+                                                <img 
+                                                    src={`http://localhost:8000${teacher.profile_picture_url}`} 
+                                                    alt={teacher.name} 
+                                                    className="w-12 h-12 rounded-full object-cover border-2 border-indigo-100"
+                                                />
+                                            ) : (
+                                                <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg border-2 border-indigo-50">
+                                                    {teacher.name.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900">{teacher.name}</h3>
+                                                <p className="text-sm text-gray-500">{teacher.email}</p>
+                                            </div>
                                         </div>
                                         {getStatusBadge(teacher.approval_status)}
                                     </div>

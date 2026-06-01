@@ -43,6 +43,7 @@ def _enrollment_payment_info(enrollment: Optional[models.Enrollment], course: mo
 
 def _serialize_course(c: models.Course, enrolled: bool = False, progress: int = 0, enrollment: Optional[models.Enrollment] = None):
     teacher_name = c.teacher.user.full_name if c.teacher and c.teacher.user else "Unknown"
+    teacher_profile_picture_url = c.teacher.profile_picture_url if c.teacher else None
     return {
         "id": c.id,
         "title": c.title,
@@ -54,6 +55,7 @@ def _serialize_course(c: models.Course, enrolled: bool = False, progress: int = 
         "is_free": c.price == 0,
         "teacher_name": teacher_name,
         "teacher_id": c.teacher_id,
+        "teacher_profile_picture_url": teacher_profile_picture_url,
         "thumbnail_url": c.thumbnail_url,
         "total_lessons": len(c.lessons),
         "total_quizzes": len(c.quizzes),
@@ -383,5 +385,232 @@ def complete_lesson(
     enrollment.last_accessed = datetime.now()
     db.commit()
     return {"progress": enrollment.progress_percent, "completed_lessons": completed}
+
+
+# ── APPROVED TEACHERS ─────────────────────────────
+
+@router.get("/teachers/approved")
+def get_approved_teachers(
+    test_type: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Get all admin-approved teachers with their courses for students to browse."""
+    q = db.query(models.TeacherProfile).filter(models.TeacherProfile.approval_status == "approved")
+    teachers = q.all()
+    
+    result = []
+    for teacher in teachers:
+        user = db.query(models.User).filter(models.User.id == teacher.user_id).first()
+        if not user:
+            continue
+            
+        # Get teacher's courses
+        teacher_courses = db.query(models.Course).filter(
+            models.Course.teacher_id == teacher.id,
+            models.Course.is_published == True
+        ).all()
+        
+        if test_type:
+            teacher_courses = [c for c in teacher_courses if c.test_type == test_type]
+        
+        # Serialize courses
+        courses_data = []
+        for c in teacher_courses:
+            enrollment = db.query(models.Enrollment).filter(
+                models.Enrollment.user_id == current_user.id,
+                models.Enrollment.course_id == c.id
+            ).first()
+            courses_data.append(_serialize_course(c, c.id in [e.course_id for e in db.query(models.Enrollment).filter(models.Enrollment.user_id == current_user.id).all()], enrollment.progress_percent if enrollment else 0, enrollment))
+        
+        result.append({
+            "teacher_id": teacher.id,
+            "user_id": teacher.user_id,
+            "name": user.full_name or user.email,
+            "email": user.email,
+            "bio": teacher.bio,
+            "specializations": teacher.specializations,
+            "experience_years": teacher.experience_years,
+            "qualification": teacher.qualification,
+            "degree": teacher.degree,
+            "institution": teacher.institution,
+            "cv_url": teacher.cv_url,
+            "is_verified": teacher.is_verified,
+            "profile_picture_url": teacher.profile_picture_url,
+            "courses": courses_data,
+            "total_courses": len(courses_data),
+            "approved_at": teacher.approved_at.isoformat() if teacher.approved_at else None,
+        })
+    
+    return result
+
+
+@router.get("/teachers/{teacher_id}")
+def get_teacher_detail(
+    teacher_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Get detailed profile of a specific approved teacher."""
+    teacher = db.query(models.TeacherProfile).filter(
+        models.TeacherProfile.id == teacher_id,
+        models.TeacherProfile.approval_status == "approved"
+    ).first()
+    
+    if not teacher:
+        raise HTTPException(404, "Teacher not found or not approved")
+    
+    user = db.query(models.User).filter(models.User.id == teacher.user_id).first()
+    if not user:
+        raise HTTPException(404, "Teacher user not found")
+    
+    # Get teacher's courses
+    teacher_courses = db.query(models.Course).filter(
+        models.Course.teacher_id == teacher.id,
+        models.Course.is_published == True
+    ).all()
+    
+    # Serialize courses with enrollment info
+    courses_data = []
+    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == current_user.id).all()
+    enrollment_map = {e.course_id: e for e in enrollments}
+    
+    for c in teacher_courses:
+        courses_data.append(_serialize_course(c, c.id in enrollment_map, enrollment_map[c.id].progress_percent if c.id in enrollment_map else 0, enrollment_map.get(c.id)))
+    
+    # Get teacher stats
+    total_students = db.query(models.Enrollment).join(models.Course).filter(
+        models.Course.teacher_id == teacher.id
+    ).count()
+    
+    return {
+        "teacher_id": teacher.id,
+        "user_id": teacher.user_id,
+        "name": user.full_name or user.email,
+        "email": user.email,
+        "bio": teacher.bio,
+        "specializations": teacher.specializations,
+        "experience_years": teacher.experience_years,
+        "qualification": teacher.qualification,
+        "degree": teacher.degree,
+        "institution": teacher.institution,
+        "cv_url": teacher.cv_url,
+        "is_verified": teacher.is_verified,
+        "profile_picture_url": teacher.profile_picture_url,
+        "courses": courses_data,
+        "total_courses": len(courses_data),
+        "total_students": total_students,
+        "approved_at": teacher.approved_at.isoformat() if teacher.approved_at else None,
+    }
+
+
+# ── STUDENT ENROLLMENT & COURSE ACCESS ─────────────────────────────
+
+@router.get("/my-enrollments")
+def get_my_enrollments(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Get all courses the current student is enrolled in with payment status."""
+    enrollments = db.query(models.Enrollment).filter(
+        models.Enrollment.user_id == current_user.id
+    ).all()
+
+    result = []
+    for enrollment in enrollments:
+        course = db.query(models.Course).filter(models.Course.id == enrollment.course_id).first()
+        if not course:
+            continue
+
+        teacher = db.query(models.TeacherProfile).filter(models.TeacherProfile.id == course.teacher_id).first()
+        teacher_user = db.query(models.User).filter(models.User.id == teacher.user_id).first() if teacher else None
+
+        result.append({
+            "enrollment_id": enrollment.id,
+            "course_id": course.id,
+            "title": course.title,
+            "test_type": course.test_type,
+            "level": course.level,
+            "price": course.price,
+            "payment_status": enrollment.payment_status,
+            "payment_method": enrollment.payment_method,
+            "payment_reference": enrollment.payment_reference,
+            "amount_paid": enrollment.amount_paid,
+            "paid_at": enrollment.paid_at.isoformat() if enrollment.paid_at else None,
+            "progress_percent": enrollment.progress_percent,
+            "enrolled_at": enrollment.enrolled_at.isoformat() if enrollment.enrolled_at else None,
+            "teacher_name": teacher_user.full_name if teacher_user else "Unknown",
+            "teacher_profile_picture_url": teacher.profile_picture_url if teacher else None,
+        })
+
+    return result
+
+
+@router.get("/{course_id}/student-view")
+def get_course_student_view(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Get course details from student perspective with enrollment info."""
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+
+    teacher = db.query(models.TeacherProfile).filter(models.TeacherProfile.id == course.teacher_id).first()
+    teacher_user = db.query(models.User).filter(models.User.id == teacher.user_id).first() if teacher else None
+
+    # Check enrollment
+    enrollment = db.query(models.Enrollment).filter(
+        models.Enrollment.user_id == current_user.id,
+        models.Enrollment.course_id == course_id
+    ).first()
+
+    has_access = False
+    if enrollment:
+        has_access = _has_paid_access(enrollment, course)
+
+    return {
+        "course": {
+            "id": course.id,
+            "title": course.title,
+            "description": course.description,
+            "test_type": course.test_type,
+            "level": course.level,
+            "price": course.price,
+            "total_lessons": len(course.lessons),
+            "total_quizzes": len(course.quizzes),
+            "total_live_classes": len(course.live_classes),
+            "total_students": course.total_students,
+            "created_at": course.created_at.isoformat() if course.created_at else None,
+        },
+        "teacher": {
+            "id": teacher.id if teacher else None,
+            "name": teacher_user.full_name if teacher_user else "Unknown",
+            "profile_picture_url": teacher.profile_picture_url if teacher else None,
+            "bio": teacher.bio if teacher else None,
+            "qualification": teacher.qualification if teacher else None,
+            "specializations": teacher.specializations.split(",") if teacher and teacher.specializations else [],
+        } if teacher else None,
+        "enrollment": {
+            "id": enrollment.id,
+            "payment_status": enrollment.payment_status,
+            "payment_method": enrollment.payment_method,
+            "payment_reference": enrollment.payment_reference,
+            "amount_paid": enrollment.amount_paid,
+            "progress_percent": enrollment.progress_percent,
+            "enrolled_at": enrollment.enrolled_at.isoformat() if enrollment.enrolled_at else None,
+            "has_access": has_access,
+        } if enrollment else None,
+        "lessons": [{"id": l.id, "title": l.title, "video_url": l.video_url, "order": l.order} for l in course.lessons] if has_access else [],
+        "quizzes": [{"id": q.id, "title": q.title} for q in course.quizzes] if has_access else [],
+        "live_classes": [{
+            "id": lc.id,
+            "title": lc.title,
+            "scheduled_at": lc.scheduled_at.isoformat() if lc.scheduled_at else None,
+            "meet_link": lc.meet_link,
+        } for lc in course.live_classes] if has_access else [],
+    }
+
 
 

@@ -4,11 +4,15 @@ const apiBase = {
   async request(endpoint: string, options: RequestInit = {}) {
     // ... implementation same as before but using internal references
     const token = localStorage.getItem("token");
-    const headers = {
-      "Content-Type": "application/json",
+    const headers: any = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     };
+
+    // Only set default Content-Type if we're not sending FormData
+    if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
@@ -16,9 +20,23 @@ const apiBase = {
     });
 
     if (response.status === 401) {
+      const isAdminEndpoint = endpoint.startsWith("/admin");
+      const isAdminLoggedIn = localStorage.getItem("admin_logged_in") === "true";
+      
+      // If admin is logged in but hits a 401 on a NON-admin endpoint, don't log them out of admin panel
+      if (isAdminLoggedIn && !isAdminEndpoint) {
+        return Promise.reject(new Error("Unauthorized for user endpoint (Admin session active)"));
+      }
+
       localStorage.removeItem("token");
-      localStorage.removeItem("admin_logged_in");
-      window.dispatchEvent(new Event("admin_session_expired"));
+      
+      if (isAdminEndpoint) {
+        localStorage.removeItem("admin_logged_in");
+        window.dispatchEvent(new Event("admin_session_expired"));
+      } else {
+        localStorage.removeItem("userRole");
+        window.dispatchEvent(new Event("session_expired"));
+      }
       return Promise.reject(new Error("Session expired. Please login again."));
     }
     if (response.status === 403) {
@@ -575,6 +593,12 @@ export const api = {
     async getProfile() {
       return apiBase.request("/teacher/profile");
     },
+    async updateProfile(data: any) {
+      return apiBase.request("/teacher/profile", {
+        method: "PUT",
+        body: JSON.stringify(data)
+      });
+    },
     async register(data: any) {
       return apiBase.request("/teacher/register", {
         method: "POST",
@@ -693,6 +717,51 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ reason })
       });
+    },
+    async uploadProfilePicture(file: File) {
+      const formData = new FormData();
+      formData.append("file", file);
+      return apiBase.request(`/teacher/profile/picture`, {
+        method: "POST",
+        body: formData,
+        // Don't set Content-Type, let browser set it with boundary
+        headers: {},
+      });
+    },
+    async removeProfilePicture() {
+      return apiBase.request(`/teacher/profile/picture`, {
+        method: "DELETE"
+      });
+    }
+  },
+
+  // Student - Browse Teachers
+  async getApprovedTeachers(testType?: string) {
+    const query = testType ? `?test_type=${testType}` : "";
+    return apiBase.request(`/courses/teachers/approved${query}`);
+  },
+  async getTeacherDetail(teacherId: number) {
+    return apiBase.request(`/courses/teachers/${teacherId}`);
+  },
+
+  // Student Enrollment & Payments - wrapped in courses object
+  courses: {
+    async enrollInCourse(courseId: number) {
+      return apiBase.request(`/courses/${courseId}/enroll`, {
+        method: "POST"
+      });
+    },
+    async submitPayment(courseId: number, data: { payment_method: string; payment_reference: string; amount_paid?: number }) {
+      return apiBase.request(`/courses/${courseId}/submit-payment`, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    async getMyEnrolledCourses() {
+      return apiBase.request("/courses/my-enrollments");
+    },
+    async getCourseDetail(courseId: number) {
+      return apiBase.request(`/courses/${courseId}/student-view`);
     }
   }
 };

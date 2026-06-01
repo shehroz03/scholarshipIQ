@@ -27,7 +27,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     const refreshStatus = async () => {
         const token = localStorage.getItem("token");
-        if (!token) {
+        const isAdmin = localStorage.getItem("admin_logged_in") === "true";
+        
+        if (!token || isAdmin) {
             setStatus(null);
             setLoading(false);
             return;

@@ -9,11 +9,13 @@ import { TeacherApprovals } from "./admin/TeacherApprovals";
 import { AutoVerifyDashboard } from "./admin/AutoVerifyDashboard";
 import { StagedReviewQueue } from "./admin/StagedReviewQueue";
 import { AdminAIChat } from "./admin/AdminAIChat";
+import { BotStats } from "./admin/BotStats";
 import { PipelineReport } from "./admin/PipelineReport";
-import { LayoutDashboard, Users, BookOpen, ShieldAlert, ShieldCheck, Sparkles, FileBarChart2, LogOut, RefreshCw, GraduationCap, AlertTriangle } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, ShieldAlert, ShieldCheck, Sparkles, FileBarChart2, LogOut, RefreshCw, GraduationCap, AlertTriangle, Bot } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { darkTheme, lightTheme } from "../styles/theme";
 import { ThemeToggle } from "./ThemeToggle";
+import { api } from "../api";
 
 interface AdminDashboardProps {
   onNavigate?: (page: string) => void;
@@ -23,11 +25,27 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const { isDark: _isDark } = useTheme();
   const isDark = false; // Admin panel uses light theme
   const theme = lightTheme;
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Validate session on mount - just check localStorage
+  // API calls will validate token when made and redirect to login if 401
+  useEffect(() => {
     const token = localStorage.getItem("token");
     const adminFlag = localStorage.getItem("admin_logged_in");
-    return !!token && adminFlag === "true";
-  });
+    
+    if (token && adminFlag === "true") {
+      setIsLoggedIn(true);
+    } else {
+      // Clear any stale data
+      if (!token || adminFlag !== "true") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("admin_logged_in");
+      }
+      setIsLoggedIn(false);
+    }
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -38,25 +56,49 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     window.addEventListener("admin_session_expired", handleUnauthorized);
     return () => window.removeEventListener("admin_session_expired", handleUnauthorized);
   }, []);
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem("admin_active_tab") || "dashboard");
 
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem("admin_active_tab") || "dashboard");
+  const [isReady, setIsReady] = useState(false);
+
+  // Delay rendering content to ensure auth state is settled
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("token");
-      const adminFlag = localStorage.getItem("admin_logged_in");
-      if (!token || adminFlag !== "true") {
-        if (isLoggedIn) setIsLoggedIn(false);
-      }
-    };
-    window.addEventListener('storage', checkAuth);
-    return () => window.removeEventListener('storage', checkAuth);
-  }, [isLoggedIn]);
+    if (isLoggedIn && !isLoading) {
+      const timer = setTimeout(() => setIsReady(true), 100);
+      return () => clearTimeout(timer);
+    } else {
+      setIsReady(false);
+    }
+  }, [isLoggedIn, isLoading]);
+
+  // Show loading while validating session
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking session...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return <AdminLogin onLogin={() => {
       localStorage.setItem("admin_logged_in", "true");
       setIsLoggedIn(true);
     }} />;
+  }
+
+  // Show loading while preparing dashboard
+  if (!isReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   const renderContent = () => {
@@ -70,6 +112,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       case "stagedreview": return <StagedReviewQueue />;
       case "aichat": return <AdminAIChat />;
       case "reports": return <PipelineReport />;
+      case "botstats": return <BotStats />;
       case "teachers": return <TeacherApprovals />;
       default: return <DashboardHome />;
     }
@@ -85,6 +128,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     { id: "autoverify", label: "Auto-Verify & Update", icon: ShieldCheck },
     { id: "stagedreview", label: "Review Queue", icon: AlertTriangle },
     { id: "reports", label: "Pipeline Reports", icon: FileBarChart2 },
+    { id: "botstats", label: "Bot Stats", icon: Bot },
     { id: "aichat", label: "Admin AI", icon: Sparkles },
   ];
 

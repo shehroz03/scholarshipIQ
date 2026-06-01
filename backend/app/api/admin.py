@@ -406,6 +406,71 @@ def pipeline_log_detail(log_id: int, db: Session = Depends(get_db)):
 
 
 # ============================================
+# AI BOT AUTO-UPDATE STATS
+# ============================================
+
+@router.get("/bot-stats", dependencies=[Depends(get_current_admin)])
+def get_bot_stats(db: Session = Depends(get_db)):
+    """Returns AI auto-update bot run history and summary stats."""
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
+    run_log_path = os.path.join(data_dir, "bot_run_log.json")
+    runs = []
+    if os.path.exists(run_log_path):
+        try:
+            with open(run_log_path) as f:
+                runs = json.load(f)
+        except Exception:
+            runs = []
+
+    total_runs = len(runs)
+    total_checked = sum(r.get("checked", 0) for r in runs)
+    total_updated = sum(r.get("updated", 0) for r in runs)
+    total_errors = sum(r.get("errors", 0) for r in runs)
+    last_run_at = runs[0].get("run_at") if runs else None
+
+    # Next scheduled run: every 4 days from last run (ensure it's in the future)
+    next_run_at = None
+    if last_run_at:
+        try:
+            last_dt = datetime.fromisoformat(last_run_at)
+            now = datetime.now()
+            # Keep adding 4 days until we get a future date
+            next_dt = last_dt + timedelta(days=4)
+            while next_dt <= now:
+                next_dt += timedelta(days=4)
+            next_run_at = next_dt.isoformat()
+        except Exception:
+            next_run_at = None
+
+    # Check if API keys are configured
+    serper_ok = bool(os.getenv("SERPER_API_KEY"))
+    openai_ok = bool(os.getenv("OPENAI_API_KEY"))
+
+    return {
+        "total_runs": total_runs,
+        "total_checked": total_checked,
+        "total_updated": total_updated,
+        "total_errors": total_errors,
+        "last_run_at": last_run_at,
+        "next_run_at": next_run_at,
+        "serper_api": "configured" if serper_ok else "missing",
+        "openai_api": "configured" if openai_ok else "missing",
+        "runs": runs[:50]  # last 50 runs for display
+    }
+
+
+@router.post("/bot-stats/run-now", dependencies=[Depends(get_current_admin)])
+async def trigger_bot_run_now(db: Session = Depends(get_db)):
+    """Manually trigger the AI scholarship auto-update bot."""
+    try:
+        from app.services.scholarship_auto_updater import auto_update_scholarships
+        result = await auto_update_scholarships(db, batch_size=6)
+        return {"status": "success", **result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Bot run failed: {str(e)}")
+
+
+# ============================================
 # TUITION & SCHOLARSHIP VERIFICATION
 # ============================================
 
@@ -826,6 +891,7 @@ def get_pending_teachers(db: Session = Depends(get_db)):
             "cv_file_url": t.cv_file_url,
             "bio": t.bio,
             "applied_at": t.created_at.isoformat(),
+            "profile_picture_url": t.profile_picture_url,
         })
     return result
 
@@ -860,6 +926,7 @@ def get_all_teachers(
             "rejection_reason": t.rejection_reason,
             "approved_at": t.approved_at.isoformat() if t.approved_at else None,
             "applied_at": t.created_at.isoformat(),
+            "profile_picture_url": t.profile_picture_url,
         })
     return result
 

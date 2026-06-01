@@ -35,16 +35,18 @@ def get_current_user(
         user_id = payload.get("sub")
     except (JWTError, ValidationError):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     try:
         user_id_str = str(user_id) if user_id is not None else ""
         user = db.query(models.User).filter(models.User.id == int(user_id_str)).first()
     except (ValueError, TypeError):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user identification format",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
