@@ -81,3 +81,31 @@ def get_current_user_optional(
 
 def require_premium(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+
+def require_admin(current_user: models.User = Depends(get_current_user)) -> models.User:
+    """Dependency that allows only users with the 'admin' role."""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_user
+
+def require_teacher(current_user: models.User = Depends(get_current_user)) -> models.User:
+    """Dependency that allows only users with the 'teacher' role."""
+    if current_user.role != "teacher" and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Teacher privileges required",
+        )
+    return current_user
+
+def require_student(current_user: models.User = Depends(get_current_user)) -> models.User:
+    """Dependency that allows only users with the 'student' role."""
+    if current_user.role != "student" and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Student privileges required",
+        )
+    return current_user

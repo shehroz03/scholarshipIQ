@@ -5,19 +5,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from app.api import auth, users, scholarships, recommendations, chatbot, dashboard, applications, consultant, sop_writer, notifications, visa, subscriptions, teacher, courses
+from app.api import auth, users, scholarships, recommendations, chatbot, dashboard, applications, consultant, sop_writer, notifications, visa, subscriptions, teacher, courses, teacher_reviews
 from app.tasks import start_scheduler
 from app.services.email import send_deadline_email
 from app.core.config import settings
 
 
-# ─── Rate Limiter ─────────────────────────────────────────────────────────────
-limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
-
+from app.core.limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
 
 # ─── Security Headers Middleware ───────────────────────────────────────────────
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -38,6 +35,12 @@ from app.db.session import init_db
 async def lifespan(app: FastAPI):
     init_db()
     start_scheduler()
+    # Pre-compute scholarship embeddings once so chat RAG is fast (~2ms/query)
+    try:
+        from app.services import embedding_cache
+        embedding_cache.warm_up()
+    except Exception as e:
+        print(f"[Startup] Embedding cache warm-up skipped: {e}")
     yield
 
 # ─── App Initialisation ────────────────────────────────────────────────────────
@@ -123,6 +126,7 @@ from app.api import admin
 app.include_router(admin.router,           prefix="/admin",           tags=["Admin Panel"])
 app.include_router(teacher.router,         prefix="",                 tags=["Teacher"])
 app.include_router(courses.router,         prefix="",                 tags=["Courses"])
+app.include_router(teacher_reviews.router, prefix="",                 tags=["Teacher Reviews"])
 
 
 # ─── Static Files (CV Uploads) ────────────────────────────────────────────────

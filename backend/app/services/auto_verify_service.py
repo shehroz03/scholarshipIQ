@@ -1,15 +1,19 @@
 """
 ScholarIQ Auto-Verify Service
 ==============================
-Processes ALL staged scholarships through bot.
+Processes ALL staged scholarships through the verification bot.
 
-Logic:
-- SAFE   (score 0-29)  : Auto-approve → promote to production
+Decision logic (by fraud risk score):
+- SAFE   (score 0-29)  : eligible for auto-approve → promote to production
 - MEDIUM (score 30-49) : Admin review queue → stays pending for admin
-- HIGH   (score 50-69) : Auto-reject → stays in staging (admin can override)
-- CRITICAL (70+)       : Auto-reject + blocked
+- HIGH/CRITICAL (>=50) : Auto-reject → stays in staging (admin can override)
 
-Each staged item gets a fresh fraud re-check before decision.
+A SAFE item is only auto-approved if it ALSO passes pre-promotion gates:
+  1. fresh fraud re-check (never trusts a stale score)
+  2. not a duplicate of an existing live scholarship
+  3. a usable application/website URL
+  4. deadline is missing or still in the future (no expired promotions)
+Items that fail a gate are routed to admin review instead of being published.
 Admin can always override any decision via the Staged Review Queue tab.
 """
 
@@ -17,6 +21,7 @@ import json
 import os
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.db.models import ScholarshipStaging, Scholarship, University, PipelineLog, ReviewStatus
 
 
@@ -25,10 +30,73 @@ AUTO_VERIFY_LOG_PATH = os.path.join(
     "data", "auto_verify_log.json"
 )
 
-# Confidence thresholds
-AUTO_APPROVE_SAFE_MAX  = 29   # score <= 29  → SAFE, full auto-approve
+# Risk-score thresholds
+AUTO_APPROVE_SAFE_MAX  = 29   # score <= 29  → SAFE, eligible for auto-approve
 ADMIN_REVIEW_MAX       = 49   # score 30-49  → MEDIUM, send to admin review queue
 AUTO_REJECT_MIN_SCORE  = 50   # score >= 50  → HIGH/CRITICAL, auto-reject
+
+
+def _is_duplicate(db: Session, staged: ScholarshipStaging) -> bool:
+    """
+    True if a live scholarship already exists with the same URL, or the same
+    (normalised title + country). Prevents the bot from publishing duplicates.
+    """
+    url = (staged.scholarship_url or "").strip().lower()
+    if url:
+        existing = (
+            db.query(Scholarship)
+            .filter(func.lower(Scholarship.scholarship_url) == url)
+            .first()
+        )
+        if existing:
+            return True
+
+    title = (staged.title or "").strip().lower()
+    if title:
+        existing = (
+            db.query(Scholarship)
+            .filter(
+                func.lower(Scholarship.title) == title,
+                func.lower(func.coalesce(Scholarship.country, "")) == (staged.country or "").strip().lower(),
+            )
+            .first()
+        )
+        if existing:
+            return True
+    return False
+
+
+def _url_is_usable(staged: ScholarshipStaging) -> bool:
+    """
+    Lightweight liveness check before publishing. A reachable HTTP(S) URL is
+    required; we don't want to push dead links live. Network errors are treated
+    as 'not usable' so the item goes to admin review rather than production.
+    """
+    url = (staged.scholarship_url or staged.website_url or "").strip()
+    if not url or not url.lower().startswith(("http://", "https://")):
+        return False
+    try:
+        import requests
+        resp = requests.head(url, timeout=5, allow_redirects=True)
+        if resp.status_code >= 400:
+            # Some servers reject HEAD — retry once with GET
+            resp = requests.get(url, timeout=6, allow_redirects=True, stream=True)
+        return resp.status_code < 400
+    except Exception:
+        return False
+
+
+def _deadline_ok(staged: ScholarshipStaging) -> bool:
+    """True if deadline is missing (rolling) or still in the future."""
+    if not staged.deadline:
+        return True
+    try:
+        dl = staged.deadline
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        dl_naive = dl.replace(tzinfo=None) if getattr(dl, "tzinfo", None) else dl
+        return dl_naive >= now
+    except Exception:
+        return True
 
 
 def _load_log() -> list:
@@ -63,6 +131,9 @@ def _promote_to_production(db: Session, staged: ScholarshipStaging) -> Scholarsh
         description=staged.description,
         degree_level=staged.degree_level,
         field_of_study=staged.field_of_study,
+        eligibility=staged.eligibility,
+        duration_text=staged.duration_text,
+        deadline=staged.deadline,
         scholarship_url=staged.scholarship_url,
         website_url=staged.website_url,
         currency=staged.currency,
@@ -119,22 +190,16 @@ def process_staged_scholarships(db: Session, batch_size: int = 50) -> dict:
 
     for staged in pending:
         try:
-            # --- Step 1: Use stored fraud score (pipeline already ran check at scrape time) ---
-            # Only re-run if score was never set (0)
-            score = staged.fraud_risk_score or 0
-            level = staged.fraud_risk_level or "SAFE"
-            reasons = json.loads(staged.fraud_reasons) if staged.fraud_reasons else []
+            # --- Step 1: ALWAYS run a fresh fraud re-check (never trust stale score) ---
+            fresh_fraud = calculate_fraud_risk(staged)
+            score = fresh_fraud["risk_score"]
+            level = fresh_fraud["risk_level"]
+            reasons = fresh_fraud["reasons"]
+            staged.fraud_risk_score = score
+            staged.fraud_risk_level = level
+            staged.fraud_reasons = json.dumps(reasons)
 
-            if score == 0:
-                fresh_fraud = calculate_fraud_risk(staged)
-                score = fresh_fraud["risk_score"]
-                level = fresh_fraud["risk_level"]
-                reasons = fresh_fraud["reasons"]
-                staged.fraud_risk_score = score
-                staged.fraud_risk_level = level
-                staged.fraud_reasons = json.dumps(reasons)
-
-            # --- Step 2: Decide ---
+            # --- Step 2: Base decision by risk score ---
             if score <= AUTO_APPROVE_SAFE_MAX:
                 decision = "approved"
                 decision_label = f"SAFE (score={score}) — auto-approved"
@@ -144,6 +209,22 @@ def process_staged_scholarships(db: Session, batch_size: int = 50) -> dict:
             else:
                 decision = "rejected"
                 decision_label = f"HIGH/CRITICAL risk (score={score}, level={level}) — auto-rejected"
+
+            # --- Step 3: Pre-promotion gates (only for SAFE auto-approve) ---
+            # A clean fraud score is necessary but not sufficient to publish.
+            if decision == "approved":
+                gate_fail = None
+                if _is_duplicate(db, staged):
+                    gate_fail = "duplicate of existing live scholarship"
+                elif not _deadline_ok(staged):
+                    gate_fail = "deadline already passed"
+                elif not _url_is_usable(staged):
+                    gate_fail = "application URL not reachable"
+
+                if gate_fail:
+                    decision = "admin_review"
+                    decision_label = f"SAFE (score={score}) but held for admin: {gate_fail}"
+                    reasons = reasons + [f"Auto-verify gate: {gate_fail}"]
 
             confidence = round((1 - score / 100) * 100, 1)
 
@@ -220,6 +301,16 @@ def process_staged_scholarships(db: Session, batch_size: int = 50) -> dict:
 
     db.commit()
     _save_log(log_entries)
+
+    # If anything was published, refresh the chatbot's RAG embedding cache so
+    # the new scholarships are immediately discoverable in chat.
+    if approved_count > 0:
+        try:
+            from app.services import embedding_cache
+            embedding_cache.warm_up()
+            print(f"[AutoVerify] Embedding cache refreshed after {approved_count} promotions.")
+        except Exception as e:
+            print(f"[AutoVerify] Cache refresh skipped: {e}")
 
     result = {
         "processed": len(pending),

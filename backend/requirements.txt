@@ -21,4 +21,7 @@ joblib
 numpy
 pandas
 scikit-learn
+imbalanced-learn
 beautifulsoup4
+sentence-transformers
+tiktoken

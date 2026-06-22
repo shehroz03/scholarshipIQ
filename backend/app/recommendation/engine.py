@@ -2,8 +2,6 @@
 ScholarIQ Recommendation Engine
 Implements hybrid scoring: 60% rule-based + 40% ML
 """
-import os
-import numpy as np
 from typing import List, Optional, Any
 from datetime import datetime, timezone
 from pydantic import BaseModel
@@ -18,7 +16,7 @@ try:
 except ImportError:
     _ML_ACTIVE = False
     _FEATURE_NAMES = []
-    def ml_score(features: dict) -> float:  # type: ignore
+    def ml_score(_features: dict) -> float:  # type: ignore
         return 0.5
 
 
@@ -228,7 +226,7 @@ def score_scholarship(user_profile, scholarship: Any) -> dict:
     return {"fit_score": score, "eligibility": elig, "reasons": reasons or ["General match based on profile"]}
 
 
-def _rule_score(user_fields: dict, scholarship: Any, feats: dict) -> float:
+def _rule_score(_user_fields: dict, scholarship: Any, feats: dict) -> float:
     """Pure rule-based score 0-100."""
     score = 0.0
 
@@ -270,11 +268,80 @@ def _rule_score(user_fields: dict, scholarship: Any, feats: dict) -> float:
     return min(round(score, 2), 100.0)
 
 
+# ─── Cold-Start Helpers ────────────────────────────────────────────────────────
+
+def _profile_completeness(user_fields: dict) -> float:
+    """Fraction (0-1) of the 4 signals needed for meaningful matching."""
+    filled = sum([
+        user_fields.get("cgpa", 0) and user_fields["cgpa"] > 0,
+        bool(user_fields.get("target_countries")),
+        bool(user_fields.get("target_degree_norm")),
+        bool(user_fields.get("major")),
+    ])
+    return filled / 4.0
+
+
+def _popularity_fallback(db: Any, today: Any, limit: int = 10) -> List[dict]:
+    """
+    Cold-start fallback: return the most-applied-to active scholarships.
+    Used when the user's profile is too sparse for hybrid scoring.
+    """
+    from app.db.models import Scholarship, Application
+    from sqlalchemy import func, or_
+
+    app_counts = (
+        db.query(Application.scholarship_id, func.count(Application.id).label("n"))
+        .group_by(Application.scholarship_id)
+        .subquery()
+    )
+
+    rows = (
+        db.query(Scholarship)
+        .outerjoin(app_counts, Scholarship.id == app_counts.c.scholarship_id)
+        .filter(
+            Scholarship.is_active == True,
+            Scholarship.approval_status == "approved",
+            or_(Scholarship.is_archived == False, Scholarship.is_archived.is_(None)),
+            or_(Scholarship.deadline == None, Scholarship.deadline > today),
+        )
+        .order_by(func.coalesce(app_counts.c.n, 0).desc(), Scholarship.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    results = []
+    for s in rows:
+        uni = getattr(s, "university", None)
+        uni_name = getattr(uni, "name", "Unknown University") if uni else "Unknown University"
+        deadline_str = ""
+        if s.deadline:
+            deadline_str = s.deadline.strftime("%Y-%m-%d") if isinstance(s.deadline, datetime) else str(s.deadline)[:10]
+        results.append({
+            "scholarship_id": s.id,
+            "scholarship_name": s.title,
+            "uni_name": uni_name,
+            "country": s.country or "",
+            "city": s.city or (getattr(uni, "city", "") if uni else ""),
+            "fit_score": 0.0,
+            "match_label": "Popular Pick",
+            "match_color": "blue",
+            "reasons": ["Trending — complete your profile for personalized matches"],
+            "scholarship_link": s.scholarship_url or s.website_url or "",
+            "after_fee": float(s.net_cost_numeric or 0.0),
+            "cgpa_min": float(getattr(uni, "min_cgpa", 0.0) or 0.0) if uni else 0.0,
+            "deadline": deadline_str,
+            "amount": s.scholarship_amount_value or s.amount or s.funding_type or "Varies",
+            "funding_type": s.funding_type or "Funding Varies",
+        })
+    return results
+
+
 # ─── Main Recommendation Function ─────────────────────────────────────────────
 
 def get_recommendations(user: Any, db: Any) -> List[dict]:
     """
     Hybrid recommendation (60% rules + 40% ML).
+    Cold-start users (profile <50% complete) get a popularity-based fallback.
     Returns list of up to 10 dicts sorted by fit_score desc.
     """
     from app.db.models import Scholarship, University
@@ -285,22 +352,30 @@ def get_recommendations(user: Any, db: Any) -> List[dict]:
           f"Target={user_fields['target_countries']}, Degree={user_fields['target_degree']}, "
           f"Major={user_fields['major']}")
 
-    # 1. OPTIMIZED QUERY: Filter by target countries and degree level first
-    # Join with University to allow country filtering even if Scholarship.country is NULL
+    today = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # Cold-start guard: sparse profile → popularity fallback (no garbage scoring)
+    completeness = _profile_completeness(user_fields)
+    if completeness < 0.5:
+        print(f"[Engine] Cold-start user (profile {completeness*100:.0f}% complete) "
+              f"→ popularity-based fallback")
+        return _popularity_fallback(db, today)
+
+    # 1. OPTIMIZED QUERY: Only approved, active, non-archived, non-expired scholarships
     query = db.query(Scholarship).outerjoin(University).filter(
         Scholarship.is_active == True,
+        Scholarship.approval_status == "approved",
         or_(Scholarship.is_suspicious == False, Scholarship.is_suspicious.is_(None)),
-        or_(Scholarship.is_archived == False, Scholarship.is_archived.is_(None))
+        or_(Scholarship.is_archived == False, Scholarship.is_archived.is_(None)),
+        or_(Scholarship.deadline == None, Scholarship.deadline > today),
     )
-    
+
     # Apply country filter if user has preferences
     if user_fields['target_countries']:
         country_filters = []
         for c in user_fields['target_countries']:
             country_filters.append(Scholarship.country.ilike(f"%{c}%"))
             country_filters.append(University.country.ilike(f"%{c}%"))
-            
-            # Add common variations to the database query
             if c == "united kingdom":
                 country_filters.append(Scholarship.country.ilike("%uk%"))
                 country_filters.append(University.country.ilike("%uk%"))
@@ -309,32 +384,49 @@ def get_recommendations(user: Any, db: Any) -> List[dict]:
                 country_filters.append(University.country.ilike("%usa%"))
                 country_filters.append(Scholarship.country.ilike("% us%"))
                 country_filters.append(University.country.ilike("% us%"))
-
         query = query.filter(or_(*country_filters))
-    
+
     # Apply degree filter if user has target
     if user_fields['target_degree_norm']:
         query = query.filter(Scholarship.degree_level.ilike(f"%{user_fields['target_degree_norm']}%"))
 
-    # Fetch top 100 relevant candidates to score in detail (much faster than scoring all 40k)
-    scholarships = query.limit(100).all()
-    
-    # Fallback if no specific matches found
+    # Deterministic pool: newest first, then closest deadline
+    scholarships = (
+        query
+        .order_by(Scholarship.created_at.desc(), Scholarship.deadline.asc())
+        .limit(200)
+        .all()
+    )
+
+    # Fallback: drop degree+country filter but keep approval/active/deadline guards
     if not scholarships:
-        print("[Engine] No specific matches found, falling back to all active scholarships")
-        scholarships = db.query(Scholarship).filter(
-            Scholarship.is_active == True,
-            Scholarship.is_archived == False
-        ).limit(50).all()
+        print("[Engine] No specific matches, falling back to all approved active scholarships")
+        scholarships = (
+            db.query(Scholarship).filter(
+                Scholarship.is_active == True,
+                Scholarship.approval_status == "approved",
+                Scholarship.is_archived == False,
+                or_(Scholarship.deadline == None, Scholarship.deadline > today),
+            )
+            .order_by(Scholarship.created_at.desc(), Scholarship.deadline.asc())
+            .limit(100)
+            .all()
+        )
 
     print(f"[Engine] Scholarships fetched for scoring: {len(scholarships)}")
 
     results = []
     for s in scholarships:
+        # Hard skip: user's CGPA is more than 1.0 below minimum (not competitive at all)
+        s_cgpa_min = float(_get(s, "min_cgpa") or 0.0)
+        user_cgpa = user_fields["cgpa"]
+        if s_cgpa_min > 0 and user_cgpa > 0 and (user_cgpa - s_cgpa_min) < -1.0:
+            continue
+
         feats = _build_ml_features(user_fields, s)
         rule_s = _rule_score(user_fields, s, feats)
         if _ML_ACTIVE:
-            ml_s = ml_score(feats) * 100.0  # 0-100 scale
+            ml_s = ml_score(feats) * 100.0
             final_score = round(0.6 * rule_s + 0.4 * ml_s, 2)
         else:
             final_score = rule_s
@@ -342,20 +434,24 @@ def get_recommendations(user: Any, db: Any) -> List[dict]:
         # Build reasons list
         reasons: List[str] = []
         if feats["cgpa_gap"] >= 0:
-            reasons.append(f"Your CGPA ({user_fields['cgpa']:.1f}) meets the minimum")
+            reasons.append(f"Your CGPA ({user_cgpa:.1f}) meets the minimum requirement")
         elif feats["cgpa_gap"] > -0.5:
-            reasons.append(f"CGPA slightly below requirement (gap: {abs(feats['cgpa_gap']):.1f})")
+            reasons.append(f"CGPA is close to requirement (gap: {abs(feats['cgpa_gap']):.1f} points)")
         if feats["degree_match"]:
-            reasons.append("Degree level matches your target")
+            reasons.append("Degree level exactly matches your target")
         if feats["country_match"]:
-            reasons.append(f"Located in one of your preferred countries")
+            reasons.append(f"Located in your preferred country ({_get(s, 'country') or ''})")
         if feats["field_match"]:
-            reasons.append("Field of study aligns with your major")
+            reasons.append(f"Field of study aligns with your major ({user_fields['major']})")
+        if feats["ielts_match"]:
+            reasons.append(f"Your IELTS ({user_fields['ielts_overall']}) meets requirement")
+        if feats["funding_match"] and user_fields["scholarship_type_pref"].lower() != "any":
+            reasons.append(f"Funding type matches your preference")
         if feats["scholarship_value"] > 0.3:
             amt = _get(s, "scholarship_amount_value") or ""
-            reasons.append(f"Scholarship covers significant costs{': ' + amt if amt else ''}")
+            reasons.append(f"High scholarship value{': ' + amt if amt else ''}")
         if not reasons:
-            reasons.append("Matches broad eligibility criteria")
+            reasons.append("Matches your general eligibility criteria")
 
         # Match label
         if final_score >= 80:
@@ -411,7 +507,7 @@ def get_recommendations(user: Any, db: Any) -> List[dict]:
 
 # ─── Degree Suggestion ─────────────────────────────────────────────────────────
 
-def get_recommended_degree(user_profile: UserProfile, top_degrees: List[str]) -> tuple:
+def get_recommended_degree(user_profile: UserProfile, _top_degrees: List[str]) -> tuple:
     d = user_profile.highest_completed_degree.lower()
     if "bachelor" in d:
         return "Masters", "A Masters builds on your Bachelor's and opens global opportunities."

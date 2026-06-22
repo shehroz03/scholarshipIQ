@@ -334,6 +334,33 @@ def trigger_fraud_scan(db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Manual fraud scan complete", "checked": len(scholarships), "flagged": flagged_count}
 
+@router.post("/notifications/send-match-digest", dependencies=[Depends(get_current_admin)])
+async def trigger_match_digest():
+    """
+    Manually run the 'new matching scholarship' digest now (normally daily @08:00).
+    Emails each opted-in student a digest of new scholarships matching their profile.
+    """
+    from app.tasks import notify_new_matching_scholarships
+    await notify_new_matching_scholarships()
+    return {"status": "match_digest_triggered"}
+
+
+@router.post("/cache/refresh-embeddings", dependencies=[Depends(get_current_admin)])
+def refresh_embedding_cache_now():
+    """
+    Manually rebuild the chatbot's scholarship embedding cache.
+    Use after bulk-approving scholarships so the chat RAG sees them immediately
+    (otherwise the scheduler refreshes every 6 hours / nightly).
+    """
+    from app.services import embedding_cache
+    count = embedding_cache.warm_up()
+    return {
+        "status": "cache_refreshed",
+        "scholarships_embedded": count,
+        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+    }
+
+
 @router.post("/fraud/review/{id}", dependencies=[Depends(get_current_admin)])
 def review_flagged_scholarship(id: int, review: FraudReviewAction, db: Session = Depends(get_db)):
     s = db.query(models.Scholarship).filter(models.Scholarship.id == id).first()
@@ -1013,34 +1040,127 @@ def get_teacher_stats(db: Session = Depends(get_db)):
     }
 
 
-# ─── ADMIN AI CHAT ───────────────────────────────────────────────────────────
+# ─── ADMIN AI CHAT (Master Overseer AI) ──────────────────────────────────────
 
 class AdminChatRequest(BaseModel):
     message: str
 
+
+def _build_admin_master_context(db: Session) -> dict:
+    """
+    Builds a wide, live snapshot of the whole platform so the admin AI behaves
+    like a 'master overseer' — it can answer questions about users, scholarships,
+    fraud, teachers, courses, applications, the ingestion pipeline and the bots.
+    Each section is guarded so one failing query never breaks the whole context.
+    """
+    ctx: dict = {}
+
+    # ── Users ──────────────────────────────────────────────────────────────
+    try:
+        week_ago = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=7)
+        ctx["Users — Total"] = db.query(models.User).count()
+        ctx["Users — Students"] = db.query(models.User).filter(models.User.role == "student").count()
+        ctx["Users — Teachers"] = db.query(models.User).filter(models.User.role == "teacher").count()
+        ctx["Users — Active"] = db.query(models.User).filter(models.User.is_active == True).count()
+        ctx["Users — New (last 7 days)"] = db.query(models.User).filter(models.User.created_at >= week_ago).count()
+        ctx["Users — Suspicious flagged"] = db.query(models.User).filter(models.User.is_suspicious == True).count()
+    except Exception as e:
+        ctx["Users — error"] = str(e)
+
+    # ── Scholarships ───────────────────────────────────────────────────────
+    try:
+        S = models.Scholarship
+        ctx["Scholarships — Total"] = db.query(S).count()
+        ctx["Scholarships — Active & Approved (public)"] = db.query(S).filter(
+            S.is_active == True, S.approval_status == "approved"
+        ).count()
+        ctx["Scholarships — Pending approval"] = db.query(S).filter(S.approval_status == "pending").count()
+        ctx["Scholarships — Rejected"] = db.query(S).filter(S.approval_status == "rejected").count()
+        ctx["Scholarships — Archived (expired)"] = db.query(S).filter(S.is_archived == True).count()
+        # Top 5 countries by count
+        rows = (
+            db.query(S.country, func.count(S.id))
+            .filter(S.country.isnot(None))
+            .group_by(S.country)
+            .order_by(func.count(S.id).desc())
+            .limit(5)
+            .all()
+        )
+        ctx["Scholarships — Top countries"] = ", ".join(f"{c}: {n}" for c, n in rows if c)
+    except Exception as e:
+        ctx["Scholarships — error"] = str(e)
+
+    # ── Fraud / risk ───────────────────────────────────────────────────────
+    try:
+        S = models.Scholarship
+        ctx["Fraud — Suspicious flagged"] = db.query(S).filter(S.is_suspicious == True).count()
+        for lvl in ("CRITICAL", "HIGH", "MEDIUM"):
+            ctx[f"Fraud — {lvl} risk"] = db.query(S).filter(S.fraud_risk_level == lvl).count()
+        ctx["Fraud — Auto-flagged for review"] = db.query(S).filter(S.auto_flagged == True).count()
+    except Exception as e:
+        ctx["Fraud — error"] = str(e)
+
+    # ── Staging / ingestion pipeline ───────────────────────────────────────
+    try:
+        ST = models.ScholarshipStaging
+        ctx["Pipeline — Staged pending review"] = db.query(ST).filter(ST.review_status == "pending").count()
+        ctx["Pipeline — Staged total"] = db.query(ST).count()
+        last_log = db.query(models.PipelineLog).order_by(models.PipelineLog.timestamp.desc()).first()
+        if last_log:
+            ctx["Pipeline — Last event"] = f"{last_log.event_type or last_log.status or 'run'} at {last_log.timestamp}"
+    except Exception as e:
+        ctx["Pipeline — error"] = str(e)
+
+    # ── Teachers & courses ─────────────────────────────────────────────────
+    try:
+        TP = models.TeacherProfile
+        ctx["Teachers — Total profiles"] = db.query(TP).count()
+        ctx["Teachers — Approved"] = db.query(TP).filter(TP.approval_status == "approved").count()
+        ctx["Teachers — Pending approval"] = db.query(TP).filter(TP.approval_status == "pending").count()
+        ctx["Courses — Total"] = db.query(models.Course).count()
+        ctx["Courses — Published"] = db.query(models.Course).filter(models.Course.is_published == True).count()
+        ctx["Enrollments — Total"] = db.query(models.Enrollment).count()
+    except Exception as e:
+        ctx["Teachers — error"] = str(e)
+
+    # ── Applications ───────────────────────────────────────────────────────
+    try:
+        ctx["Applications — Total"] = db.query(models.Application).count()
+        rows = (
+            db.query(models.Application.status, func.count(models.Application.id))
+            .group_by(models.Application.status)
+            .all()
+        )
+        ctx["Applications — By status"] = ", ".join(f"{s}: {n}" for s, n in rows if s)
+    except Exception as e:
+        ctx["Applications — error"] = str(e)
+
+    # ── Bot activity (from data logs) ──────────────────────────────────────
+    try:
+        import os as _os
+        data_dir = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))), "data")
+        run_log = _os.path.join(data_dir, "bot_run_log.json")
+        if _os.path.exists(run_log):
+            with open(run_log) as f:
+                runs = json.load(f)
+            if runs:
+                last = runs[0]
+                ctx["Auto-Update Bot — Last run"] = (
+                    f"{last.get('run_at','?')} | checked={last.get('checked',0)} "
+                    f"updated={last.get('updated',0)} errors={last.get('errors',0)}"
+                )
+    except Exception:
+        pass
+
+    return ctx
+
+
 @router.post("/ai-chat", dependencies=[Depends(get_current_admin)])
 def admin_ai_chat(body: AdminChatRequest, db: Session = Depends(get_db)):
-    """Admin-specific AI with live platform data context injected."""
+    """Admin 'master overseer' AI — full live platform snapshot injected as context."""
     from app.services.chatbot import get_ai_response
 
-    # Inject live platform stats as context
-    total_users = db.query(models.User).count()
-    total_scholarships = db.query(models.Scholarship).count()
-    active_scholarships = db.query(models.Scholarship).filter(
-        models.Scholarship.is_active == True,
-        models.Scholarship.approval_status == "approved"
-    ).count()
-    suspicious_count = db.query(models.Scholarship).filter(models.Scholarship.is_suspicious == True).count()
-    pending_teachers = db.query(models.TeacherProfile).filter(models.TeacherProfile.approval_status == "pending").count()
-
-    context = {
-        "Total Registered Users": total_users,
-        "Total Scholarships in DB": total_scholarships,
-        "Active + Approved Scholarships (visible to users)": active_scholarships,
-        "Suspicious/Fraud Flagged Scholarships": suspicious_count,
-        "Teachers Pending Approval": pending_teachers,
-    }
-
+    context = _build_admin_master_context(db)
     reply = get_ai_response(body.message, mode="admin", context=context)
     return {"reply": reply}
 

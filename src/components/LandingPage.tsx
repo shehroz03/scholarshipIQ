@@ -660,6 +660,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               <input
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   background: "transparent",
                   border: "none",
                   padding: "0 16px",
@@ -667,11 +668,10 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
                   fontSize: "16px",
                   fontWeight: 500,
                   outline: "none",
-                  width: "100%",
                   height: "60px"
                 }}
                 type="email"
-                placeholder="Enter your email address"
+                placeholder="Enter your email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
               />
@@ -729,10 +729,10 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
       {/* ─── HOW IT WORKS STEPS ─── */}
       <section style={{ maxWidth: "1200px", margin: "80px auto 0", padding: "0 32px" }}>
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
-          <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", marginBottom: "16px" }}>
+          <h2 style={{ fontSize: "32px", fontWeight: 800, color: "#1a2250", marginBottom: "16px" }}>
             How ScholarIQ <span style={{ color: "#6366f1" }}>Works</span>
           </h2>
-          <p style={{ color: "rgba(255, 255, 255, 0.6)", maxWidth: "600px", margin: "0 auto" }}>
+          <p style={{ color: "#64748b", maxWidth: "600px", margin: "0 auto" }}>
             Four simple steps to find, match, and apply for your dream scholarship with AI-powered precision.
           </p>
         </div>
@@ -748,16 +748,16 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               key={i} 
               whileHover={{ y: -10, borderColor: "rgba(99, 102, 241, 0.5)" }}
               onClick={step.action}
-              style={{ 
+              style={{
                 cursor: "pointer",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
+                background: "#ffffff",
+                border: "1px solid #e8eaf3",
                 borderRadius: "24px",
                 padding: "32px",
-                backdropFilter: "blur(12px)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "20px",
+                boxShadow: "0 4px 20px rgba(26, 34, 80, 0.06)",
                 transition: "all 0.4s ease"
               }}
             >
@@ -776,17 +776,17 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               </div>
               
               <div>
-                <div style={{ 
-                  fontSize: "18px", 
-                  fontWeight: 800, 
-                  color: "white", 
-                  marginBottom: "10px" 
+                <div style={{
+                  fontSize: "18px",
+                  fontWeight: 800,
+                  color: "#1a2250",
+                  marginBottom: "10px"
                 }}>
                   {step.title}
                 </div>
-                <div style={{ 
-                  fontSize: "14px", 
-                  color: "rgba(255, 255, 255, 0.5)", 
+                <div style={{
+                  fontSize: "14px",
+                  color: "#64748b",
                   lineHeight: 1.6,
                   fontWeight: 500
                 }}>

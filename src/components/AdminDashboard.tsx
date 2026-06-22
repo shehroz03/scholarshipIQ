@@ -11,7 +11,8 @@ import { StagedReviewQueue } from "./admin/StagedReviewQueue";
 import { AdminAIChat } from "./admin/AdminAIChat";
 import { BotStats } from "./admin/BotStats";
 import { PipelineReport } from "./admin/PipelineReport";
-import { LayoutDashboard, Users, BookOpen, ShieldAlert, ShieldCheck, Sparkles, FileBarChart2, LogOut, RefreshCw, GraduationCap, AlertTriangle, Bot } from "lucide-react";
+import { AdminReviewManagement } from "./admin/AdminReviewManagement";
+import { LayoutDashboard, Users, BookOpen, ShieldAlert, ShieldCheck, Sparkles, FileBarChart2, LogOut, RefreshCw, GraduationCap, AlertTriangle, Bot, Star } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { darkTheme, lightTheme } from "../styles/theme";
 import { ThemeToggle } from "./ThemeToggle";
@@ -114,6 +115,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       case "reports": return <PipelineReport />;
       case "botstats": return <BotStats />;
       case "teachers": return <TeacherApprovals />;
+      case "teacher-reviews": return <AdminReviewManagement />;
       default: return <DashboardHome />;
     }
   };
@@ -125,6 +127,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     { id: "pipeline", label: "Data Pipeline", icon: RefreshCw },
     { id: "fraud", label: "Fraud Security", icon: ShieldAlert },
     { id: "teachers", label: "Teacher Approvals", icon: GraduationCap },
+    { id: "teacher-reviews", label: "Teacher Reviews", icon: Star },
     { id: "autoverify", label: "Auto-Verify & Update", icon: ShieldCheck },
     { id: "stagedreview", label: "Review Queue", icon: AlertTriangle },
     { id: "reports", label: "Pipeline Reports", icon: FileBarChart2 },

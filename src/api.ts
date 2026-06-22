@@ -762,6 +762,75 @@ export const api = {
     },
     async getCourseDetail(courseId: number) {
       return apiBase.request(`/courses/${courseId}/student-view`);
+    },
+    async createStripePaymentIntent(courseId: number, amount: number) {
+      return apiBase.request("/payments/create-intent", {
+        method: "POST",
+        body: JSON.stringify({ course_id: courseId, amount }),
+      });
+    },
+    async confirmStripePayment(courseId: number, paymentIntentId: string) {
+      return apiBase.request("/payments/confirm", {
+        method: "POST",
+        body: JSON.stringify({ course_id: courseId, payment_intent_id: paymentIntentId }),
+      });
+    }
+  },
+
+  // ─── Teacher Reviews API ────────────────────────────
+  teacherReviews: {
+    // Submit a review for a teacher (student only)
+    async submitReview(teacherId: number, rating: number, reviewText?: string) {
+      return apiBase.request(`/teacher-reviews/${teacherId}?rating=${rating}${reviewText ? `&review_text=${encodeURIComponent(reviewText)}` : ""}`, {
+        method: "POST"
+      });
+    },
+
+    // Get all reviews for a teacher (public)
+    async getTeacherReviews(teacherId: number, page: number = 1, perPage: number = 10) {
+      return apiBase.request(`/teacher-reviews/${teacherId}?page=${page}&per_page=${perPage}`);
+    },
+
+    // Get reviews submitted by current student
+    async getMyReviews() {
+      return apiBase.request("/teacher-reviews/student/my-reviews");
+    },
+
+    // Report a review (teacher only)
+    async reportReview(reviewId: number, reason: string) {
+      return apiBase.request(`/teacher-reviews/report/${reviewId}?reason=${encodeURIComponent(reason)}`, {
+        method: "POST"
+      });
+    },
+
+    // Get my reported reviews (teacher only)
+    async getMyReportedReviews() {
+      return apiBase.request("/teacher-reviews/teacher/reported");
+    },
+
+    // Admin: Get all reported reviews
+    async adminGetReportedReviews() {
+      return apiBase.request("/teacher-reviews/admin/reported");
+    },
+
+    // Admin: Remove a review
+    async adminRemoveReview(reviewId: number, reason: string) {
+      return apiBase.request(`/teacher-reviews/admin/remove/${reviewId}?reason=${encodeURIComponent(reason)}`, {
+        method: "POST"
+      });
+    },
+
+    // Admin: Dismiss a report
+    async adminDismissReport(reviewId: number, notes?: string) {
+      const query = notes ? `?notes=${encodeURIComponent(notes)}` : "";
+      return apiBase.request(`/teacher-reviews/admin/dismiss/${reviewId}${query}`, {
+        method: "POST"
+      });
+    },
+
+    // Admin: Get all reviews
+    async adminGetAllReviews(page: number = 1, perPage: number = 20) {
+      return apiBase.request(`/teacher-reviews/admin/all-reviews?page=${page}&per_page=${perPage}`);
     }
   }
 };

@@ -70,14 +70,14 @@ export function UserManagement() {
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-gray-600 text-sm">{u.email}</TableCell>
-                                <TableCell className="text-gray-600 text-sm">{u.nationality || "—"}</TableCell>
+                                <TableCell className="text-gray-600 text-sm">{u.nationality || u.target_country || "—"}</TableCell>
                                 <TableCell>
                                     <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs bg-gray-50">
-                                        {u.degree_level || "—"}
+                                        {u.current_degree || u.degree_level || u.target_degree || "—"}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="text-gray-600 text-sm max-w-[120px] truncate" title={u.field_of_interest || ""}>
-                                    {u.field_of_interest || "—"}
+                                <TableCell className="text-gray-600 text-sm max-w-[120px] truncate" title={u.major || u.field_of_interest || u.target_field || ""}>
+                                    {u.major || u.field_of_interest || u.target_field || "—"}
                                 </TableCell>
                                 <TableCell className="text-gray-600 text-sm max-w-[100px] truncate" title={u.specialization || ""}>
                                     {u.specialization || "—"}

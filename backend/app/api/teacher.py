@@ -9,9 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, Body, File, UploadFile
 from fastapi.responses import JSONResponse
 import os
 import uuid
+import shutil
 from pathlib import Path
 from pydantic import BaseModel as PydanticBaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 from app.db.session import get_db
 from app.db import models
 from app.api.deps import get_current_user
@@ -129,13 +131,12 @@ def upload_profile_picture(
     filename = f"teacher_{teacher.id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = uploads_dir / filename
     
-    # Save file
-    content = file.file.read()
-    if len(content) > 5 * 1024 * 1024:  # 5MB limit
+    # Save file efficiently
+    if file.size is not None and file.size > 5 * 1024 * 1024:  # 5MB limit
         raise HTTPException(400, "File size too large. Max 5MB allowed.")
     
     with open(filepath, "wb") as f:
-        f.write(content)
+        shutil.copyfileobj(file.file, f)
     
     # Update teacher profile with new picture URL
     file_url = f"/uploads/profile_pictures/{filename}"
@@ -199,10 +200,24 @@ def create_course(
 @router.get("/courses")
 def list_my_courses(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     teacher = get_teacher(db, current_user.id)
-    courses = db.query(models.Course).filter(models.Course.teacher_id == teacher.id).all()
+    
+    courses = db.query(models.Course).options(
+        joinedload(models.Course.lessons),
+        joinedload(models.Course.quizzes).joinedload(models.Quiz.questions),
+        joinedload(models.Course.live_classes),
+        joinedload(models.Course.meeting_links)
+    ).filter(models.Course.teacher_id == teacher.id).all()
+    
+    enrollment_counts = dict(
+        db.query(models.Enrollment.course_id, func.count(models.Enrollment.id))
+        .join(models.Course)
+        .filter(models.Course.teacher_id == teacher.id)
+        .group_by(models.Enrollment.course_id).all()
+    )
+    
     result = []
     for c in courses:
-        enrolled = db.query(models.Enrollment).filter(models.Enrollment.course_id == c.id).count()
+        enrolled = enrollment_counts.get(c.id, 0)
         meeting_links = [
             {
                 "id": ml.id,
@@ -678,21 +693,7 @@ def get_pending_payments(db: Session = Depends(get_db), current_user: models.Use
     ]
 
 
-@router.post("/enrollments/{enrollment_id}/approve-payment")
-def approve_payment(enrollment_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    teacher = get_teacher(db, current_user.id)
-    enrollment = db.query(models.Enrollment).join(models.Course).filter(
-        models.Enrollment.id == enrollment_id,
-        models.Course.teacher_id == teacher.id,
-    ).first()
-    if not enrollment:
-        raise HTTPException(404, "Enrollment not found")
-    enrollment.payment_status = "paid"
-    enrollment.paid_at = datetime.now()
-    if enrollment.amount_paid is None:
-        enrollment.amount_paid = enrollment.course.price
-    db.commit()
-    return {"message": "Payment approved. Student now has full access.", "payment_status": "paid"}
+
 
 
 @router.post("/enrollments/{enrollment_id}/approve-payment")

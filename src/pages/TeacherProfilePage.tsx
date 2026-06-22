@@ -61,8 +61,8 @@ export default function TeacherProfilePage() {
           </button>
 
           <div className="flex flex-col md:flex-row gap-6 items-start">
-            {/* Avatar */}
-            <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white text-4xl font-bold shadow-xl border-4 border-white/20 shrink-0 overflow-hidden">
+            {/* Avatar - Smaller size like standard DP */}
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg border-2 border-white/30 shrink-0 overflow-hidden">
               {teacher.profile_picture_url ? (
                 <img 
                   src={`http://localhost:8000${teacher.profile_picture_url}`} 
@@ -116,6 +116,13 @@ export default function TeacherProfilePage() {
                   <Users size={16} className="text-violet-300" />
                   <span className="font-bold">{teacher.total_students || 0}</span> students
                 </span>
+                {teacher.average_rating > 0 && (
+                  <span className="flex items-center gap-2">
+                    <Star size={16} className="text-amber-400" />
+                    <span className="font-bold">{teacher.average_rating.toFixed(1)}</span> rating
+                    <span className="text-violet-300">({teacher.total_reviews || 0} reviews)</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -246,6 +253,15 @@ export default function TeacherProfilePage() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-8">
+          <TeacherReviews 
+            teacherId={teacher.id} 
+            isEnrolled={teacher.courses?.some((c: any) => c.enrolled)}
+            canReview={true}
+          />
         </div>
       </div>
     </div>

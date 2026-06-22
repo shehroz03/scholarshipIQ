@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.api import deps
@@ -8,6 +8,8 @@ from app.db.session import get_db
 import re
 import os
 import uuid
+import shutil
+from app.core.limiter import limiter
 
 router = APIRouter()
 
@@ -29,20 +31,19 @@ async def upload_cv(file: UploadFile = File(...)):
         raise HTTPException(400, "Only PDF, DOC, and DOCX files are allowed")
 
     # Validate file size (max 5MB)
-    content = await file.read()
-    if len(content) > 5 * 1024 * 1024:
+    if file.size is not None and file.size > 5 * 1024 * 1024:
         raise HTTPException(400, "File size must be less than 5MB")
 
-    if len(content) == 0:
+    if file.size == 0:
         raise HTTPException(400, "File is empty")
 
     # Generate unique filename
     filename = f"{uuid.uuid4().hex}{ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)
 
-    # Save file
+    # Save file efficiently
     with open(filepath, "wb") as f:
-        f.write(content)
+        shutil.copyfileobj(file.file, f)
 
     # Return URL
     cv_url = f"/uploads/cv/{filename}"
@@ -83,14 +84,16 @@ def validate_password(password: str) -> tuple[bool, str]:
 
 
 @router.post("/register", response_model=schemas.UserOut)
+@limiter.limit("5/minute")
 def register(
-    request: dict,  # Full JSON body including user data, role, teacher_data
+    request: Request,
+    body: dict = Body(...),  # Full JSON body including user data, role, teacher_data
     db: Session = Depends(get_db)
 ):
     # Extract user data, role, and teacher_data from request
-    user_in = schemas.UserCreate(**request)
-    role = request.get("role", "student")
-    teacher_data = request.get("teacher_data")
+    user_in = schemas.UserCreate(**body)
+    role = body.get("role", "student")
+    teacher_data = body.get("teacher_data")
 
     # Sanitize email
     email = sanitize_input(user_in.email, 255).lower()
@@ -165,7 +168,9 @@ def register(
 
 
 @router.post("/login", response_model=schemas.Token)
+@limiter.limit("10/minute")
 def login(
+    request: Request,
     db: Session = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ):

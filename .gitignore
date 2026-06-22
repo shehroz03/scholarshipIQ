@@ -1,54 +1,59 @@
-# Python
+# ─── Python ──────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Virtual environments ────────────────────────────────
 .venv/
 env/
 venv/
 ENV/
-
-# Databases
-*.db
-*.sqlite3
-
-# Environments
-.env
-
-# Node
-node_modules/
-dist/
-dist-ssr/
-*.local
-
-# IDEs
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# User uploads
-backend/uploads/
-
-# Mobile App (separate project - not part of web app)
-ScholarIQApp/
-
-# Backend log & data files
-backend/*.log
-backend/data/
-backend/scratch/
-
-# Scratch / temp files
-scratch/
-
-# Build outputs
-build/
-
-# Large PDF assets
-*.pdf
-
-# Backend venv variants
 backend/venv/
 backend/venv_new/
 backend/.venv/
+
+# ─── Databases (DB ships seeded; don't track local changes) ─
+*.db
+*.sqlite3
+
+# ─── Secrets / environment ───────────────────────────────
+.env
+backend/.env
+*.env.local
+
+# ─── Node / frontend ─────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+build/
+*.local
+
+# ─── ML artifacts ────────────────────────────────────────
+# NOTE: trained models (*.pkl), feature_names.json, fraud_threshold.json and
+# *_report.txt are intentionally COMMITTED so the project runs out-of-the-box
+# and the evaluation reports are available as evidence. Regenerate them with
+# `python -m ml.train_fraud_model` / `python -m ml.train_recommendation_model`.
+
+# ─── Logs & runtime-generated data ───────────────────────
+*.log
+backend/data/*_log.json
+backend/uploads/
+
+# ─── Temp / scratch ──────────────────────────────────────
+_tmp_*.py
+scratch/
+backend/scratch/
+
+# ─── IDEs / OS ───────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ─── Misc ────────────────────────────────────────────────
+*.pdf
+ScholarIQApp/

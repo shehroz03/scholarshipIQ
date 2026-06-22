@@ -21,5 +21,124 @@
     ],
     "ai_notes": "The scholarship now provides CAD 18,200 per year plus full tuition coverage, indicating it is fully funded.",
     "updated_at": "2026-05-20T14:07:59.978619"
+  },
+  {
+    "scholarship_id": 29,
+    "title": "International Postgraduate Taught Merit Scholarship",
+    "university": "University of Leicester",
+    "country": "United Kingdom",
+    "deadline": "2026-05-31",
+    "scholarship_url": "https://le.ac.uk/study/postgraduates/fees-funding/scholarships-discounts/international-postgraduate-merit-scholarship",
+    "changes": [
+      "Deadline: 2026-06-30 \u2192 2026-05-31",
+      "Amount: None \u2192 \u00a35,000"
+    ],
+    "ai_notes": "The deadline has been updated to 31 May 2026, and the scholarship amount is now specified as \u00a35,000.",
+    "updated_at": "2026-06-02T04:00:18.670115"
+  },
+  {
+    "scholarship_id": 31,
+    "title": "GREAT Scholarship",
+    "university": "Swansea University",
+    "country": "United Kingdom",
+    "deadline": "2026-05-15",
+    "scholarship_url": "https://www.swansea.ac.uk/postgraduate/scholarships/taught/",
+    "changes": [
+      "Deadline: 2026-06-30 \u2192 2026-05-15"
+    ],
+    "ai_notes": "The deadline for the GREAT Scholarship at Swansea University has been updated to May 15, 2026, based on information from the British Council website.",
+    "updated_at": "2026-06-02T04:00:21.880896"
+  },
+  {
+    "scholarship_id": 41,
+    "title": "Postgraduate Excellence Scholarship",
+    "university": "University of Glasgow",
+    "country": "United Kingdom",
+    "deadline": "2026-05-31",
+    "scholarship_url": "https://www.gla.ac.uk/scholarships/universityofglasgowpostgraduateexcellencescholarship/",
+    "changes": [
+      "Amount: None \u2192 \u00a33,000 to \u00a37,000"
+    ],
+    "ai_notes": "The scholarship amount has been updated to a range of \u00a33,000 to \u00a37,000 for outstanding master's applicants.",
+    "updated_at": "2026-06-02T04:00:26.896962"
+  },
+  {
+    "scholarship_id": 44,
+    "title": "International Postgraduate Taught Merit Scholarship",
+    "university": "University of Sheffield",
+    "country": "United Kingdom",
+    "deadline": "2026-05-31",
+    "scholarship_url": "https://www.sheffield.ac.uk/international/fees-and-funding/scholarships/postgraduate",
+    "changes": [
+      "Amount: None \u2192 \u00a310,000"
+    ],
+    "ai_notes": "The scholarship amount has been updated to \u00a310,000 based on multiple sources.",
+    "updated_at": "2026-06-02T04:00:31.976106"
+  },
+  {
+    "scholarship_id": 66,
+    "title": "Knight-Hennessy Scholars Program",
+    "university": "Stanford University",
+    "country": "USA",
+    "deadline": "2025-10-08",
+    "scholarship_url": "https://knight-hennessy.stanford.edu/admission",
+    "changes": [
+      "Deadline: 2026-08-16 \u2192 2025-10-08"
+    ],
+    "ai_notes": "The deadline for the Knight-Hennessy Scholars Program has been updated to October 8, 2025, as per the fresh web search results.",
+    "updated_at": "2026-06-02T04:00:50.120027"
+  },
+  {
+    "scholarship_id": 29,
+    "title": "International Postgraduate Taught Merit Scholarship",
+    "university": "University of Leicester",
+    "country": "United Kingdom",
+    "deadline": "2026-05-31",
+    "scholarship_url": "https://le.ac.uk/study/postgraduates/fees-funding/scholarships-discounts/international-postgraduate-merit-scholarship",
+    "changes": [
+      "Deadline: 2026-06-30 \u2192 2026-05-31",
+      "Amount: None \u2192 \u00a35,000"
+    ],
+    "ai_notes": "The deadline has been updated to 31 May 2026, and the scholarship amount is now specified as \u00a35,000.",
+    "updated_at": "2026-06-02T04:00:18.584155"
+  },
+  {
+    "scholarship_id": 31,
+    "title": "GREAT Scholarship",
+    "university": "Swansea University",
+    "country": "United Kingdom",
+    "deadline": "2026-05-15",
+    "scholarship_url": "https://www.swansea.ac.uk/postgraduate/scholarships/taught/",
+    "changes": [
+      "Deadline: 2026-06-30 \u2192 2026-05-15"
+    ],
+    "ai_notes": "The deadline for the GREAT Scholarship at Swansea University has been updated to May 15, 2026, based on the information from the British Council website.",
+    "updated_at": "2026-06-02T04:00:24.245915"
+  },
+  {
+    "scholarship_id": 44,
+    "title": "International Postgraduate Taught Merit Scholarship",
+    "university": "University of Sheffield",
+    "country": "United Kingdom",
+    "deadline": "2026-05-31",
+    "scholarship_url": "https://www.sheffield.ac.uk/international/fees-and-funding/scholarships/postgraduate",
+    "changes": [
+      "Amount: None \u2192 \u00a310,000"
+    ],
+    "ai_notes": "The scholarship amount has been updated to \u00a310,000 based on multiple sources confirming this change.",
+    "updated_at": "2026-06-02T04:00:39.172160"
+  },
+  {
+    "scholarship_id": 66,
+    "title": "Knight-Hennessy Scholars Program",
+    "university": "Stanford University",
+    "country": "USA",
+    "deadline": "2025-10-08",
+    "scholarship_url": "https://knight-hennessy.stanford.edu/admission",
+    "changes": [
+      "Deadline: 2026-08-16 \u2192 2025-10-08"
+    ],
+    "ai_notes": "The deadline for the Knight-Hennessy Scholars Program has been updated to October 8, 2025, as per the fresh web search results.",
+    "updated_at": "2026-06-02T04:01:00.414163"
   }
 ]

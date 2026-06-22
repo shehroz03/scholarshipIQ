@@ -1,5 +1,317 @@
 [
   {
+    "run_at": "2026-06-01T23:10:00.005771",
+    "archived_count": 15,
+    "scholarships": [
+      {
+        "id": 3,
+        "title": "TUM Merit Scholarship",
+        "university": "Technical University of Munich",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.tum.de/en/studies/fees-and-financial-aid/scholarships/tum-scholarships",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 14,
+        "title": "METU International Graduate Fellowship",
+        "university": "Middle East Technical University",
+        "country": "Turkey",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.metu.edu.tr/academic/graduate-programs/funding",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 29,
+        "title": "International Postgraduate Taught Merit Scholarship",
+        "university": "University of Leicester",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://le.ac.uk/study/postgraduates/fees-funding/scholarships-discounts/international-postgraduate-merit-scholarship",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 31,
+        "title": "GREAT Scholarship",
+        "university": "Swansea University",
+        "country": "United Kingdom",
+        "deadline": "2026-05-15",
+        "scholarship_url": "https://www.swansea.ac.uk/postgraduate/scholarships/taught/",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 41,
+        "title": "Postgraduate Excellence Scholarship",
+        "university": "University of Glasgow",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.gla.ac.uk/scholarships/universityofglasgowpostgraduateexcellencescholarship/",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 44,
+        "title": "International Postgraduate Taught Merit Scholarship",
+        "university": "University of Sheffield",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.sheffield.ac.uk/international/fees-and-funding/scholarships/postgraduate",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 66,
+        "title": "Knight-Hennessy Scholars Program",
+        "university": "",
+        "country": "USA",
+        "deadline": "2025-10-08",
+        "scholarship_url": "https://knight-hennessy.stanford.edu/admission",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 70,
+        "title": "Manchester Masters Excellence Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.manchester.ac.uk/study/masters/fees-and-funding/scholarships/",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 79,
+        "title": "Leeds Masters Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-06-01",
+        "scholarship_url": "https://www.leeds.ac.uk/scholarships/postgraduate",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 80,
+        "title": "Global Scholarship for International Masters",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.southampton.ac.uk/study/fees-funding/scholarships/postgraduate/global-scholarship",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 160,
+        "title": "Freiburg Masters Excellence Award",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-freiburg.de/en/university/international/funding-scholarships",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 167,
+        "title": "T\u00fcbingen Graduate Excellence Award",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-tuebingen.de/en/scholarships-funding.html",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 169,
+        "title": "Leipzig International Masters Award",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-leipzig.de/en/study/scholarships-and-financial-support/",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 175,
+        "title": "Bayreuth Graduate Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-bayreuth.de/en/academics/scholarships/",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 182,
+        "title": "Konstanz International Excellence Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-konstanz.de/en/study/scholarships/",
+        "archived_at": "2026-06-01T23:10:00.005771",
+        "reason": "deadline_passed_auto"
+      }
+    ]
+  },
+  {
+    "run_at": "2026-06-01T23:10:00.005545",
+    "archived_count": 15,
+    "scholarships": [
+      {
+        "id": 3,
+        "title": "TUM Merit Scholarship",
+        "university": "Technical University of Munich",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.tum.de/en/studies/fees-and-financial-aid/scholarships/tum-scholarships",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 14,
+        "title": "METU International Graduate Fellowship",
+        "university": "Middle East Technical University",
+        "country": "Turkey",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.metu.edu.tr/academic/graduate-programs/funding",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 29,
+        "title": "International Postgraduate Taught Merit Scholarship",
+        "university": "University of Leicester",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://le.ac.uk/study/postgraduates/fees-funding/scholarships-discounts/international-postgraduate-merit-scholarship",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 31,
+        "title": "GREAT Scholarship",
+        "university": "Swansea University",
+        "country": "United Kingdom",
+        "deadline": "2026-05-15",
+        "scholarship_url": "https://www.swansea.ac.uk/postgraduate/scholarships/taught/",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 41,
+        "title": "Postgraduate Excellence Scholarship",
+        "university": "University of Glasgow",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.gla.ac.uk/scholarships/universityofglasgowpostgraduateexcellencescholarship/",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 44,
+        "title": "International Postgraduate Taught Merit Scholarship",
+        "university": "University of Sheffield",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.sheffield.ac.uk/international/fees-and-funding/scholarships/postgraduate",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 66,
+        "title": "Knight-Hennessy Scholars Program",
+        "university": "",
+        "country": "USA",
+        "deadline": "2025-10-08",
+        "scholarship_url": "https://knight-hennessy.stanford.edu/admission",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 70,
+        "title": "Manchester Masters Excellence Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.manchester.ac.uk/study/masters/fees-and-funding/scholarships/",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 79,
+        "title": "Leeds Masters Scholarship",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-06-01",
+        "scholarship_url": "https://www.leeds.ac.uk/scholarships/postgraduate",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 80,
+        "title": "Global Scholarship for International Masters",
+        "university": "",
+        "country": "United Kingdom",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.southampton.ac.uk/study/fees-funding/scholarships/postgraduate/global-scholarship",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 160,
+        "title": "Freiburg Masters Excellence Award",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-freiburg.de/en/university/international/funding-scholarships",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 167,
+        "title": "T\u00fcbingen Graduate Excellence Award",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-tuebingen.de/en/scholarships-funding.html",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 169,
+        "title": "Leipzig International Masters Award",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-leipzig.de/en/study/scholarships-and-financial-support/",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 175,
+        "title": "Bayreuth Graduate Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-bayreuth.de/en/academics/scholarships/",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      },
+      {
+        "id": 182,
+        "title": "Konstanz International Excellence Scholarship",
+        "university": "",
+        "country": "Germany",
+        "deadline": "2026-05-31",
+        "scholarship_url": "https://www.uni-konstanz.de/en/study/scholarships/",
+        "archived_at": "2026-06-01T23:10:00.005545",
+        "reason": "deadline_passed_auto"
+      }
+    ]
+  },
+  {
     "run_at": "2026-05-22T07:44:14.174977",
     "archived_count": 92,
     "scholarships": [

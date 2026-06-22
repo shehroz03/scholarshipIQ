@@ -39,7 +39,7 @@ export default function CoursesPage() {
   const coursesRef = useRef<HTMLDivElement>(null);
   const enrolledRef = useRef<HTMLDivElement>(null);
 
-  const scrollTo = (ref: React.RefObject<HTMLDivElement>) => {
+  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 

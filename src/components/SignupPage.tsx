@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Check, Loader2, AlertCircle, LogOut } from "lucide-react";
+import { Check, Loader2, AlertCircle, LogOut, Eye, EyeOff } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -21,6 +21,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
     const { isDark } = useTheme();
     const theme = isDark ? darkTheme : lightTheme;
     const [role, setRole] = useState<"student" | "teacher">("student");
+    const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         fullName: "",
         email: "",
@@ -218,9 +219,10 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                     onClick={() => setRole("student")}
                                     className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all ${
                                         role === "student"
-                                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
-                                            : "text-gray-600 hover:bg-gray-100"
+                                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-600/25"
+                                            : "hover:bg-black/5 dark:hover:bg-white/5"
                                     }`}
+                                    style={role !== "student" ? { color: theme.textSecondary } : undefined}
                                 >
                                     📚 Student
                                 </button>
@@ -229,9 +231,10 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                     onClick={() => setRole("teacher")}
                                     className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all ${
                                         role === "teacher"
-                                            ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg"
-                                            : "text-gray-600 hover:bg-gray-100"
+                                            ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-600/25"
+                                            : "hover:bg-black/5 dark:hover:bg-white/5"
                                     }`}
+                                    style={role !== "teacher" ? { color: theme.textSecondary } : undefined}
                                 >
                                     🎓 Teacher
                                 </button>
@@ -271,7 +274,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                     value={formData.fullName}
                                     onChange={(e) => handleChange('fullName', e.target.value)}
                                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                                    className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                    className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm"
                                     required
                                 />
                             </div>
@@ -288,7 +291,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         value={formData.email}
                                         onChange={(e) => handleChange('email', e.target.value)}
                                         style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                                        className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                        className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm"
                                         required
                                     />
                                 </div>
@@ -296,16 +299,29 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                     <Label htmlFor="password" style={{ color: theme.text }}>
                                         Password <span className="text-red-500">*</span>
                                     </Label>
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        value={formData.password}
-                                        onChange={(e) => handleChange('password', e.target.value)}
-                                        style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                                        className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
-                                        required
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            value={formData.password}
+                                            onChange={(e) => handleChange('password', e.target.value)}
+                                            style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
+                                            className="h-[52px] rounded-xl px-4 pr-12 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="h-5 w-5" />
+                                            ) : (
+                                                <Eye className="h-5 w-5" />
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -316,7 +332,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         Country <span className="text-red-500">*</span>
                                     </Label>
                                     <Select value={formData.nationality} onValueChange={(value: string) => handleChange('nationality', value)} required>
-                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
+                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm">
                                             <SelectValue placeholder="Select your country" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
@@ -331,7 +347,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         Highest completed degree <span className="text-red-500">*</span>
                                     </Label>
                                     <Select value={formData.currentDegree} onValueChange={(value: string) => handleChange('currentDegree', value)} required>
-                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
+                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm">
                                             <SelectValue placeholder="Select degree" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
@@ -347,13 +363,17 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
 
                             {role !== "teacher" && (
                             <>
-                            <div className="grid md:grid-cols-2 gap-4 border-t pt-6" style={{ borderColor: theme.border }}>
+                            <div className="border-t pt-6 space-y-4" style={{ borderColor: theme.border }}>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">🎯 Your Study Goals</span>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="target_country" style={{ color: theme.text }}>
                                         Target Country <span className="text-blue-600">*</span>
                                     </Label>
                                     <Select value={formData.target_country} onValueChange={(value: string) => handleChange('target_country', value)} required>
-                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
+                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm">
                                             <SelectValue placeholder="Where to study?" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
@@ -368,7 +388,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         Target Degree <span className="text-blue-600">*</span>
                                     </Label>
                                     <Select value={formData.target_degree} onValueChange={(value: string) => handleChange('target_degree', value)} required>
-                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
+                                        <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm">
                                             <SelectValue placeholder="What to study?" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
@@ -389,7 +409,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                     Field of Study <span className="text-red-500">*</span>
                                 </Label>
                                 <Select value={formData.major} onValueChange={(value: string) => handleChange('major', value)} required>
-                                    <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
+                                    <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm">
                                         <SelectValue placeholder="e.g. Computer Science, Business, Medicine" />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
@@ -403,6 +423,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         <SelectItem value="Natural Sciences" style={{ color: theme.text }} className="rounded-lg py-2.5">Natural Sciences</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
                             </div>
                             </>
                             )}
@@ -423,7 +444,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                             onValueChange={(v) => setTeacherData(prev => ({ ...prev, specializations: v }))}
                                             required={role === "teacher"}
                                         >
-                                            <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 transition-all font-medium">
+                                            <SelectTrigger style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm">
                                                 <SelectValue placeholder="What test do you teach?" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl shadow-2xl" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
@@ -450,7 +471,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                                 value={teacherData.experience_years}
                                                 onChange={(e) => setTeacherData(prev => ({ ...prev, experience_years: parseInt(e.target.value) || 0 }))}
                                                 style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                                                className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                                className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm"
                                                 required={role === "teacher"}
                                             />
                                         </div>
@@ -464,7 +485,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                                 value={teacherData.qualification}
                                                 onChange={(e) => setTeacherData(prev => ({ ...prev, qualification: e.target.value }))}
                                                 style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                                                className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                                className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm"
                                             />
                                         </div>
                                     </div>
@@ -480,7 +501,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                                 value={teacherData.degree}
                                                 onChange={(e) => setTeacherData(prev => ({ ...prev, degree: e.target.value }))}
                                                 style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                                                className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                                className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm"
                                                 required={role === "teacher"}
                                             />
                                         </div>
@@ -494,7 +515,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                                 value={teacherData.institution}
                                                 onChange={(e) => setTeacherData(prev => ({ ...prev, institution: e.target.value }))}
                                                 style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                                                className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                                className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm"
                                                 required={role === "teacher"}
                                             />
                                         </div>
@@ -511,7 +532,7 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                             value={teacherData.cv_url}
                                             onChange={(e) => setTeacherData(prev => ({ ...prev, cv_url: e.target.value }))}
                                             style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                                            className="h-[52px] rounded-xl px-4 focus:ring-2 transition-all font-medium"
+                                            className="h-[52px] rounded-xl px-4 border-2 focus:ring-4 focus:ring-blue-500/15 focus:border-blue-500 transition-all font-medium shadow-sm"
                                         />
                                         <p className="text-xs text-gray-500">Provide LinkedIn URL or upload CV — at least one is required</p>
                                     </div>

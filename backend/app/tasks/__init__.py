@@ -309,6 +309,102 @@ async def process_smart_notifications():
     finally:
         db.close()
 
+# --- 7a. NEW MATCHING SCHOLARSHIP DIGEST (daily) ---
+async def notify_new_matching_scholarships():
+    """
+    Daily digest email of NEW scholarships that match each user's profile.
+
+    • Looks at scholarships approved & added in the last ~25 hours (so each new
+      scholarship is emailed at most once — natural dedup, no extra state).
+    • For every active user with email_notifications ON, computes profile match
+      (country / degree / field / CGPA) and emails a single digest of matches.
+    • Also drops an in-app notification per match.
+    Sends to the email the user registered/logged in with.
+    """
+    print(f"[{datetime.now()}] [MatchDigest] Scanning for new matching scholarships...")
+    db: Session = SessionLocal()
+    try:
+        from app.services.recommendation import get_match_score
+        from app.services.email import send_new_matches_email
+        from app.services.notification_service import NotificationService
+
+        now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        since = now_naive - timedelta(hours=25)
+
+        new_scholarships = db.query(Scholarship).filter(
+            Scholarship.created_at >= since,
+            Scholarship.approval_status == "approved",
+            Scholarship.is_active == True,
+            Scholarship.is_archived == False,
+        ).all()
+
+        if not new_scholarships:
+            print("[MatchDigest] No new scholarships in the last 25h. Skipping.")
+            return
+
+        users = db.query(User).filter(
+            User.is_active == True,
+            User.email_notifications == True,
+            User.role == "student",
+        ).all()
+
+        MATCH_THRESHOLD = 60  # only email genuinely relevant matches
+        emails_sent = 0
+
+        for user in users:
+            matches = []
+            for s in new_scholarships:
+                try:
+                    result = get_match_score(user, s)
+                except Exception:
+                    continue
+                if result["score"] >= MATCH_THRESHOLD:
+                    deadline = s.deadline.strftime("%d %b %Y") if s.deadline else "Open"
+                    matches.append({
+                        "title": s.title,
+                        "country": s.country or "",
+                        "degree_level": s.degree_level or "",
+                        "amount": s.scholarship_amount_value or s.amount or s.funding_type or "Varies",
+                        "deadline": deadline,
+                        "match_score": result["score"],
+                        "detail_url": f"http://localhost:3001/detail/{s.id}",
+                    })
+                    # In-app notification too
+                    NotificationService.create_notification(
+                        db, user_id=user.id, scholarship_id=s.id,
+                        type="new_match",
+                        title="✨ New scholarship match!",
+                        message=f"'{s.title}' matches {result['score']}% of your profile.",
+                        action_url=f"/detail/{s.id}",
+                    )
+
+            if matches and user.email:
+                matches.sort(key=lambda m: m["match_score"], reverse=True)
+                await send_new_matches_email(user.email, user.full_name or "there", matches)
+                emails_sent += 1
+
+        print(f"[MatchDigest] Done. New scholarships: {len(new_scholarships)} | digest emails sent: {emails_sent}")
+    except Exception as e:
+        print(f"[MatchDigest] Error: {e}")
+    finally:
+        db.close()
+
+
+# --- 7b. EMBEDDING CACHE REFRESH ---
+def refresh_embedding_cache():
+    """
+    Rebuild the chatbot's scholarship embedding cache so newly approved /
+    archived / expired scholarships become visible to the RAG layer without
+    a server restart. Runs every 6 hours and after data-changing jobs.
+    """
+    try:
+        from app.services import embedding_cache
+        count = embedding_cache.warm_up()
+        print(f"[Scheduler] Embedding cache refreshed — {count} scholarships.")
+    except Exception as e:
+        print(f"[Scheduler] Embedding cache refresh failed: {e}")
+
+
 # --- 7. SCHEDULER SETUP ---
 scheduler = AsyncIOScheduler()
 
@@ -321,5 +417,10 @@ def start_scheduler():
     scheduler.add_job(auto_verify_staged, 'cron', hour=3, minute=30)
     scheduler.add_job(auto_update_scholarship_data, 'interval', days=4, start_date=datetime.now().replace(hour=4, minute=0, second=0, microsecond=0))
     scheduler.add_job(auto_archive_expired_scholarships, 'cron', hour=4, minute=10)  # daily expired cleanup
+    # New matching scholarship digest email — daily at 08:00 (after nightly ingestion)
+    scheduler.add_job(notify_new_matching_scholarships, 'cron', hour=8, minute=0, id='new_match_digest', replace_existing=True)
+    # Keep chatbot RAG cache fresh: rebuild every 6 hours + 04:45 (after nightly data jobs)
+    scheduler.add_job(refresh_embedding_cache, 'interval', hours=6, id='cache_refresh_interval', replace_existing=True)
+    scheduler.add_job(refresh_embedding_cache, 'cron', hour=4, minute=45, id='cache_refresh_postjobs', replace_existing=True)
     scheduler.start()
-    print("[Scheduler] Started! Deadline@09:00 | Retrain@Sun02:00 | Fraud+Pipeline@03:00 | AutoVerify@03:30 | AutoUpdate every 4 days@04:00 | ExpiredBot@04:10 daily")
+    print("[Scheduler] Started! Deadline@09:00 | MatchDigest@08:00 | Retrain@Sun02:00 | Fraud+Pipeline@03:00 | AutoVerify@03:30 | AutoUpdate every 4 days@04:00 | ExpiredBot@04:10 | CacheRefresh@6h+04:45")

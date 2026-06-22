@@ -1,9 +1,17 @@
-import requests
-import re
+import os
 import json
-from typing import List, Any
-from datetime import datetime
-from ml.fraud_model import extract_features, predict_anomaly, HIGH_RISK_KEYWORDS, MEDIUM_RISK_KEYWORDS
+import requests
+from typing import Any
+from ml.fraud_model import predict_anomaly, HIGH_RISK_KEYWORDS, MEDIUM_RISK_KEYWORDS
+
+# Load data-driven threshold produced by train_fraud_model.py
+# Falls back to 0.50 if training has not been run yet
+_THRESH_PATH = os.path.join(os.path.dirname(__file__), "../../ml/fraud_threshold.json")
+try:
+    with open(os.path.normpath(_THRESH_PATH)) as _f:
+        _FRAUD_THRESHOLD = float(json.load(_f).get("threshold", 0.50))
+except Exception:
+    _FRAUD_THRESHOLD = 0.50
 
 def check_keywords(scholarship: Any) -> tuple:
     """Check text for high and medium risk keywords. Returns (score, reasons)."""
@@ -80,23 +88,34 @@ def calculate_fraud_risk(scholarship: Any) -> dict:
                 self.tuition_fee_numeric = d.get("tuition_fee_per_year", 0)
                 self.min_cgpa = d.get("cgpa_min", 0)
         scholarship = MockScholarship(scholarship)
-        
+
     kw_score, kw_reasons = check_keywords(scholarship)
     url_score, url_reasons = validate_url(scholarship)
-    ml_anomaly = predict_anomaly(scholarship)
-    ml_score = int(ml_anomaly * 20)
-    
+
+    # Determine actual URL reachability from url_reasons (0 = unreachable, 1 = reachable)
+    url_reachable = 0 if any("not reachable" in r or "error status" in r for r in url_reasons) else 1
+
+    # Pass real url_reachable flag into ML features
+    ml_anomaly = predict_anomaly(scholarship, url_reachable=url_reachable)
+    ml_score = int(ml_anomaly * 25)  # slightly higher weight for ML layer
+
     total = max(0, min(100, kw_score + url_score + ml_score))
     reasons = kw_reasons + url_reasons
-    
-    if ml_anomaly > 0.7:
-        reasons.append(f"ML Anomaly Detector flagged unusual pattern ({int(ml_anomaly*100)}%)")
-        
+
+    if ml_anomaly > _FRAUD_THRESHOLD:
+        reasons.append(
+            f"ML classifier flagged unusual pattern "
+            f"({int(ml_anomaly * 100)}% fraud probability, threshold={_FRAUD_THRESHOLD:.2f})"
+        )
+
     risk_level = "SAFE"
-    if total >= 70: risk_level = "CRITICAL"
-    elif total >= 50: risk_level = "HIGH"
-    elif total >= 30: risk_level = "MEDIUM"
-    
+    if total >= 70:
+        risk_level = "CRITICAL"
+    elif total >= 50:
+        risk_level = "HIGH"
+    elif total >= 25:
+        risk_level = "MEDIUM"
+
     return {
         "risk_score": total,
         "risk_level": risk_level,

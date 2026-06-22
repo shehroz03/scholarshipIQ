@@ -125,6 +125,71 @@ async def send_deadline_email(user_email: str, scholarship_title: str, days_left
     fm = FastMail(conf)
     await fm.send_message(message)
     return {"message": "Email sent"}
+async def send_new_matches_email(user_email: str, user_name: str, matches: list):
+    """
+    Professional daily digest: notifies a user about NEW scholarships that match
+    their profile. `matches` is a list of dicts:
+      {title, country, degree_level, amount, deadline, match_score, detail_url}
+    Sends ONE email listing all matches (no per-scholarship spam).
+    """
+    if not matches:
+        return {"message": "no matches, skipped"}
+
+    rows = ""
+    for m in matches[:10]:  # cap at 10 to keep the email tidy
+        badge = (
+            f'<span style="background:#dcfce7;color:#166534;padding:2px 8px;'
+            f'border-radius:10px;font-size:12px;font-weight:600;">'
+            f'{int(m.get("match_score", 0))}% match</span>'
+        )
+        rows += f"""
+        <tr>
+          <td style="padding:14px;border-bottom:1px solid #f1f5f9;">
+            <div style="font-weight:600;color:#1e293b;margin-bottom:4px;">{m.get('title','Scholarship')}</div>
+            <div style="font-size:13px;color:#64748b;">
+              📍 {m.get('country','')} &nbsp;·&nbsp; 🎓 {m.get('degree_level','')} &nbsp;·&nbsp; 💰 {m.get('amount','Varies')}
+            </div>
+            <div style="font-size:13px;color:#64748b;margin-top:2px;">⏳ Deadline: {m.get('deadline','Open')} &nbsp; {badge}</div>
+            <a href="{m.get('detail_url','#')}" style="display:inline-block;margin-top:8px;font-size:13px;color:#4f46e5;font-weight:600;text-decoration:none;">View details →</a>
+          </td>
+        </tr>"""
+
+    html = f"""
+    <div style="font-family:sans-serif;max-width:620px;margin:auto;padding:28px;border:1px solid #e2e8f0;border-radius:12px;background:#ffffff;">
+        <div style="text-align:center;margin-bottom:20px;">
+            <h2 style="color:#1e3a8a;margin:0;">ScholarIQ</h2>
+        </div>
+        <div style="background:#eef2ff;border-left:4px solid #4f46e5;padding:16px;border-radius:8px;margin-bottom:20px;">
+            <h3 style="color:#3730a3;margin:0;">✨ {len(matches)} new scholarship{'s' if len(matches) != 1 else ''} match your profile</h3>
+        </div>
+        <p style="color:#374151;">Hi <strong>{user_name or 'there'}</strong>,</p>
+        <p style="color:#374151;">Based on your target country, degree and field of study, we found these new opportunities for you:</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;">{rows}</table>
+        <div style="text-align:center;margin:24px 0;">
+            <a href="http://localhost:3001/dashboard" style="background:#4f46e5;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">Open My Dashboard</a>
+        </div>
+        <p style="font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;">
+            You receive these because email notifications are ON. You can turn them off anytime in Settings.<br>
+            <strong>The ScholarIQ Team</strong>
+        </p>
+    </div>
+    """
+    try:
+        message = MessageSchema(
+            subject=f"✨ {len(matches)} new scholarship match{'es' if len(matches) != 1 else ''} for you - ScholarIQ",
+            recipients=[user_email],
+            body=html,
+            subtype=MessageType.html,
+        )
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        print(f"[EmailService] New-matches digest sent to {user_email} ({len(matches)} items)")
+        return {"message": "digest sent"}
+    except Exception as e:
+        print(f"[EmailService] Failed to send new-matches digest to {user_email}: {e}")
+        return {"message": "Email failed", "error": str(e)}
+
+
 async def send_scholarship_saved_email(user_email: str, user_name: str, scholarship_title: str, deadline: str, amount: str, country: str, apply_link: str | None):
     """
     Sends a confirmation email when a user saves a scholarship.

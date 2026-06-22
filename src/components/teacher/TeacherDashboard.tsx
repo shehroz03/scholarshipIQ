@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { toast } from "sonner";
 import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, X, HelpCircle, Settings, ArrowRight, User, Target, FileText, Tag } from "lucide-react";
+import { TeacherReviewManagement } from "./TeacherReviewManagement";
 
 const TEST_TYPES = ["IELTS", "TOEFL", "GRE", "GMAT", "PTE", "TestDaF", "Duolingo", "SAT"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -583,7 +584,7 @@ Notes/Topic: ${aiNotes}`;
               />
               <label
                 htmlFor="profile-picture-input"
-                className="w-14 h-14 rounded-full flex items-center justify-center text-white font-black text-lg cursor-pointer overflow-hidden transition-all hover:ring-2 hover:ring-white/50"
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-base cursor-pointer overflow-hidden transition-all hover:ring-2 hover:ring-white/50"
                 style={{ 
                   background: profile?.profile_picture_url ? "transparent" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
                 }}
@@ -1420,8 +1421,23 @@ Notes/Topic: ${aiNotes}`;
                                         {/* AI Generated Questions Review */}
                                         {aiGeneratedQuestions.length > 0 && (
                                           <div className="space-y-3">
+                                            {/* BIG SAVE BUTTON AT TOP */}
+                                            <div style={{ background: "linear-gradient(135deg, #059669, #10b981)", borderRadius: "16px", padding: "16px", textAlign: "center", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)" }}>
+                                              <p style={{ color: "white", fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>
+                                                🎉 {aiGeneratedQuestions.length} AI Questions Generated!
+                                              </p>
+                                              <button
+                                                onClick={() => addApprovedAiQuestions(q.id)}
+                                                disabled={aiApproved.filter(Boolean).length === 0}
+                                                className="w-full py-3 rounded-xl text-base font-bold text-white transition-all disabled:opacity-50"
+                                                style={{ background: "rgba(255,255,255,0.2)", border: "2px solid white" }}
+                                              >
+                                                💾 SAVE ALL {aiApproved.filter(Boolean).length} QUESTIONS TO QUIZ
+                                              </button>
+                                            </div>
+
                                             <div className="flex items-center justify-between">
-                                              <p className="text-sm font-bold text-gray-800">📋 Review Generated Questions</p>
+                                              <p className="text-sm font-bold text-gray-800">📋 Review & Approve/Reject</p>
                                               <div className="flex gap-2">
                                                 <button onClick={() => setAiApproved(aiApproved.map(() => true))} className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-lg font-bold">Approve All</button>
                                                 <button onClick={() => setAiApproved(aiApproved.map(() => false))} className="text-xs text-red-700 bg-red-100 px-2 py-1 rounded-lg font-bold">Reject All</button>
@@ -1484,13 +1500,23 @@ Notes/Topic: ${aiNotes}`;
                                     </div>
                                   )}
 
-                                  {/* Add New MCQ Question */}
-                                  <div style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e9d5ff" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid #f3e8ff" }}>
-                                      <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "linear-gradient(135deg, #7c3aed, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  {/* Divider when AI questions exist */}
+                                  {aiGeneratedQuestions.length > 0 && (
+                                    <div style={{ borderTop: "2px dashed #e9d5ff", margin: "24px 0", paddingTop: "16px" }}>
+                                      <p style={{ textAlign: "center", color: "#6b7280", fontSize: "13px", fontWeight: 500 }}>⬆️ Save AI questions above OR add manually below ⬇️</p>
+                                    </div>
+                                  )}
+
+                                  {/* Add New MCQ Question - Manual Entry */}
+                                  <div style={{ background: "linear-gradient(135deg, #fefce8, #fef9c3)", borderRadius: "16px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "2px solid #facc15" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid #fde047" }}>
+                                      <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "linear-gradient(135deg, #eab308, #facc15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                         <Plus size={18} color="#ffffff" />
                                       </div>
-                                      <h4 style={{ color: "#1e293b", fontSize: "16px", fontWeight: 700, margin: 0 }}>Add MCQ Question</h4>
+                                      <div>
+                                        <h4 style={{ color: "#1e293b", fontSize: "16px", fontWeight: 700, margin: 0 }}>Add Question Manually</h4>
+                                        <p style={{ color: "#854d0e", fontSize: "12px", margin: "2px 0 0 0" }}>Fill form below to add one question at a time</p>
+                                      </div>
                                     </div>
 
                                     {/* Question Field */}

@@ -680,3 +680,59 @@ class Enrollment(Base):
     user: Mapped["User"] = relationship("User")
     course: Mapped["Course"] = relationship("Course", back_populates="enrollments")
 
+
+# ─────────────────────────────────────────────
+#   TEACHER REVIEW SYSTEM
+# ─────────────────────────────────────────────
+
+class TeacherReview(Base):
+    """Student reviews and ratings for teachers"""
+    __tablename__ = "teacher_reviews"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    teacher_id: Mapped[int] = mapped_column(Integer, ForeignKey("teacher_profiles.id"), index=True)
+    student_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
+    
+    # Rating (1-5 stars)
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)  # 1-5
+    
+    # Review content
+    review_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Metadata
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
+    
+    # For admin control - if review is hidden/removed
+    is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_removed_by_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    removal_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    removed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    removed_by_admin_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Report system (teachers can report, admin decides)
+    is_reported: Mapped[bool] = mapped_column(Boolean, default=False)
+    report_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    reported_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    reported_by_teacher_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("teacher_profiles.id"), nullable=True)
+    
+    # Admin verification status
+    admin_review_status: Mapped[str] = mapped_column(String, default="pending")  # pending, reviewed, dismissed
+    admin_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    admin_reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    admin_reviewed_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    teacher: Mapped["TeacherProfile"] = relationship("TeacherProfile", foreign_keys=[teacher_id], back_populates="reviews")
+    student: Mapped["User"] = relationship("User", foreign_keys=[student_id], back_populates="teacher_reviews_given")
+    removed_by_admin: Mapped[Optional["User"]] = relationship("User", foreign_keys=[removed_by_admin_id])
+    reported_by_teacher: Mapped[Optional["TeacherProfile"]] = relationship("TeacherProfile", foreign_keys=[reported_by_teacher_id], back_populates="reported_reviews")
+    admin_reviewer: Mapped[Optional["User"]] = relationship("User", foreign_keys=[admin_reviewed_by])
+
+# Update TeacherProfile to include relationship
+TeacherProfile.reviews = relationship("TeacherReview", back_populates="teacher", foreign_keys="TeacherReview.teacher_id", lazy="dynamic")
+TeacherProfile.reported_reviews = relationship("TeacherReview", foreign_keys="TeacherReview.reported_by_teacher_id", back_populates="reported_by_teacher", lazy="dynamic")
+
+# Update User to include relationship
+User.teacher_reviews_given = relationship("TeacherReview", foreign_keys="TeacherReview.student_id", back_populates="student", lazy="dynamic")
+
