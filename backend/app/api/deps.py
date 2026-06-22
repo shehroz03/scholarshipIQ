@@ -92,6 +92,21 @@ def require_admin(current_user: models.User = Depends(get_current_user)) -> mode
         )
     return current_user
 
+
+def require_admin_session(token: str = Depends(reusable_oauth2)) -> dict:
+    """
+    Validates the env-based admin session token (issued by /admin/login, sub == 'admin').
+    Use this for admin endpoints that live outside the /admin router (e.g. teacher-reviews
+    admin actions) so they accept the same admin login as the rest of the admin panel.
+    """
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid administrative token")
+    if payload.get("sub") != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrative access required")
+    return payload
+
 def require_teacher(current_user: models.User = Depends(get_current_user)) -> models.User:
     """Dependency that allows only users with the 'teacher' role."""
     if current_user.role != "teacher" and current_user.role != "admin":

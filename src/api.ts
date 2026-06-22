@@ -20,7 +20,7 @@ const apiBase = {
     });
 
     if (response.status === 401) {
-      const isAdminEndpoint = endpoint.startsWith("/admin");
+      const isAdminEndpoint = endpoint.startsWith("/admin") || endpoint.includes("/admin/");
       const isAdminLoggedIn = localStorage.getItem("admin_logged_in") === "true";
       
       // If admin is logged in but hits a 401 on a NON-admin endpoint, don't log them out of admin panel

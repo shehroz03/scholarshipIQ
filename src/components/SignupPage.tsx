@@ -313,7 +313,8 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute top-1/2 -translate-y-1/2 right-4 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            className="flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)' }}
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="h-5 w-5" />

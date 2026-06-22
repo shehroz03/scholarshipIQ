@@ -153,7 +153,8 @@ export function TeacherLoginPage({ onNavigate }: { onNavigate: (page: string, pa
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />

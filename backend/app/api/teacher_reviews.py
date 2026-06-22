@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.db.session import get_db
 from app.db import models
-from app.api.deps import get_current_user, require_admin, require_student, require_teacher
+from app.api.deps import get_current_user, require_admin_session, require_student, require_teacher
 
 router = APIRouter(prefix="/teacher-reviews", tags=["Teacher Reviews"])
 
@@ -222,7 +222,7 @@ def get_my_reported_reviews(
 @router.get("/admin/reported")
 def get_all_reported_reviews(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    _admin: dict = Depends(require_admin_session)
 ):
     """Admin gets all reported reviews"""
     reviews = db.query(models.TeacherReview).filter(
@@ -256,18 +256,18 @@ def admin_remove_review(
     review_id: int,
     reason: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    _admin: dict = Depends(require_admin_session)
 ):
     """Admin removes a reported review"""
     review = db.query(models.TeacherReview).filter(models.TeacherReview.id == review_id).first()
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
-    
+
     review.is_visible = False
     review.is_removed_by_admin = True
     review.removal_reason = reason
     review.removed_at = datetime.utcnow()
-    review.removed_by_admin_id = current_user.id
+    review.removed_by_admin_id = None  # env-based admin has no users-table id
     review.admin_review_status = "reviewed"
     db.commit()
     
@@ -279,18 +279,18 @@ def admin_dismiss_report(
     review_id: int,
     notes: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    _admin: dict = Depends(require_admin_session)
 ):
     """Admin dismisses a report (review stays visible)"""
     review = db.query(models.TeacherReview).filter(models.TeacherReview.id == review_id).first()
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
-    
+
     review.is_reported = False
     review.admin_review_status = "dismissed"
     review.admin_notes = notes
     review.admin_reviewed_at = datetime.utcnow()
-    review.admin_reviewed_by = current_user.id
+    review.admin_reviewed_by = None  # env-based admin has no users-table id
     db.commit()
     
     return {"message": "Report dismissed successfully"}
@@ -299,7 +299,7 @@ def admin_dismiss_report(
 @router.get("/admin/all-reviews")
 def get_all_reviews_admin(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    _admin: dict = Depends(require_admin_session),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100)
 ):
