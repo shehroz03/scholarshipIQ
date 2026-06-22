@@ -153,7 +153,10 @@ export default function CoursesPage() {
         <div className="max-w-6xl mx-auto px-6 pt-7 pb-20 relative">
           {/* Back */}
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              const role = localStorage.getItem("userRole");
+              navigate(role === "teacher" ? "/teacher" : "/dashboard");
+            }}
             className="inline-flex items-center gap-1.5 text-violet-300 hover:text-white text-sm font-medium mb-8 transition-colors group"
           >
             <span className="group-hover:-translate-x-0.5 transition-transform inline-block">←</span> Back to Dashboard

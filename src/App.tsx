@@ -50,7 +50,8 @@ export default function App() {
 
   const handleNavigate = (page: string, params?: any) => {
     if ((page === "login" || page === "signup") && isLoggedIn()) {
-      navigate("/dashboard");
+      const role = localStorage.getItem("userRole");
+      navigate(role === "teacher" ? "/teacher" : "/dashboard");
       return;
     }
 
@@ -92,12 +93,12 @@ export default function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage onNavigate={handleNavigate} />} />
-          <Route path="/login" element={isLoggedIn() ? <Navigate to="/dashboard" /> : <LoginPage onNavigate={handleNavigate} />} />
+          <Route path="/login" element={isLoggedIn() ? <Navigate to={localStorage.getItem("userRole") === "teacher" ? "/teacher" : "/dashboard"} /> : <LoginPage onNavigate={handleNavigate} />} />
           <Route path="/teacher-login" element={<TeacherLoginPage onNavigate={handleNavigate} />} />
-          <Route path="/signup" element={isLoggedIn() ? <Navigate to="/dashboard" /> : <SignupPage onNavigate={handleNavigate} />} />
+          <Route path="/signup" element={isLoggedIn() ? <Navigate to={localStorage.getItem("userRole") === "teacher" ? "/teacher" : "/dashboard"} /> : <SignupPage onNavigate={handleNavigate} />} />
           <Route path="/auth-required" element={<AuthRequiredPage onNavigate={handleNavigate} />} />
           <Route path="/admin" element={<AdminDashboard onNavigate={handleNavigate} />} />
-          <Route path="/pricing" element={<Navigate to="/dashboard" />} />
+          <Route path="/pricing" element={<Navigate to={localStorage.getItem("userRole") === "teacher" ? "/teacher" : "/dashboard"} />} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>

@@ -146,7 +146,10 @@ const VisaGuidanceLandingPage: React.FC = () => {
         {/* HEADER NAV */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
             <button 
-                onClick={() => navigate('/dashboard')}
+                onClick={() => {
+                    const role = localStorage.getItem("userRole");
+                    navigate(role === "teacher" ? '/teacher' : '/dashboard');
+                }}
                 style={{
                     display: 'flex',
                     alignItems: 'center',

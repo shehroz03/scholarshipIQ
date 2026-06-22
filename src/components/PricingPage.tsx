@@ -15,8 +15,9 @@ export function PricingPage({ onNavigate }: { onNavigate?: (page: string) => voi
     const [annual, setAnnual] = useState(false);
 
     const handleBack = () => {
-        if (onNavigate) onNavigate("dashboard");
-        else navigate("/dashboard");
+        const role = localStorage.getItem("userRole");
+        if (onNavigate) onNavigate(role === "teacher" ? "teacher-dashboard" : "dashboard");
+        else navigate(role === "teacher" ? "/teacher" : "/dashboard");
     };
 
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -37,8 +38,9 @@ export function PricingPage({ onNavigate }: { onNavigate?: (page: string) => voi
             await refreshStatus();
             alert(`🚀 Awesome! Your account has been upgraded to ${selectedPlan!.toUpperCase()} for 1 month.`);
             setShowModal(false);
-            if (onNavigate) onNavigate("dashboard");
-            else navigate("/dashboard");
+            const role = localStorage.getItem("userRole");
+            if (onNavigate) onNavigate(role === "teacher" ? "teacher-dashboard" : "dashboard");
+            else navigate(role === "teacher" ? "/teacher" : "/dashboard");
         } catch (err: any) {
             console.error(err);
             alert(`Error: ${err.message || 'Payment failed'}`);
