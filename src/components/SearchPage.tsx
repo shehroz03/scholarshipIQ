@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import toast from "react-hot-toast";
 import { Scholarship } from "../types/scholarship";
 import { getDemoScholarships } from "../data/demoScholarships";
 import {
@@ -263,10 +264,18 @@ export function SearchPage({
     if (savedIds.has(id)) return;
     setSavingId(id);
     try {
-      await api.dashboard.save(id);
-      setSavedIds(prev => new Set(Array.from(prev).concat(id)));
-    } catch (err) {
+      if (isDemoData) {
+        // For demo data, just save locally (backend not needed)
+        setSavedIds(prev => new Set(Array.from(prev).concat(id)));
+        toast.success("Scholarship saved! (Demo Mode)", { icon: "❤️" });
+      } else {
+        await api.dashboard.save(id);
+        setSavedIds(prev => new Set(Array.from(prev).concat(id)));
+        toast.success("Scholarship saved successfully!", { icon: "❤️" });
+      }
+    } catch (err: any) {
       console.error("Failed to save scholarship", err);
+      toast.error(err?.message || "Failed to save scholarship. Please try again.");
     } finally {
       setSavingId(null);
     }
