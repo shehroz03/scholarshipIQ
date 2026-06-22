@@ -32,7 +32,7 @@ export default function TeacherDashboard() {
   const [isStudent, setIsStudent] = useState(false);
   const [studentCourses, setStudentCourses] = useState<any[]>([]);
   const [registerForm, setRegisterForm] = useState({ bio: "", specializations: "IELTS", experience_years: 1, qualification: "" });
-  const [courseForm, setCourseForm] = useState({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: 0 });
+  const [courseForm, setCourseForm] = useState<{ title: string, subject: string, description: string, test_type: string, level: string, price: number | string }>({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: "" });
   const [meetingForm, setMeetingForm] = useState({ date: "", time: "", link: "", platform: "Google Meet", description: "" });
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(() => {
@@ -131,7 +131,7 @@ export default function TeacherDashboard() {
   const handleCreateCourse = async () => {
     try {
       await api.teacher.createCourse(courseForm);
-      toast.success("Course created!"); setCourseForm({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: 0 });
+      toast.success("Course created!"); setCourseForm({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: "" });
       fetchAll(); setTab("overview");
     } catch (e: any) { toast.error(e.message); }
   };
@@ -1936,12 +1936,12 @@ Notes/Topic: ${aiNotes}`;
                           <input
                             type="number" min="0"
                             className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl text-base font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-gray-50 focus:bg-white transition-all"
-                            placeholder="0 = Free"
+                            placeholder="e.g. 5000"
                             value={courseForm.price}
-                            onChange={e => setCourseForm(p => ({ ...p, price: +e.target.value }))}
+                            onChange={e => setCourseForm(p => ({ ...p, price: e.target.value === "" ? "" : +e.target.value }))}
                           />
                         </div>
-                        {courseForm.price === 0 && (
+                        {(!courseForm.price || courseForm.price === 0) && (
                           <div className="flex items-center gap-2 mt-2 text-green-600">
                             <CheckCircle size={14} />
                             <span className="text-sm font-medium">This course will be free for students</span>
@@ -1995,11 +1995,11 @@ Notes/Topic: ${aiNotes}`;
                           {courseForm.test_type || "Select Type"}
                         </span>
                         <span className={`text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm ${
-                          courseForm.price === 0 
+                          (!courseForm.price || courseForm.price === 0) 
                             ? "bg-green-100 text-green-700 border border-green-200" 
                             : "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}>
-                          {courseForm.price === 0 ? "FREE" : `₨${courseForm.price?.toLocaleString()}`}
+                          {(!courseForm.price || courseForm.price === 0) ? "FREE" : `₨${Number(courseForm.price).toLocaleString()}`}
                         </span>
                       </div>
                       
