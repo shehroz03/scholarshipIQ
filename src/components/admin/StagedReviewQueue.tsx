@@ -141,95 +141,97 @@ export function StagedReviewQueue() {
           const risk = RISK_CONFIG[s.fraud_risk_level as keyof typeof RISK_CONFIG] || RISK_CONFIG.MEDIUM;
           const isExpanded = expanded === s.id;
           const isActing = overriding === s.id;
-
           return (
-            <div key={s.id} className={`rounded-2xl border-2 overflow-hidden transition-all ${s.review_status === "pending" ? "border-yellow-200 bg-yellow-50/30" : "border-red-200 bg-red-50/20"}`}>
+            <div key={s.id} className={`bg-white rounded-2xl border overflow-hidden transition-all hover:shadow-md ${s.review_status === "pending" ? "border-l-4 border-l-yellow-400 border-y-gray-200 border-r-gray-200" : "border-l-4 border-l-red-500 border-y-gray-200 border-r-gray-200"}`}>
               {/* Top bar */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-white/70">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${risk.color}`}>
-                    ⚠️ Score {s.fraud_risk_score} — {risk.label}
-                  </span>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${s.review_status === "pending" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>
-                    {s.review_status === "pending" ? "🕐 Pending Review" : "❌ Bot Rejected"}
-                  </span>
+              <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-gray-50/80">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold uppercase border ${risk.color}`}>
+                    <ShieldAlert size={14} /> Score {s.fraud_risk_score} — {risk.label}
+                  </div>
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${s.review_status === "pending" ? "bg-yellow-100 text-yellow-800 border border-yellow-200" : "bg-red-100 text-red-800 border border-red-200"}`}>
+                    {s.review_status === "pending" ? <Clock size={14} /> : <XCircle size={14} />}
+                    {s.review_status === "pending" ? "Pending Review" : "Bot Rejected"}
+                  </div>
                   {s.scraped_at && (
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Clock size={11} /> {new Date(s.scraped_at).toLocaleDateString()}
+                    <span className="text-xs text-gray-500 font-medium flex items-center gap-1 ml-1">
+                      <Clock size={13} /> Scraped: {new Date(s.scraped_at).toLocaleDateString()}
                     </span>
                   )}
                 </div>
-                <button onClick={() => setExpanded(isExpanded ? null : s.id)} className="text-gray-400 hover:text-gray-700 transition-colors p-1">
-                  {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                <button onClick={() => setExpanded(isExpanded ? null : s.id)} className="text-gray-500 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 shadow-sm rounded-full p-1.5 transition-colors">
+                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
               </div>
 
               {/* Main content */}
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="p-6">
+                <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-bold text-gray-900 leading-tight">{s.title}</h3>
-                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-gray-500">
-                      <span className="flex items-center gap-1"><GraduationCap size={13} /> {s.university}</span>
-                      <span className="flex items-center gap-1"><MapPin size={13} /> {s.city}, {s.country}</span>
-                      <span className="flex items-center gap-1"><BookOpen size={13} /> {s.degree_level}</span>
+                    <h3 className="text-lg font-bold text-gray-900 leading-tight mb-2">{s.title}</h3>
+                    
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600 font-medium">
+                      <span className="flex items-center gap-1.5"><GraduationCap size={16} className="text-gray-400"/> {s.university}</span>
+                      <span className="flex items-center gap-1.5"><MapPin size={16} className="text-gray-400"/> {s.city}, {s.country}</span>
+                      <span className="flex items-center gap-1.5"><BookOpen size={16} className="text-gray-400"/> {s.degree_level}</span>
                     </div>
 
                     {/* Key stats row */}
-                    <div className="flex flex-wrap gap-3 mt-3">
-                      <div className="flex items-center gap-1.5 bg-green-50 border border-green-100 rounded-xl px-3 py-1.5">
-                        <Banknote size={13} className="text-green-600" />
-                        <span className="text-xs font-bold text-green-700">{s.scholarship_amount_value || "N/A"}</span>
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 shadow-sm">
+                        <Banknote size={15} className="text-green-600" />
+                        <span className="text-sm font-bold text-green-700">{s.scholarship_amount_value || "Amount N/A"}</span>
                       </div>
-                      <div className="text-xs bg-gray-100 rounded-xl px-3 py-1.5 font-semibold text-gray-600">
-                        CGPA {s.min_cgpa}+ · IELTS {s.min_ielts}+ · TOEFL {s.min_toefl}+
+                      <div className="flex items-center gap-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 font-semibold text-gray-700 shadow-sm">
+                        CGPA {s.min_cgpa}+ <span className="text-gray-300">|</span> IELTS {s.min_ielts}+ <span className="text-gray-300">|</span> TOEFL {s.min_toefl}+
                       </div>
-                      <div className="text-xs bg-blue-50 rounded-xl px-3 py-1.5 font-semibold text-blue-700 border border-blue-100">
-                        {s.funding_type} · {s.duration_text}
+                      <div className="flex items-center gap-1.5 text-sm bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 font-semibold text-blue-700 shadow-sm">
+                        {s.funding_type} <span className="text-blue-200">|</span> {s.duration_text}
                       </div>
                     </div>
 
                     {/* Fraud reasons */}
                     {s.fraud_reasons.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-4 flex flex-col gap-1.5">
                         {s.fraud_reasons.map((r, i) => (
-                          <span key={i} className="text-xs bg-red-50 text-red-600 border border-red-100 rounded-lg px-2 py-0.5">
-                            ⚠️ {r}
-                          </span>
+                          <div key={i} className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 shadow-sm">
+                            <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                            <span className="font-medium">{r}</span>
+                          </div>
                         ))}
                       </div>
                     )}
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex flex-col gap-2 shrink-0">
+                  <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0 w-full lg:w-48 mt-2 lg:mt-0">
                     {/* Verify URL button */}
                     {(s.scholarship_url || s.website_url) && (
                       <a
                         href={s.scholarship_url || s.website_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition-all shadow-sm shadow-blue-200"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 text-sm font-bold transition-all shadow-sm w-full"
                       >
-                        <Globe size={14} /> Verify on Website
-                        <ExternalLink size={12} />
+                        <Globe size={16} className="text-blue-500"/> Verify on Website
+                        <ExternalLink size={14} className="text-gray-400" />
                       </a>
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full">
                       <button
                         onClick={() => handleAction(s.id, "approve")}
                         disabled={isActing}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold transition-all disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-bold transition-all shadow-sm disabled:opacity-50"
                       >
-                        {isActing ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                        {isActing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                         Approve
                       </button>
                       <button
                         onClick={() => handleAction(s.id, "reject")}
                         disabled={isActing}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-all disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-all shadow-sm disabled:opacity-50"
                       >
-                        {isActing ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+                        {isActing ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
                         Reject
                       </button>
                     </div>
@@ -238,26 +240,34 @@ export function StagedReviewQueue() {
 
                 {/* Expanded details */}
                 {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-                    {s.eligibility && (
-                      <div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Eligibility</p>
-                        <p className="text-sm text-gray-700">{s.eligibility}</p>
-                      </div>
-                    )}
-                    {s.description && (
-                      <div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Description</p>
-                        <p className="text-sm text-gray-700">{s.description}</p>
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-4 text-sm">
+                  <div className="mt-5 pt-5 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 -mx-6 -mb-6 p-6 rounded-b-2xl border-t-slate-100 shadow-inner">
+                    <div className="space-y-4">
+                      {s.eligibility && (
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><ShieldCheck size={14}/> Eligibility Criteria</p>
+                          <p className="text-sm text-gray-700 leading-relaxed bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm">{s.eligibility}</p>
+                        </div>
+                      )}
                       {s.tuition_fee_per_year && (
-                        <div><span className="font-bold text-gray-600">Tuition: </span><span className="text-gray-700">{s.tuition_fee_per_year}</span></div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><Banknote size={14}/> Tuition Fee</p>
+                          <p className="text-sm text-gray-700 font-medium bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm">{s.tuition_fee_per_year}</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {s.description && (
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><BookOpen size={14}/> Description</p>
+                          <p className="text-sm text-gray-700 leading-relaxed bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm">{s.description}</p>
+                        </div>
                       )}
                       {s.scholarship_url && (
-                        <div><span className="font-bold text-gray-600">Scholarship URL: </span>
-                          <a href={s.scholarship_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><Globe size={14}/> Official Source</p>
+                          <a href={s.scholarship_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium break-all bg-blue-50/50 hover:bg-blue-50 p-3.5 rounded-xl border border-blue-100 shadow-sm flex items-start gap-2 transition-colors">
+                            <ExternalLink size={16} className="shrink-0 mt-0.5 text-blue-500"/>
                             {s.scholarship_url}
                           </a>
                         </div>
