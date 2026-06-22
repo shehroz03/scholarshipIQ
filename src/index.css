@@ -4055,4 +4055,8 @@ html {
      d i v [ s t y l e * = ' h e i g h t :   1 0 0 v h ' ]   {   h e i g h t :   a u t o   ! i m p o r t a n t ;   o v e r f l o w :   v i s i b l e   ! i m p o r t a n t ;   } 
      d i v [ s t y l e * = ' o v e r f l o w :   h i d d e n ' ]   {   o v e r f l o w :   v i s i b l e   ! i m p o r t a n t ;   } 
  }  
- 
+ /* Hide default browser password reveal eye icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

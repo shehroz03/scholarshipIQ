@@ -138,7 +138,7 @@ export function LoginPage({ onNavigate }: { onNavigate: (page: string, params?: 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
