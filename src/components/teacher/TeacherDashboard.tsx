@@ -842,7 +842,8 @@ Notes/Topic: ${aiNotes}`;
                         toast.error(err.message || "Failed to update profile");
                       }
                     }}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors shadow-sm shadow-indigo-200 flex items-center gap-2"
+                    className="text-white font-bold py-3 px-8 rounded-xl text-sm transition-all shadow-sm flex items-center gap-2 hover:shadow-md hover:scale-[1.02]"
+                    style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#ffffff" }}
                   >
                     Save Changes <CheckCircle size={16} />
                   </button>
