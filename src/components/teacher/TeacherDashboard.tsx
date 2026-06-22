@@ -723,7 +723,7 @@ Notes/Topic: ${aiNotes}`;
           <div className="max-w-4xl space-y-6">
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
               <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                <User size={24} className="text-rose-500" /> Public Profile Info
+                <User size={24} className="text-indigo-600" /> Public Profile Info
               </h2>
               
               <div className="space-y-6">
@@ -732,7 +732,7 @@ Notes/Topic: ${aiNotes}`;
                   <div className="col-span-2">
                     <label className="text-xs font-bold text-gray-700 mb-1.5 block">Full Name</label>
                     <input
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50"
                       value={profile.name || ""}
                       onChange={e => setProfile({ ...profile, name: e.target.value })}
                       placeholder="e.g. John Doe"
@@ -743,7 +743,7 @@ Notes/Topic: ${aiNotes}`;
                   <div>
                     <label className="text-xs font-bold text-gray-700 mb-1.5 block">Specializations (comma separated)</label>
                     <input
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50"
                       value={profile.specializations?.join(", ") || ""}
                       onChange={e => setProfile({ ...profile, specializations: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
                       placeholder="e.g. IELTS, TOEFL"
@@ -756,7 +756,7 @@ Notes/Topic: ${aiNotes}`;
                     <input
                       type="number"
                       min={0}
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50"
                       value={profile.experience_years || 0}
                       onChange={e => setProfile({ ...profile, experience_years: parseInt(e.target.value) || 0 })}
                     />
@@ -766,7 +766,7 @@ Notes/Topic: ${aiNotes}`;
                   <div className="col-span-2 md:col-span-1">
                     <label className="text-xs font-bold text-gray-700 mb-1.5 block">Certifications</label>
                     <input
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50"
                       value={profile.qualification || ""}
                       onChange={e => setProfile({ ...profile, qualification: e.target.value })}
                       placeholder="e.g. CELTA, TEFL"
@@ -777,7 +777,7 @@ Notes/Topic: ${aiNotes}`;
                   <div className="col-span-2 md:col-span-1">
                     <label className="text-xs font-bold text-gray-700 mb-1.5 block">Degree</label>
                     <input
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50"
                       value={profile.degree || ""}
                       onChange={e => setProfile({ ...profile, degree: e.target.value })}
                       placeholder="e.g. MA English Literature"
@@ -788,7 +788,7 @@ Notes/Topic: ${aiNotes}`;
                   <div className="col-span-2 md:col-span-1">
                     <label className="text-xs font-bold text-gray-700 mb-1.5 block">Institution</label>
                     <input
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50"
                       value={profile.institution || ""}
                       onChange={e => setProfile({ ...profile, institution: e.target.value })}
                       placeholder="e.g. Oxford University"
@@ -799,7 +799,7 @@ Notes/Topic: ${aiNotes}`;
                   <div className="col-span-2 md:col-span-1">
                     <label className="text-xs font-bold text-gray-700 mb-1.5 block">LinkedIn / CV URL</label>
                     <input
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50"
                       value={profile.cv_url || ""}
                       onChange={e => setProfile({ ...profile, cv_url: e.target.value })}
                       placeholder="https://linkedin.com/in/..."
@@ -811,7 +811,7 @@ Notes/Topic: ${aiNotes}`;
                     <label className="text-xs font-bold text-gray-700 mb-1.5 block">About Me (Bio)</label>
                     <textarea
                       rows={4}
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all bg-gray-50 resize-none"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50 resize-none"
                       value={profile.bio || ""}
                       onChange={e => setProfile({ ...profile, bio: e.target.value })}
                       placeholder="Write a brief introduction about yourself and your teaching style..."
@@ -842,7 +842,7 @@ Notes/Topic: ${aiNotes}`;
                         toast.error(err.message || "Failed to update profile");
                       }
                     }}
-                    className="bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors shadow-sm shadow-rose-200 flex items-center gap-2"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors shadow-sm shadow-indigo-200 flex items-center gap-2"
                   >
                     Save Changes <CheckCircle size={16} />
                   </button>
