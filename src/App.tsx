@@ -19,6 +19,7 @@ import { Chatbot } from "./components/Chatbot";
 import AdminDashboard from "./components/AdminDashboard";
 import { UniversityMatcher } from "./pages/UniversityMatcher";
 import { Toaster } from "./components/ui/sonner";
+import { Toaster as HotToaster } from "react-hot-toast";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 
@@ -135,6 +136,7 @@ export default function App() {
       </div>
       {isLoggedIn() && <Chatbot />}
       <Toaster position="top-right" richColors />
+      <HotToaster position="top-right" toastOptions={{ duration: 3000 }} />
       </CurrencyProvider>
     </UserProvider>
     </ThemeProvider>
