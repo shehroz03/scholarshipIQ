@@ -1064,6 +1064,9 @@ def _build_admin_master_context(db: Session) -> dict:
         ctx["Users — Active"] = db.query(models.User).filter(models.User.is_active == True).count()
         ctx["Users — New (last 7 days)"] = db.query(models.User).filter(models.User.created_at >= week_ago).count()
         ctx["Users — Suspicious flagged"] = db.query(models.User).filter(models.User.is_suspicious == True).count()
+        
+        recent_users = db.query(models.User).order_by(models.User.id.desc()).limit(5).all()
+        ctx["Users — 5 Most Recent"] = ", ".join([f"{u.full_name} ({u.role})" for u in recent_users if u.full_name])
     except Exception as e:
         ctx["Users — error"] = str(e)
 
@@ -1087,6 +1090,11 @@ def _build_admin_master_context(db: Session) -> dict:
             .all()
         )
         ctx["Scholarships — Top countries"] = ", ".join(f"{c}: {n}" for c, n in rows if c)
+        
+        # Details of pending approval
+        pending = db.query(S).filter(S.approval_status == "pending").order_by(S.id.desc()).limit(5).all()
+        if pending:
+            ctx["Scholarships — 5 Recent Pending"] = " | ".join([f"ID:{p.id} {p.title} ({p.country})" for p in pending])
     except Exception as e:
         ctx["Scholarships — error"] = str(e)
 
@@ -1097,6 +1105,20 @@ def _build_admin_master_context(db: Session) -> dict:
         for lvl in ("CRITICAL", "HIGH", "MEDIUM"):
             ctx[f"Fraud — {lvl} risk"] = db.query(S).filter(S.fraud_risk_level == lvl).count()
         ctx["Fraud — Auto-flagged for review"] = db.query(S).filter(S.auto_flagged == True).count()
+        
+        # Specific flagged ones
+        flagged = db.query(S).filter(S.is_suspicious == True).order_by(S.id.desc()).limit(5).all()
+        if flagged:
+            details = []
+            for f in flagged:
+                reasons = []
+                if f.fraud_reasons:
+                    try:
+                        reasons = json.loads(f.fraud_reasons)
+                    except:
+                        pass
+                details.append(f"ID:{f.id} '{f.title}' Risk:{f.fraud_risk_level} Reasons:{','.join(reasons[:2])}")
+            ctx["Fraud — 5 Recent Flagged Details"] = " | ".join(details)
     except Exception as e:
         ctx["Fraud — error"] = str(e)
 
@@ -1108,6 +1130,7 @@ def _build_admin_master_context(db: Session) -> dict:
         last_log = db.query(models.PipelineLog).order_by(models.PipelineLog.timestamp.desc()).first()
         if last_log:
             ctx["Pipeline — Last event"] = f"{last_log.event_type or last_log.status or 'run'} at {last_log.timestamp}"
+            ctx["Pipeline — Last log detail"] = f"Action: {last_log.action_taken}, Found: {last_log.total_found}, Staged: {last_log.staged}"
     except Exception as e:
         ctx["Pipeline — error"] = str(e)
 
@@ -1116,7 +1139,18 @@ def _build_admin_master_context(db: Session) -> dict:
         TP = models.TeacherProfile
         ctx["Teachers — Total profiles"] = db.query(TP).count()
         ctx["Teachers — Approved"] = db.query(TP).filter(TP.approval_status == "approved").count()
-        ctx["Teachers — Pending approval"] = db.query(TP).filter(TP.approval_status == "pending").count()
+        
+        pending_teachers = db.query(TP).filter(TP.approval_status == "pending").all()
+        ctx["Teachers — Pending approval"] = len(pending_teachers)
+        
+        if pending_teachers:
+            t_details = []
+            for t in pending_teachers[:5]:
+                user = db.query(models.User).filter(models.User.id == t.user_id).first()
+                name = user.full_name if user else "Unknown"
+                t_details.append(f"ID:{t.id} Name:{name} Spec:{t.specializations} Exp:{t.experience_years}yrs")
+            ctx["Teachers — Recent Pending Details"] = " | ".join(t_details)
+
         ctx["Courses — Total"] = db.query(models.Course).count()
         ctx["Courses — Published"] = db.query(models.Course).filter(models.Course.is_published == True).count()
         ctx["Enrollments — Total"] = db.query(models.Enrollment).count()
@@ -1154,16 +1188,73 @@ def _build_admin_master_context(db: Session) -> dict:
 
     return ctx
 
+@router.get("/ai-chat/history", dependencies=[Depends(get_current_admin)])
+def admin_ai_history(db: Session = Depends(get_db)):
+    admin_user = db.query(models.User).filter(models.User.email == "admin@scholariq.com").first()
+    if not admin_user:
+        return []
+    chat_session = db.query(models.ChatSession).filter(
+        models.ChatSession.user_id == admin_user.id, 
+        models.ChatSession.tool_type == "admin_ai", 
+        models.ChatSession.is_active == True
+    ).order_by(models.ChatSession.created_at.desc()).first()
+    if not chat_session:
+        return []
+    messages = db.query(models.ChatMessage).filter(
+        models.ChatMessage.session_id == chat_session.id
+    ).order_by(models.ChatMessage.created_at.asc()).all()
+    return [
+        {
+            "id": m.id,
+            "role": m.role,
+            "content": m.content,
+            "timestamp": m.created_at.isoformat() if m.created_at else None,
+        }
+        for m in messages
+    ]
 
 @router.post("/ai-chat", dependencies=[Depends(get_current_admin)])
 def admin_ai_chat(body: AdminChatRequest, db: Session = Depends(get_db)):
     """Admin 'master overseer' AI — full live platform snapshot injected as context."""
     from app.services.chatbot import get_ai_response
-
+    
+    admin_user = db.query(models.User).filter(models.User.email == "admin@scholariq.com").first()
+    if not admin_user:
+        from app.core import security
+        admin_user = models.User(email="admin@scholariq.com", hashed_password=security.get_password_hash("admin123"), role="admin")
+        db.add(admin_user)
+        db.commit()
+        db.refresh(admin_user)
+        
+    chat_session = db.query(models.ChatSession).filter(
+        models.ChatSession.user_id == admin_user.id, 
+        models.ChatSession.tool_type == "admin_ai", 
+        models.ChatSession.is_active == True
+    ).order_by(models.ChatSession.created_at.desc()).first()
+    
+    if not chat_session:
+        chat_session = models.ChatSession(user_id=admin_user.id, tool_type="admin_ai", is_active=True)
+        db.add(chat_session)
+        db.commit()
+        db.refresh(chat_session)
+        
+    user_msg = models.ChatMessage(session_id=chat_session.id, user_id=admin_user.id, role="user", content=body.message)
+    db.add(user_msg)
+    db.commit()
+    
+    recent = db.query(models.ChatMessage).filter(
+        models.ChatMessage.session_id == chat_session.id
+    ).order_by(models.ChatMessage.created_at.desc()).limit(8).all()
+    history = [(m.role, m.content) for m in reversed(recent) if m.role in ("user", "ai", "assistant")]
+    
     context = _build_admin_master_context(db)
-    reply = get_ai_response(body.message, mode="admin", context=context)
+    reply = get_ai_response(body.message, mode="admin", context=context, history=history)
+    
+    ai_msg = models.ChatMessage(session_id=chat_session.id, user_id=admin_user.id, role="assistant", content=reply)
+    db.add(ai_msg)
+    db.commit()
+    
     return {"reply": reply}
-
 
 # ─── PIPELINE REPORTS ────────────────────────────────────────────────────────
 

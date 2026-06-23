@@ -53,11 +53,19 @@ from ml.fraud_model import extract_features, HIGH_RISK_KEYWORDS, MEDIUM_RISK_KEY
 MODEL_OUT   = os.path.join(_HERE, "fraud_model.pkl")
 REPORT_OUT  = os.path.join(_HERE, "fraud_model_report.txt")
 FEATURE_NAMES = [
-    "has_high_risk_keyword", "has_medium_risk_keyword",
-    "url_reachable", "trusted_domain", "suspicious_domain",
-    "scholarship_amount_ratio", "deadline_too_close",
-    "has_official_email", "cgpa_min_zero",
-    "has_apply_steps", "description_length", "short_description",
+    # --- VIVA PREP: Features for Fraud Detection Model ---
+    "has_high_risk_keyword",    # (Leakage feature - Train mein use nahi hota) Kiya scam words hain jese "Western Union"?
+    "has_medium_risk_keyword",  # (Leakage feature) Kiya thore doubtful words hain jese "Processing fee"?
+    "url_reachable",            # Kiya scholarship ka link asal mein open ho raha hai ya broken/fake link hai?
+    "trusted_domain",           # Kiya domain trusted hai jese .edu, .gov, .ac.uk waghaira?
+    "suspicious_domain",        # (Leakage feature) Kiya domain spammy hai jese .tk, .ml?
+    "scholarship_amount_ratio", # Kiya amount bohat ziyada unrealistic hai (choti field aur millions mein grant)?
+    "deadline_too_close",       # Kiya deadline achanak kal ya parso ki de di hai (urgency create karne ke liye)?
+    "has_official_email",       # Kiya contact ke liye official domain email hai (ya gmail/yahoo/hotmail hai)?
+    "cgpa_min_zero",            # Kiya criteria mein likha hai ke 0 CGPA walay bhi apply karein (jo suspicious hai)?
+    "has_apply_steps",          # Kiya apply karne ke proper aur wazeh steps likhay hue hain?
+    "description_length",       # Scholarship ka description kitna lamba hai? (Scams aksar bohot chote hote hain)
+    "short_description",        # Kiya description intehai chota hai?
 ]
 
 # ── Anti-leakage: features the ML model is allowed to train on ────────────────
@@ -197,13 +205,16 @@ def train():
     # If SMOTE wasn't applied, lean on balanced class weights instead
     class_weight = None if smote_used else "balanced"
 
+    # VIVA PREP: Fraud Detect karne ke liye humne RandomForest use kiya hai.
+    # Yeh classification (0 = Legit, 1 = Fraud) ke liye best hai aur isme Explainability milti hai (Gini Feature Importances).
+    # Agar fraud samples kam hon, toh isme SMOTE (Synthetic Minority Oversampling) ka logic bhi likha hai pehle data balance karne k lye.
     model = RandomForestClassifier(
-        n_estimators=300,
-        max_depth=8,
-        min_samples_leaf=4,
-        class_weight=class_weight,
-        random_state=42,
-        n_jobs=-1,
+        n_estimators=300,          # 300 decision trees mil kar vote karenge fraud hai ya nahi
+        max_depth=8,               # Fraud pakarne ke liye tree ko thora zyada gehra (8) allow kiya hai
+        min_samples_leaf=4,        # Leaf par kam az kam 4 samples
+        class_weight=class_weight, # 'balanced' use karega agar SMOTE algorithm fail ho jaye
+        random_state=42,           # Hamesha same result aye
+        n_jobs=-1,                 # Sare CPU cores use hon
     )
 
     # ── Cross-validated evaluation (data-driven, not guessed thresholds) ──────

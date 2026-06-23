@@ -801,6 +801,7 @@ def teacher_ai_chat(
     """Teacher-specific AI assistant with teacher context injected."""
     from app.services.chatbot import get_ai_response
     from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
 
     try:
         teacher = db.query(models.TeacherProfile).filter(
@@ -817,7 +818,32 @@ def teacher_ai_chat(
                 "Total Courses Created": total_courses,
             }
 
-        reply = get_ai_response(body.message, mode="teacher", context=context if context else None)
+        chat_session = db.query(models.ChatSession).filter(
+            models.ChatSession.user_id == current_user.id, 
+            models.ChatSession.tool_type == "teacher_chat", 
+            models.ChatSession.is_active == True
+        ).order_by(models.ChatSession.created_at.desc()).first()
+        
+        if not chat_session:
+            chat_session = models.ChatSession(user_id=current_user.id, tool_type="teacher_chat", is_active=True)
+            db.add(chat_session)
+            db.commit()
+            db.refresh(chat_session)
+            
+        user_msg = models.ChatMessage(session_id=chat_session.id, user_id=current_user.id, role="user", content=body.message)
+        db.add(user_msg)
+        db.commit()
+        
+        recent = db.query(models.ChatMessage).filter(
+            models.ChatMessage.session_id == chat_session.id
+        ).order_by(models.ChatMessage.created_at.desc()).limit(8).all()
+        history = [(m.role, m.content) for m in reversed(recent) if m.role in ("user", "ai", "assistant")]
+
+        reply = get_ai_response(body.message, mode="teacher", context=context if context else None, history=history)
+        
+        ai_msg = models.ChatMessage(session_id=chat_session.id, user_id=current_user.id, role="assistant", content=reply)
+        db.add(ai_msg)
+        db.commit()
         
         # Check if reply indicates an error
         if reply and ("offline" in reply.lower() or "trouble" in reply.lower() or "error" in reply.lower()):

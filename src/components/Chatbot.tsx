@@ -2,9 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { MessageCircle, X, Send, Sparkles, Loader2, GraduationCap } from "lucide-react";
+import { X, Send, Sparkles, Loader2, GraduationCap, Bot, Shield } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { api } from "../api";
+import { useUser } from "../context/UserContext";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   role: string;
@@ -12,57 +15,151 @@ interface Message {
   fileName?: string;
 }
 
-const ComparisonTable = ({ data }: { data: any[] }) => {
-  if (!data || data.length === 0) return null;
-  const headers = Object.keys(data[0]);
 
-  return (
-    <div className="overflow-x-auto my-4 rounded-lg border border-gray-200 shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200 bg-white">
-        <thead className="bg-[#1e3a8a] text-white">
-          <tr>
-            {headers.map((header, index) => (
-              <th key={index} className="px-4 py-3 text-left text-xs font-semibold uppercase">{header}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          {data.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {headers.map((header, colIndex) => (
-                <td key={colIndex} className="px-4 py-3 text-sm text-gray-700">
-                  {/* Handle deadline specifically if needed, otherwise just render value */}
-                  {header.toLowerCase().includes('deadline') ? <span className="text-red-600 font-medium">{row[header]}</span> : row[header]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+// Role-specific welcome messages
+const getRoleWelcome = (role: "student" | "teacher" | "admin", userName: string) => {
+  const nameStr = userName ? ` ${userName}` : "";
+  if (role === "student") {
+    return `👋 Hi${nameStr}! I'm your **Student Assistant**, powered by GPT-4o.\n\nMain aapki help kar sakta hoon:\n- 🎓 Scholarship recommendations (CGPA, country, field ke mutabiq)\n- 📄 Document review (SOP, CV, transcripts)\n- 🌍 Visa guidance (UK, Germany, Australia, Canada)\n- 🚨 Fake scholarship detection\n\nApna sawal type karein ya document upload karein!`;
+  }
+  if (role === "teacher") {
+    return `👋 Salam${nameStr}! Main aapka **Teacher Assistant** hoon, powered by GPT-4o.\n\nMain aapki in cheezon mein help kar sakta hoon:\n- 👩‍🎓 Student scholarship guidance plans\n- 📝 Recommendation letter structure\n- 📚 IELTS/TOEFL preparation plans\n- 🔍 Student profiles ke liye best scholarships\n\nKoi bhi sawaal poochein!`;
+  }
+  return `👋 Salam${nameStr}! Main **Admin Intelligence** hoon, powered by GPT-4o.\n\nMain platform management mein help kar sakta hoon:\n- 🛡️ Fraud detection patterns ka analysis\n- 📊 Platform analytics aur user trends\n- ⚙️ Auto-verify pipeline insights\n- ✅ Scholarship approval decisions\n\nKoi bhi admin sawaal poochein!`;
 };
 
+
 export function Chatbot() {
+  const { status } = useUser();
+  const userName = status?.full_name ? status.full_name.split(' ')[0] : "";
+  
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hi! I'm your ScholarIQ AI assistant. I can analyze scholarship documents (PDF/Images). How can I help you today?"
-    }
-  ]);
+
+  // Initial messages set hoga role detect hone ke baad
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const chatbotRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Role-aware assistant identity (distinct shape + colour + icon per role) ──
+  // FIX: Teacher role must be checked FIRST before admin, because teacher login
+  // sometimes leaves admin_logged_in in storage from a previous session.
+  // Priority: teacher (by userRole) > admin (by admin_logged_in) > student
+  const getRole = (): "student" | "teacher" | "admin" => {
+    const userRole = localStorage.getItem("userRole");
+    const adminLoggedIn = localStorage.getItem("admin_logged_in");
+    if (userRole === "teacher") return "teacher";
+    if (adminLoggedIn === "true") return "admin";
+    return "student";
+  };
+
+  const [role, setRole] = useState<"student" | "teacher" | "admin">(getRole);
+
+  const ONBOARDING_QUESTIONS = [
+    {
+      id: "cgpa",
+      question: "Welcome! To give you the best advice, let's do a quick profile check. Is your current CGPA above or below 3.0?",
+      options: ["Above 3.0", "Below 3.0", "Not sure"]
+    },
+    {
+      id: "english",
+      question: "Got it. Have you already taken an English proficiency test like IELTS or TOEFL?",
+      options: ["Yes, I have", "Planning to take it", "Not yet"]
+    },
+    {
+      id: "region",
+      question: "Great. Which region are you primarily targeting for your studies?",
+      options: ["UK & Europe", "USA & Canada", "Australia & NZ", "Anywhere"]
+    },
+    {
+      id: "funding",
+      question: "Finally, what kind of scholarship funding are you looking for?",
+      options: ["Fully Funded (100%)", "Partially Funded is fine", "Self-funded mostly"]
+    }
+  ];
+
+  const [isOnboarding, setIsOnboarding] = useState<boolean>(() => {
+    return getRole() === "student" && localStorage.getItem("onboardingComplete") !== "true";
+  });
+  const [onboardingStep, setOnboardingStep] = useState<number>(0);
+  const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, string>>({});
+
+  // Re-evaluate role whenever localStorage changes (e.g. login/logout)
+  useEffect(() => {
+    const handleStorage = () => setRole(getRole());
+    window.addEventListener("storage", handleStorage);
+    const detectedRole = getRole();
+    setRole(detectedRole);
+    // Set role-specific welcome message on mount
+    setMessages([{ role: "assistant", content: getRoleWelcome(detectedRole, userName) }]);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [userName]);
+
+  // Update welcome message when role changes
+  useEffect(() => {
+    if (isOnboarding) {
+      setMessages([{ role: "assistant", content: ONBOARDING_QUESTIONS[0].question }]);
+    } else {
+      setMessages([{ role: "assistant", content: getRoleWelcome(role, userName) }]);
+    }
+  }, [role, userName, isOnboarding]);
+
+  const ROLE_THEME = {
+    student: {
+      name: "Student Assistant",
+      subtitle: "Scholarships & Visas",
+      Icon: Bot,
+      gradient: "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
+      headerGradient: "linear-gradient(135deg, #0B0F19 0%, #111827 100%)",
+      glow: "rgba(37,99,235,0.45)",
+      accentColor: "#3b82f6",
+      accentBg: "rgba(59, 130, 246, 0.1)",
+      borderRadius: "50%",
+      clipPath: "none",
+    },
+    teacher: {
+      name: "Teacher Assistant",
+      subtitle: "Curriculum & Mentoring",
+      Icon: GraduationCap,
+      gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
+      headerGradient: "linear-gradient(135deg, #0B0F19 0%, #111827 100%)",
+      glow: "rgba(5,150,105,0.45)",
+      accentColor: "#10b981",
+      accentBg: "rgba(16, 185, 129, 0.1)",
+      borderRadius: "20px",
+      clipPath: "none",
+    },
+    admin: {
+      name: "Admin Intelligence",
+      subtitle: "Platform Analytics",
+      Icon: Shield,
+      gradient: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+      headerGradient: "linear-gradient(135deg, #0B0F19 0%, #111827 100%)",
+      glow: "rgba(217,119,6,0.5)",
+      accentColor: "#f59e0b",
+      accentBg: "rgba(245, 158, 11, 0.1)",
+      borderRadius: "0",
+      clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+    },
+  } as const;
+
+  const theme = ROLE_THEME[role];
+  const RoleIcon = theme.Icon;
+
   // Load history when chat opens
   useEffect(() => {
     const fetchHistory = async () => {
-      if (isOpen) {
+      if (isOpen && !isOnboarding) {
         try {
-          const history = await api.chatbot.getHistory();
+          let history;
+          if (role === "admin") {
+            history = await api.chatbot.getAdminHistory();
+          } else {
+            history = await api.chatbot.getHistory(role);
+          }
+          
           const mappedHistory: Message[] = history.map((msg: any) => ({
             role: msg.role === "ai" ? "assistant" : "user",
             content: msg.content,
@@ -84,7 +181,7 @@ export function Chatbot() {
       }
     };
     fetchHistory();
-  }, [isOpen]);
+  }, [isOpen, role, isOnboarding]);
 
   // Close chatbot when clicking outside
   useEffect(() => {
@@ -122,6 +219,38 @@ export function Chatbot() {
     const messageText = text || input;
     if ((!messageText.trim() && !selectedFile) || isLoading) return;
 
+    if (isOnboarding) {
+      const currentQ = ONBOARDING_QUESTIONS[onboardingStep];
+      const newAnswers = { ...onboardingAnswers, [currentQ.id]: messageText };
+      setOnboardingAnswers(newAnswers);
+      
+      const newMessages = [...messages, { role: "user", content: messageText }];
+      
+      if (onboardingStep < ONBOARDING_QUESTIONS.length - 1) {
+        setOnboardingStep(prev => prev + 1);
+        setMessages([...newMessages, { role: "assistant", content: ONBOARDING_QUESTIONS[onboardingStep + 1].question }]);
+      } else {
+        localStorage.setItem("onboardingComplete", "true");
+        setIsOnboarding(false);
+        setIsLoading(true);
+        setMessages([...newMessages]);
+        
+        const profileDataStr = Object.entries(newAnswers).map(([k, v]) => `${k}: ${v}`).join(", ");
+        const initMessage = `System Context: The user just completed onboarding. Their profile data is: ${profileDataStr}. Acknowledge this and tell them you are ready to help them as a personalized expert advisor. Keep it short and encouraging.`;
+        
+        try {
+           const response = await api.chatbot.sendMessage(initMessage);
+           setMessages([...newMessages, { role: "assistant", content: response.reply || response.response || response.message || "Perfect! I've set up your profile. What would you like to ask?" }]);
+        } catch (e) {
+           setMessages([...newMessages, { role: "assistant", content: "Perfect! I've set up your profile. What would you like to ask?" }]);
+        } finally {
+           setIsLoading(false);
+        }
+      }
+      setInput("");
+      return;
+    }
+
     const userMessage: Message = {
       role: "user",
       content: messageText || (selectedFile ? "Analyze this file" : ""),
@@ -135,158 +264,250 @@ export function Chatbot() {
     setIsLoading(true);
 
     try {
-      const response = await api.chatbot.sendMessage(messageText || "Analyze this file", currentFile || undefined);
-      setMessages((prev: Message[]) => [...prev, { role: "assistant", content: response.reply }]);
-    } catch (err) {
-      setMessages((prev: Message[]) => [...prev, { role: "assistant", content: "Sorry, I'm having trouble analyzing the file. Please try again later." }]);
+      let response: any;
+      // BUG FIX: Send correct role/mode to backend so system prompt matches the logged-in role
+      if (role === "admin") {
+        response = await api.chatbot.sendAdminMessage(messageText || "Help me with admin tasks");
+      } else if (role === "teacher") {
+        response = await api.chatbot.sendTeacherMessage(messageText || "Help me with teacher tasks");
+      } else {
+        response = await api.chatbot.sendMessage(messageText || "Help me find scholarships", currentFile || undefined);
+      }
+      const reply = response.reply || response.response || response.message || "Sorry, koi response nahi mila.";
+      setMessages((prev: Message[]) => [...prev, { role: "assistant", content: reply }]);
+    } catch (err: any) {
+      const errMsg = err?.message?.includes("Backend") || err?.message?.includes("fetch")
+        ? "⚠️ Backend se connection nahi ho raha. Kripya ensure karein ke backend chal raha hai (port 8000)."
+        : "⚠️ Kuch masla aa gaya. Thori dair baad dobara try karein.";
+      setMessages((prev: Message[]) => [...prev, { role: "assistant", content: errMsg }]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (role === "admin") {
+    return null; // Admin uses the full-page AdminAIChat component
+  }
+
   if (!isOpen) {
     return (
-      <Button
+      <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-[#1e3a8a] max-md:bottom-20 max-md:right-4 hover:bg-[#1e3a8a]/90 p-0 z-50 transition-all hover:scale-110 active:scale-95"
+        aria-label={`Open ${theme.name}`}
+        className="fixed bottom-6 right-6 max-md:bottom-20 max-md:right-4 z-50 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+        style={{
+          width: "60px",
+          height: "60px",
+          background: theme.gradient,
+          borderRadius: theme.borderRadius,
+          clipPath: theme.clipPath,
+          border: "none",
+          cursor: "pointer",
+          boxShadow: `0 10px 30px ${theme.glow}`,
+        }}
       >
-        <MessageCircle className="w-6 h-6" />
-      </Button>
+        <RoleIcon className="w-7 h-7" style={{ color: "#fff" }} strokeWidth={2} />
+        {/* notification dot */}
+        <span
+          style={{
+            position: "absolute",
+            top: theme.clipPath === "none" ? "6px" : "10px",
+            right: theme.clipPath === "none" ? "6px" : "14px",
+            width: "12px",
+            height: "12px",
+            background: "#ef4444",
+            border: "2px solid #fff",
+            borderRadius: "50%",
+          }}
+        />
+      </button>
     );
   }
 
   return (
     <div ref={chatbotRef}>
-      <Card className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-2rem)] shadow-2xl border-none z-50 flex flex-col animate-in slide-in-from-bottom-4">
-        <CardHeader className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] text-white rounded-t-lg flex-shrink-0">
+      <Card 
+        className="fixed bottom-6 right-6 border-none z-50 flex flex-col animate-in slide-in-from-bottom-4 bg-white overflow-hidden" 
+        style={{ 
+          width: '420px', 
+          maxWidth: 'calc(100vw - 2rem)', 
+          height: '650px', 
+          maxHeight: 'calc(100vh - 2rem)', 
+          borderRadius: '24px',
+          backgroundColor: '#ffffff', 
+          boxShadow: '0 0 40px rgba(0,0,0,0.15)' 
+        }}
+      >
+        {/* Header */}
+        <CardHeader className="text-white flex-shrink-0 px-4 py-3" style={{ background: theme.headerGradient }}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-yellow-200" />
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div
+                  className="w-10 h-10 bg-white/10 flex items-center justify-center relative z-10"
+                  style={{ borderRadius: theme.clipPath === "none" ? theme.borderRadius : "10px", clipPath: theme.clipPath }}
+                >
+                  <RoleIcon className="w-6 h-6 text-white" />
+                </div>
+                {/* Online Dot */}
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full z-20"></span>
               </div>
               <div>
-                <CardTitle className="text-white text-lg">AI Vision Assistant</CardTitle>
-                <p className="text-[10px] text-blue-100 uppercase tracking-widest font-bold">Powered by GPT-4o</p>
+                <CardTitle className="text-white text-[16px] font-bold tracking-wide">{theme.name}</CardTitle>
+                <p className="text-[11px] font-semibold" style={{ color: theme.accentColor }}>
+                  {theme.subtitle}
+                </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-white/20 h-8 w-8 p-0"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="text-white hover:bg-white/10 h-8 w-8 p-0 rounded-full">
               <X className="w-5 h-5" />
             </Button>
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden bg-gray-50/50">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Safety Banner */}
+        <div className="bg-[#f0fdf4] border-b border-green-100 py-1.5 px-4 flex items-center gap-2 justify-center shrink-0">
+          <Shield className="w-3 h-3 text-green-600" />
+          <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">AI guidance - Verify critical info</span>
+        </div>
+
+        {/* Chat Content */}
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative bg-slate-50" style={{ backgroundColor: '#f8fafc' }}>
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {messages.map((message, i) => (
-              <div
-                key={i}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2`}
-              >
+              <div key={i} className={`flex flex-col ${message.role === "user" ? "items-end" : "items-start"} animate-in fade-in slide-in-from-bottom-2`}>
+                
+                {/* Avatar/Name Header for AI */}
+                {message.role !== "user" && (
+                  <div className="flex items-center gap-2 mb-1.5 ml-1">
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-100 border border-slate-200">
+                      <RoleIcon className="w-3 h-3 text-slate-600" />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{theme.name}</span>
+                    <Badge variant="secondary" className="text-[8px] h-4 px-1 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 ml-1">AI</Badge>
+                  </div>
+                )}
+
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm ${message.role === "user"
-                    ? "bg-[#1e3a8a] text-white rounded-br-none"
-                    : "bg-white text-gray-900 border border-gray-100 rounded-bl-none"
+                  className={`max-w-[88%] px-4 py-3 shadow-sm text-sm leading-relaxed ${message.role === "user"
+                      ? "bg-[#1e3a8a] text-white rounded-2xl rounded-br-sm ml-auto"
+                      : "bg-white text-slate-800 border border-slate-100 border-l-4 rounded-r-2xl rounded-bl-sm"
                     }`}
+                  style={message.role !== "user" ? { borderLeftColor: theme.accentColor } : {}}
                 >
                   {message.fileName && (
-                    <div className="flex items-center gap-2 mb-1.5 bg-white/10 p-1 rounded text-[10px] font-bold">
+                    <div className={`flex items-center gap-2 mb-2 p-1.5 rounded-lg text-[10px] font-bold ${message.role === 'user' ? 'bg-white/20 text-white' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}>
                       📎 {message.fileName}
                     </div>
                   )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {(() => {
-                      // Attempt to parse content as JSON for table rendering
-                      try {
-                        // Very basic heuristic: if starts with [ and ends with ], try to parse
-                        const trimmed = message.content.trim();
-                        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-                          const data = JSON.parse(trimmed);
-                          if (Array.isArray(data) && data.length > 0) {
-                            return <ComparisonTable data={data} />;
-                          }
-                        }
-                      } catch (e) {
-                        // Not JSON, render as text
-                      }
-                      return message.content;
-                    })()}
-                  </p>
+                  
+                  {message.role === "user" ? (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  ) : (
+                    <div className="prose prose-slate prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-200 prose-th:bg-slate-50 prose-td:border-slate-200 prose-th:border-slate-200">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
             {isLoading && (
-              <div className="flex justify-start animate-in fade-in">
-                <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-none px-4 py-2.5 shadow-sm">
-                  <div className="flex gap-1 items-center">
-                    <Loader2 className="w-3 h-3 animate-spin text-[#1e3a8a] mr-1" />
-                    <span className="text-[10px] font-bold text-gray-400">AI is analyzing...</span>
+              <div className="flex flex-col items-start animate-in fade-in">
+                <div className="flex items-center gap-2 mb-1.5 ml-1">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-100 border border-slate-200">
+                    <RoleIcon className="w-3 h-3 text-slate-600" />
                   </div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{theme.name}</span>
+                </div>
+                <div className="bg-white border border-slate-100 border-l-4 rounded-r-2xl rounded-bl-sm px-4 py-3 shadow-sm flex items-center gap-2" style={{ borderLeftColor: theme.accentColor }}>
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: theme.accentColor }} />
+                  <span className="text-xs font-medium text-slate-500">Typing...</span>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="p-4 bg-white border-t flex-shrink-0">
+          {/* Quick Prompts & Input Area */}
+          <div className="p-4 bg-white border-t border-slate-200 flex-shrink-0 flex flex-col gap-3" style={{ backgroundColor: '#ffffff' }}>
+            
+            {/* Quick Prompts */}
+            {isOnboarding ? (
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {ONBOARDING_QUESTIONS[onboardingStep].options.map((opt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(opt)}
+                    className="whitespace-nowrap px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition-colors shadow-sm"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              messages.length <= 1 && !selectedFile && (
+                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                  {quickPrompts.map((prompt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSend(prompt)}
+                      className="whitespace-nowrap px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-600 text-xs font-medium hover:bg-slate-50 transition-colors shadow-sm"
+                    >
+                      {idx === 0 ? "🔥 " : idx === 1 ? "🎓 " : idx === 2 ? "🌍 " : "📝 "}
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              )
+            )}
+
             {/* File Preview */}
             {selectedFile && (
-              <div className="flex items-center justify-between bg-blue-50 p-2 rounded-xl mb-3 border border-blue-100 animate-in slide-in-from-bottom-2">
+              <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200 animate-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-2 overflow-hidden">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 bg-white rounded-lg border border-slate-200 flex items-center justify-center shrink-0">
                     <GraduationCap className="w-4 h-4 text-blue-600" />
                   </div>
-                  <span className="text-xs font-bold text-blue-800 truncate">{selectedFile.name}</span>
+                  <span className="text-xs font-medium text-slate-700 truncate">{selectedFile.name}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedFile(null)}
-                  className="h-6 w-6 p-0 hover:bg-blue-100 text-blue-800"
-                >
+                <Button variant="ghost" size="sm" onClick={() => setSelectedFile(null)} className="h-6 w-6 p-0 hover:bg-slate-200 text-slate-500">
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             )}
 
-            <div className="flex gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*,application/pdf"
-                className="hidden"
-              />
+            {/* Input Form */}
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full p-1.5 focus-within:border-slate-300 focus-within:bg-white shadow-inner transition-colors">
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,application/pdf" className="hidden" />
               <Button
-                variant="outline"
+                variant="ghost"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                className="h-11 w-11 rounded-xl border-gray-200 hover:bg-gray-50 p-0 shrink-0"
+                className="h-10 w-10 rounded-full hover:bg-slate-200 p-0 shrink-0 text-slate-500"
               >
                 <div className="relative">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                   </svg>
-                  {selectedFile && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>}
+                  {selectedFile && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>}
                 </div>
               </Button>
               <Input
-                placeholder="Ask or upload a doc..."
+                placeholder="Type your reply..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="flex-1 bg-gray-50 border-gray-200 h-11 rounded-xl focus:bg-white transition-colors text-sm"
+                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-sm text-slate-800 placeholder-slate-400 h-10 px-2 shadow-none"
                 disabled={isLoading}
               />
               <Button
                 onClick={() => handleSend()}
                 disabled={isLoading || (!input.trim() && !selectedFile)}
-                className="bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 h-11 w-11 rounded-xl p-0 shadow-lg shadow-blue-900/10"
+                className="h-10 w-10 rounded-full p-0 flex-shrink-0 transition-all hover:scale-105 active:scale-95 shadow-md"
+                style={{ background: (!input.trim() && !selectedFile) ? '#e2e8f0' : theme.accentColor, color: (!input.trim() && !selectedFile) ? '#94a3b8' : 'white' }}
               >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
               </Button>
             </div>
           </div>

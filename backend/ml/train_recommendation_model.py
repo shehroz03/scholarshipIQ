@@ -47,10 +47,19 @@ FEATURES_OUT = os.path.join(_HERE, "feature_names.json")
 REPORT_OUT   = os.path.join(_HERE, "rec_model_report.txt")
 
 FEATURE_NAMES = [
-    "cgpa_gap", "degree_match", "country_match", "field_match",
-    "fee_affordable", "scholarship_value", "deadline_days",
-    "ielts_match", "funding_match", "work_exp_match",
-    "requires_work", "has_work",
+    # --- VIVA PREP: 12 Features for Recommendation Model ---
+    "cgpa_gap",         # Student ka CGPA aur scholarship ke required CGPA ka farq (Gap)
+    "degree_match",     # Kiya student ki degree (Bachelors/Masters) scholarship se match karti hai?
+    "country_match",    # Kiya student apna desired country apply kar raha hai?
+    "field_match",      # Kiya student ki field of study match ho rahi hai?
+    "fee_affordable",   # Kiya scholarship fee cover karti hai ya student afford kar sakta hai?
+    "scholarship_value",# Scholarship ki financial value (kitne paisay milenge)
+    "deadline_days",    # Deadline mein kitne din baqi hain? (Kahin expire to nahi ho rahi?)
+    "ielts_match",      # Kiya IELTS required tha aur student ke paas hai?
+    "funding_match",    # Fully funded vs partially funded preference match
+    "work_exp_match",   # Kiya work experience requirement student ke experience se milti hai?
+    "requires_work",    # Kiya scholarship ko lazmi work experience chahiye?
+    "has_work",         # Kiya student ke paas koi work experience hai?
 ]
 
 
@@ -215,13 +224,16 @@ def train():
         print("[Rec Trainer] ERROR: Only one class in dataset. Cannot train.")
         sys.exit(1)
 
+    # VIVA PREP: Humne 'RandomForestClassifier' use kiya hai kyunke yeh tabular data (excel jesa data) 
+    # par bohat acha kaam karta hai aur overfitting (ratta lagane) se bachata hai.
+    # Deep learning (Neural Networks) yahan zaroorat nahi thi kyunke hamare paas features kam hain.
     model = RandomForestClassifier(
-        n_estimators=300,
-        max_depth=6,
-        min_samples_leaf=5,
-        class_weight="balanced",
-        random_state=42,
-        n_jobs=-1,
+        n_estimators=300,        # Model mein total kitne 'Decision Trees' (Darakht) banenge (300 trees)
+        max_depth=6,             # Ek tree kitna deep ja sakta hai (zayada deep karein toh overfit ho jata hai)
+        min_samples_leaf=5,      # Har aakhri branch (leaf) par kam se kam 5 samples hone chahiye
+        class_weight="balanced", # Agar negative samples zayada hain toh positive/negative ko khud balance kar dega
+        random_state=42,         # Taake har dafa run karne par same result aaye (reproducibility)
+        n_jobs=-1,               # Computer ke saare cores use kare taake training jaldi ho
     )
 
     # ── Cross-validated evaluation ────────────────────────────────────────────

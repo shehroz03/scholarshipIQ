@@ -327,8 +327,11 @@ export const api = {
       }
       return response.json();
     },
-    async getHistory() {
-      return apiBase.request("/api/chat/history");
+    async getHistory(mode: string = "student") {
+      return apiBase.request(`/api/chat/history?mode=${mode}`);
+    },
+    async getAdminHistory() {
+      return apiBase.request("/admin/ai-chat/history");
     },
     async sendAdminMessage(message: string) {
       return apiBase.request("/admin/ai-chat", {

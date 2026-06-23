@@ -151,41 +151,39 @@ const INITIAL_MSG: Message = {
     ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
 };
 
-function loadMessages(): Message[] {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-    } catch { /* ignore */ }
-    return [INITIAL_MSG];
-}
-
 export function AdminAIChat() {
-    const [messages, setMessages] = useState<Message[]>(loadMessages);
+    const [messages, setMessages] = useState<Message[]>([INITIAL_MSG]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
-    const [showPrompts, setShowPrompts] = useState(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                return !Array.isArray(parsed) || parsed.filter((m: Message) => m.role === "user").length === 0;
-            } catch { return true; }
-        }
-        return true;
-    });
+    const [showPrompts, setShowPrompts] = useState(true);
     const bottomRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, loading]);
+        const fetchHistory = async () => {
+            try {
+                const history = await api.chatbot.getAdminHistory();
+                if (history && history.length > 0) {
+                    const mapped = history.map((m: any) => ({
+                        role: m.role === "ai" ? "assistant" : m.role,
+                        content: m.content,
+                        ts: m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : undefined
+                    }));
+                    setMessages(mapped);
+                    if (mapped.filter((m: Message) => m.role === "user").length > 0) {
+                        setShowPrompts(false);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load history", err);
+            }
+        };
+        fetchHistory();
+    }, []);
 
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    }, [messages]);
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages, loading]);
 
     const handleSend = async (text?: string) => {
         const msg = text || input;

@@ -13,12 +13,23 @@ router = APIRouter()
 
 @router.get("/history")
 async def get_chat_history(
+    mode: str = "student",
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    tool_type = "teacher_chat" if mode == "teacher" else "general_chat"
+    chat_session = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == current_user.id, ChatSession.tool_type == tool_type, ChatSession.is_active == True)
+        .order_by(ChatSession.created_at.desc())
+        .first()
+    )
+    if not chat_session:
+        return []
+
     messages = (
         db.query(ChatMessage)
-        .filter(ChatMessage.user_id == current_user.id)
+        .filter(ChatMessage.session_id == chat_session.id)
         .order_by(ChatMessage.created_at.asc())
         .all()
     )
@@ -56,7 +67,11 @@ async def chat_endpoint(
     # Ensure active ChatSession exists
     chat_session = (
         db.query(ChatSession)
-        .filter(ChatSession.user_id == current_user.id, ChatSession.is_active == True)
+        .filter(
+            ChatSession.user_id == current_user.id, 
+            ChatSession.tool_type == "general_chat", 
+            ChatSession.is_active == True
+        )
         .order_by(ChatSession.created_at.desc())
         .first()
     )
@@ -84,7 +99,7 @@ async def chat_endpoint(
     # Fetch last 8 messages for conversation history (4 turns)
     recent = (
         db.query(ChatMessage)
-        .filter(ChatMessage.user_id == current_user.id)
+        .filter(ChatMessage.session_id == chat_session.id)
         .order_by(ChatMessage.created_at.desc())
         .limit(8)
         .all()
@@ -93,6 +108,7 @@ async def chat_endpoint(
 
     # Build user profile dict for RAG personalisation
     user_profile = {
+        "name": current_user.full_name,
         "cgpa": current_user.cgpa,
         "target_country": current_user.target_country,
         "target_degree": current_user.target_degree,

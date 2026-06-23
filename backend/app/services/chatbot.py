@@ -120,12 +120,14 @@ DEGREE_ALIASES = {
 
 def _build_rag_context(db: Any, user_message: str, user_profile: Optional[dict] = None) -> str:
     """
+    # --- VIVA PREP: RAG (Retrieval-Augmented Generation) ---
+    # Supervisor puchega ke "Chatbot ko kahan se pata chala scholarship ka? Hallucinate to nahi karta?"
+    # Jawab: Humne RAG use kiya hai. Jab student question puchta hai, hum sabse pehle uske sawal ko 
+    # vector (numbers) mein convert karte hain aur Database mein se sabse close/relevant 6 scholarships nikalte hain.
+    # Phir woh 6 scholarships hum GPT ko dete hain aur kehte hain "Sirf in 6 scholarships mein se answer do". 
+    # Is tarah GPT apni taraf se jhoot (hallucinations) nahi bolta.
+    
     Dynamic Context Injection via cached vector similarity.
-
-    Embeddings are pre-computed at server startup (see embedding_cache.warm_up),
-    so this function only embeds the *query* (~2ms) and does one numpy dot product
-    against the cached matrix — no per-request corpus encoding.
-
     Falls back to SQL keyword filter if the cache is cold or unavailable.
     """
     try:
@@ -200,7 +202,41 @@ def _sql_fallback_context(db: Any, user_message: str, user_profile: Optional[dic
             lines.append(f"• [{s.id}] {s.title} | {uni} | {s.country} | "
                          f"Amount: {amount} | Deadline: {deadline}")
         return "\n".join(lines)
+        return "\n".join(lines)
     except Exception:
+        return ""
+
+def _get_teacher_course_context(db: Any, user_message: str) -> str:
+    """Fetch top published courses/teachers if user asks for test prep or teachers."""
+    msg_lower = user_message.lower()
+    keywords = ["teacher", "course", "ielts", "toefl", "prepare", "preparation", "test", "gre", "gmat", "class", "tutor", "study"]
+    if not any(k in msg_lower for k in keywords):
+        return ""
+
+    try:
+        from app.db.models import Course, TeacherProfile, User
+        courses = (
+            db.query(Course)
+            .join(TeacherProfile, Course.teacher_id == TeacherProfile.id)
+            .join(User, TeacherProfile.user_id == User.id)
+            .filter(Course.is_published == True)
+            .order_by(Course.rating.desc(), Course.total_students.desc())
+            .limit(3)
+            .all()
+        )
+
+        if not courses:
+            return ""
+
+        lines = ["RECOMMENDED TEACHERS & COURSES (Suggest these if the user asks for test prep or teachers):"]
+        for c in courses:
+            lines.append(
+                f"• Teacher: {c.teacher.user.full_name} | Subject/Test: {c.subject or c.test_type} | Course: '{c.title}' | "
+                f"Rating: {c.rating}/5.0 ({c.total_students} students) | Enroll Link: /dashboard/courses/{c.id}"
+            )
+        return "\n".join(lines)
+    except Exception as e:
+        print(f"[RAG] Teacher fetch failed: {e}")
         return ""
 
 
@@ -293,20 +329,96 @@ YOUR EXPERTISE:
 """,
 
     "admin": """
-You are 'ScholarIQ Admin Intelligence' — an expert AI trained for ScholarIQ platform administrators.
+You are 'ScholarIQ Admin Intelligence' — a MASTER OVERSEER AI that has LIVE ACCESS to the entire ScholarIQ platform database.
+You behave exactly like Hostinger's AI assistant — you analyze real numbers, give precise answers, and make smart recommendations.
 
-YOUR EXPERTISE:
-1. Language: Respond in Urdu, Roman Urdu, or English — match the admin's language.
-2. System Analytics: Analyze platform metrics — user growth, scholarship counts, fraud rates, pipeline health.
-3. Fraud Analysis: Identify fraud patterns, explain risk scores, recommend threshold adjustments.
-4. Pipeline Insights: Explain why scholarships were auto-approved or rejected by the bot.
-5. Data Quality: Spot data inconsistencies, suggest database improvements.
-6. User Behavior: Analyze user registration trends, active users, dropout patterns.
-7. Auto-Update Reports: Interpret scholarship auto-update logs, summarize what changed.
-8. Security: Flag unusual admin activity, suggest security improvements.
-9. Decision Support: Help admin make informed decisions about scholarship approvals, teacher verifications.
-10. Be analytical, precise, and data-driven.
-"""
+CRITICAL RULE: You will receive LIVE PLATFORM DATA in the context below. ALWAYS reference the exact numbers from that data in your answers.
+NEVER say "I don't have access to the data". The live data is injected into your context — USE IT.
+
+Language Rule: Respond in Urdu, Roman Urdu, or English — match the admin's language automatically.
+
+═══════════════════════════════════════════════════════
+WHAT YOU KNOW (LIVE DATA — always quote exact numbers):
+═══════════════════════════════════════════════════════
+
+USERS & REGISTRATIONS:
+- Total users, students, teachers, active users, new signups (last 7 days), suspicious accounts
+- Recent users details (names, roles)
+- You can identify user growth trends and flag anomalies
+
+SCHOLARSHIPS:
+- Total scholarships, active/approved (public), pending approval, rejected, archived
+- Top countries by scholarship count
+- Specific recent pending scholarships (IDs, titles)
+- You can recommend which scholarships need urgent attention
+
+FRAUD DETECTION:
+- Fraud by risk level: CRITICAL, HIGH, MEDIUM
+- Suspicious flagged count, auto-flagged for review
+- Detailed info of recently flagged scholarships (IDs, titles, risk score, reasons)
+- You can explain WHY a scholarship might be flagged and what admin should do
+
+PIPELINE & AUTO-VERIFY:
+- Staged scholarships pending review
+- Last pipeline event and timing, plus detailed logs of actions taken
+- Bot decisions (approved/rejected) and approval rate
+- You know if the pipeline is healthy or stuck
+
+TEACHERS & COURSES:
+- Total teacher profiles, approved vs pending vs rejected
+- Specific details of pending teachers (names, IDs, specializations, experience)
+- Total courses, published courses, total enrollments
+- You can flag if teacher approvals are backlogged
+
+APPLICATIONS:
+- Total applications, breakdown by status (Saved, Applied, etc.)
+
+AUTO-UPDATE BOT:
+- Last bot run timestamp, how many scholarships checked/updated/errored
+- Whether API keys (OpenAI, Serper) are properly configured
+
+═══════════════════════════════════════════════════════
+YOUR CAPABILITIES (like Hostinger AI):
+═══════════════════════════════════════════════════════
+
+1. PLATFORM HEALTH CHECK
+   - Give overall platform health score based on real data
+   - Flag critical issues (e.g. fraud spike, pipeline stuck, teacher backlog)
+   - Example: "Platform is 87% healthy. 3 CRITICAL issues detected..."
+
+2. FRAUD ANALYSIS
+   - Explain fraud risk levels from real counts
+   - Suggest threshold adjustments if too many false positives
+   - Tell admin exactly which risk level has most flagged items
+   - Explain what each fraud signal means (keywords, suspicious TLD, URL unreachable)
+
+3. USER ANALYTICS
+   - New user growth this week vs expectations
+   - Suspicious account ratio analysis
+   - Student vs teacher ratio insights
+
+4. SCHOLARSHIP PIPELINE
+   - How many are stuck in pending approval
+   - Whether auto-verify bot is running on schedule
+   - What percentage of bot decisions are approvals vs rejections
+
+5. TEACHER MANAGEMENT
+   - How many are waiting approval (backlog alert if > 5)
+   - Suggest approval/rejection criteria
+
+6. ACTIONABLE RECOMMENDATIONS
+   - Always end with 2-3 specific ACTIONS admin can take RIGHT NOW
+   - Example: "Action 1: Review 5 pending teachers. Action 2: Archive 12 expired scholarships."
+
+═══════════════════════════════════════════════════════
+RESPONSE FORMAT (strict):
+═══════════════════════════════════════════════════════
+- Start with the KEY METRIC or direct answer (bold it)
+- Use bullet points with actual numbers from the data
+- End with: **📋 Recommended Actions:**
+- Keep it concise but data-rich — no filler text
+- Use emojis to categorize: ✅ Healthy | ⚠️ Warning | 🚨 Critical | 📊 Stats | 🔧 Action needed
+""",
 }
 
 
@@ -342,6 +454,12 @@ def get_ai_response(
             rag_ctx = _build_rag_context(db, user_message, user_profile)
             if rag_ctx:
                 system_instruction += f"\n\n{rag_ctx}\n"
+
+            # 1.5. Inject Teacher / Course Recommendations if relevant
+            if mode == "student":
+                teacher_ctx = _get_teacher_course_context(db, user_message)
+                if teacher_ctx:
+                    system_instruction += f"\n\n{teacher_ctx}\n"
 
         # 2. Personalise with user profile
         if user_profile:
@@ -398,6 +516,10 @@ def get_ai_response(
         else:
             messages.append({"role": "user", "content": user_message})
 
+        # VIVA PREP: Yahan hum OpenAI ki GPT-4o-mini API call kar rahe hain. 
+        # Isko hum 'train' nahi karte, isko 'Prompt Engineering' se control karte hain.
+        # Hum usko bata dete hain "Tumhara kaam sirf students ki help karna hai, unko visa guidelines dena hai, 
+        # aur jo scholarships DB se milein sirf wahi batani hain." (Yeh sab prompts upar define hue hain).
         response = active_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
