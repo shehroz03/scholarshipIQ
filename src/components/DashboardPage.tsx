@@ -97,11 +97,7 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
       } catch (err) {
         console.error("Dashboard data fetch failed", err);
       } finally {
-        const elapsed = Date.now() - startTime;
-        const delay = Math.max(0, 2500 - elapsed);
-        setTimeout(() => {
-          setIsLoading(false);
-        }, delay);
+        setIsLoading(false);
       }
     };
     fetchInitialData();
