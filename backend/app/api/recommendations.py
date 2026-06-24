@@ -11,7 +11,7 @@ router = APIRouter()
 # ─── /recommendations/ (Legacy AI endpoint) ────────────────────────────────
 
 @router.get("/", response_model=schemas.AIRecommendationResponse)
-async def get_recommendations(
+def get_recommendations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_user)
 ):
