@@ -380,7 +380,7 @@ export function Chatbot() {
         </div>
 
         {/* Chat Content */}
-        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative bg-slate-900">
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative" style={{ backgroundColor: '#f1f5f9' }}>
           <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
             {messages.map((message, i) => (
               <div key={i} className={`flex flex-col ${message.role === "user" ? "items-end" : "items-start"} animate-in fade-in slide-in-from-bottom-2`}>
@@ -388,23 +388,23 @@ export function Chatbot() {
                 {/* Avatar/Name Header for AI */}
                 {message.role !== "user" && (
                   <div className="flex items-center gap-2 mb-1.5 ml-1">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-800 border border-slate-700">
-                      <RoleIcon className="w-3 h-3 text-slate-300" />
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center border" style={{ backgroundColor: '#1e293b', borderColor: '#334155' }}>
+                      <RoleIcon className="w-3 h-3" style={{ color: '#ffffff' }} />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{theme.name}</span>
-                    <Badge variant="secondary" className="text-[8px] h-4 px-1 bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 ml-1">AI</Badge>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#475569' }}>{theme.name}</span>
+                    <Badge variant="secondary" className="text-[8px] h-4 px-1 border ml-1" style={{ backgroundColor: '#e2e8f0', color: '#475569', borderColor: '#cbd5e1' }}>AI</Badge>
                   </div>
                 )}
 
                 <div
                   className={`max-w-[88%] px-4 py-3 shadow-md text-sm leading-relaxed ${message.role === "user"
-                      ? "bg-indigo-600 text-white rounded-2xl rounded-br-sm ml-auto"
-                      : "bg-slate-800 text-slate-200 border border-slate-700 border-l-4 rounded-r-2xl rounded-bl-sm"
+                      ? "rounded-2xl rounded-br-sm ml-auto font-medium"
+                      : "border border-l-4 rounded-r-2xl rounded-bl-sm"
                     }`}
-                  style={message.role !== "user" ? { borderLeftColor: theme.accentColor } : {}}
+                  style={message.role === "user" ? { backgroundColor: '#2563eb', color: '#ffffff' } : { backgroundColor: '#ffffff', color: '#1e293b', borderLeftColor: theme.accentColor, borderColor: '#e2e8f0', borderLeftWidth: '4px' }}
                 >
                   {message.fileName && (
-                    <div className={`flex items-center gap-2 mb-2 p-1.5 rounded-lg text-[10px] font-bold ${message.role === 'user' ? 'bg-white/20 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}`}>
+                    <div className={`flex items-center gap-2 mb-2 p-1.5 rounded-lg text-[10px] font-bold ${message.role === 'user' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
                       📎 {message.fileName}
                     </div>
                   )}
@@ -412,7 +412,7 @@ export function Chatbot() {
                   {message.role === "user" ? (
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   ) : (
-                    <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:border prose-pre:border-slate-700 prose-th:bg-slate-800 prose-td:border-slate-700 prose-th:border-slate-700">
+                    <div className="prose prose-sm max-w-none prose-p:leading-relaxed" style={{ color: '#1e293b' }}>
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {message.content}
                       </ReactMarkdown>
@@ -424,14 +424,14 @@ export function Chatbot() {
             {isLoading && (
               <div className="flex flex-col items-start animate-in fade-in">
                 <div className="flex items-center gap-2 mb-1.5 ml-1">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-800 border border-slate-700">
-                    <RoleIcon className="w-3 h-3 text-slate-300" />
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center border" style={{ backgroundColor: '#1e293b', borderColor: '#334155' }}>
+                    <RoleIcon className="w-3 h-3" style={{ color: '#ffffff' }} />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{theme.name}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#475569' }}>{theme.name}</span>
                 </div>
-                <div className="bg-slate-800 border border-slate-700 border-l-4 rounded-r-2xl rounded-bl-sm px-4 py-3 shadow-md flex items-center gap-2" style={{ borderLeftColor: theme.accentColor }}>
+                <div className="border border-l-4 rounded-r-2xl rounded-bl-sm px-4 py-3 shadow-md flex items-center gap-2" style={{ backgroundColor: '#ffffff', borderLeftColor: theme.accentColor, borderColor: '#e2e8f0', borderLeftWidth: '4px' }}>
                   <Loader2 className="w-4 h-4 animate-spin" style={{ color: theme.accentColor }} />
-                  <span className="text-xs font-medium text-slate-400">Typing...</span>
+                  <span className="text-xs font-medium" style={{ color: '#475569' }}>Typing...</span>
                 </div>
               </div>
             )}
