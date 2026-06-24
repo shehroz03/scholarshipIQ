@@ -32,10 +32,13 @@ export function LoginPage({ onNavigate }: { onNavigate: (page: string, params?: 
       // Check role from response OR localStorage (fallback)
       const role = response.role || localStorage.getItem("userRole") || "student";
       if (role === "teacher") {
-        onNavigate('teacher-dashboard');
-      } else {
-        onNavigate('dashboard');
+        // Teacher accounts are NOT allowed on the student login page
+        localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
+        setError("🚫 You have a Teacher account. Please use the Teacher Login page to sign in.");
+        return;
       }
+      onNavigate('dashboard');
     } catch (err: any) {
       setError(err.message || "Invalid credentials");
     } finally {

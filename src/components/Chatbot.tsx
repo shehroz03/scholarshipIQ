@@ -42,6 +42,8 @@ export function Chatbot() {
   const [isLoading, setIsLoading] = useState(false);
   const chatbotRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasLoadedHistory = useRef<boolean>(false);
 
   // ── Role-aware assistant identity (distinct shape + colour + icon per role) ──
   // FIX: Teacher role must be checked FIRST before admin, because teacher login
@@ -148,10 +150,16 @@ export function Chatbot() {
   const theme = ROLE_THEME[role];
   const RoleIcon = theme.Icon;
 
-  // Load history when chat opens
+  // Auto-scroll to bottom whenever messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
+  // Load history ONCE when chat first opens
   useEffect(() => {
     const fetchHistory = async () => {
-      if (isOpen && !isOnboarding) {
+      if (isOpen && !isOnboarding && !hasLoadedHistory.current) {
+        hasLoadedHistory.current = true;
         try {
           let history;
           if (role === "admin") {
@@ -372,31 +380,31 @@ export function Chatbot() {
         </div>
 
         {/* Chat Content */}
-        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative bg-slate-50" style={{ backgroundColor: '#f8fafc' }}>
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative bg-slate-900">
+          <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
             {messages.map((message, i) => (
               <div key={i} className={`flex flex-col ${message.role === "user" ? "items-end" : "items-start"} animate-in fade-in slide-in-from-bottom-2`}>
                 
                 {/* Avatar/Name Header for AI */}
                 {message.role !== "user" && (
                   <div className="flex items-center gap-2 mb-1.5 ml-1">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-100 border border-slate-200">
-                      <RoleIcon className="w-3 h-3 text-slate-600" />
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-800 border border-slate-700">
+                      <RoleIcon className="w-3 h-3 text-slate-300" />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{theme.name}</span>
-                    <Badge variant="secondary" className="text-[8px] h-4 px-1 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 ml-1">AI</Badge>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{theme.name}</span>
+                    <Badge variant="secondary" className="text-[8px] h-4 px-1 bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 ml-1">AI</Badge>
                   </div>
                 )}
 
                 <div
-                  className={`max-w-[88%] px-4 py-3 shadow-sm text-sm leading-relaxed ${message.role === "user"
-                      ? "bg-[#1e3a8a] text-white rounded-2xl rounded-br-sm ml-auto"
-                      : "bg-white text-slate-800 border border-slate-100 border-l-4 rounded-r-2xl rounded-bl-sm"
+                  className={`max-w-[88%] px-4 py-3 shadow-md text-sm leading-relaxed ${message.role === "user"
+                      ? "bg-indigo-600 text-white rounded-2xl rounded-br-sm ml-auto"
+                      : "bg-slate-800 text-slate-200 border border-slate-700 border-l-4 rounded-r-2xl rounded-bl-sm"
                     }`}
                   style={message.role !== "user" ? { borderLeftColor: theme.accentColor } : {}}
                 >
                   {message.fileName && (
-                    <div className={`flex items-center gap-2 mb-2 p-1.5 rounded-lg text-[10px] font-bold ${message.role === 'user' ? 'bg-white/20 text-white' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}>
+                    <div className={`flex items-center gap-2 mb-2 p-1.5 rounded-lg text-[10px] font-bold ${message.role === 'user' ? 'bg-white/20 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}`}>
                       📎 {message.fileName}
                     </div>
                   )}
@@ -404,7 +412,7 @@ export function Chatbot() {
                   {message.role === "user" ? (
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   ) : (
-                    <div className="prose prose-slate prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-200 prose-th:bg-slate-50 prose-td:border-slate-200 prose-th:border-slate-200">
+                    <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:border prose-pre:border-slate-700 prose-th:bg-slate-800 prose-td:border-slate-700 prose-th:border-slate-700">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {message.content}
                       </ReactMarkdown>
@@ -416,17 +424,19 @@ export function Chatbot() {
             {isLoading && (
               <div className="flex flex-col items-start animate-in fade-in">
                 <div className="flex items-center gap-2 mb-1.5 ml-1">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-100 border border-slate-200">
-                    <RoleIcon className="w-3 h-3 text-slate-600" />
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-800 border border-slate-700">
+                    <RoleIcon className="w-3 h-3 text-slate-300" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{theme.name}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{theme.name}</span>
                 </div>
-                <div className="bg-white border border-slate-100 border-l-4 rounded-r-2xl rounded-bl-sm px-4 py-3 shadow-sm flex items-center gap-2" style={{ borderLeftColor: theme.accentColor }}>
+                <div className="bg-slate-800 border border-slate-700 border-l-4 rounded-r-2xl rounded-bl-sm px-4 py-3 shadow-md flex items-center gap-2" style={{ borderLeftColor: theme.accentColor }}>
                   <Loader2 className="w-4 h-4 animate-spin" style={{ color: theme.accentColor }} />
-                  <span className="text-xs font-medium text-slate-500">Typing...</span>
+                  <span className="text-xs font-medium text-slate-400">Typing...</span>
                 </div>
               </div>
             )}
+            {/* Scroll anchor */}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Prompts & Input Area */}
