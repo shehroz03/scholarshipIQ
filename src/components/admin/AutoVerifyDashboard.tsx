@@ -40,6 +40,7 @@ export function AutoVerifyDashboard() {
     const [updateLog, setUpdateLog] = useState<any[]>([]);
     const [updateRunning, setUpdateRunning] = useState(false);
     const [lastUpdateResult, setLastUpdateResult] = useState<any>(null);
+    const [updateBatchSize, setUpdateBatchSize] = useState<number>(6);
 
     // Expired Bot state
     const [expiredCount, setExpiredCount] = useState<number | null>(null);
@@ -139,7 +140,7 @@ export function AutoVerifyDashboard() {
         setUpdateRunning(true);
         toast.info("AI scan started... may take 1-2 minutes.");
         try {
-            const result = await api.admin.triggerAutoUpdate(6);
+            const result = await api.admin.triggerAutoUpdate(updateBatchSize);
             setLastUpdateResult(result);
             toast.success(`Scan done! Checked: ${result.checked} | Updated: ${result.updated}`);
             fetchData();
@@ -439,14 +440,37 @@ export function AutoVerifyDashboard() {
                             Uses Serper + GPT-4o to detect scholarship changes every 4 days
                         </p>
                     </div>
-                    <button
-                        onClick={handleRunUpdate}
-                        disabled={updateRunning}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-all disabled:opacity-60"
-                    >
-                        <RefreshCw size={14} className={updateRunning ? "animate-spin" : ""} />
-                        {updateRunning ? "Scanning..." : "Run Now (6 Scholarships)"}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-end gap-1">
+                            <span className="text-xs text-gray-500 font-semibold">
+                                Batch: <span className="text-indigo-600 font-black">{updateBatchSize}</span>
+                            </span>
+                            <div className="flex gap-1">
+                                {[6, 10, 25, 50].map(n => (
+                                    <button
+                                        key={n}
+                                        onClick={() => setUpdateBatchSize(n)}
+                                        disabled={updateRunning}
+                                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold border transition-all ${
+                                            updateBatchSize === n
+                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                : 'bg-white text-gray-400 border-gray-200 hover:border-indigo-400 hover:text-indigo-600'
+                                        }`}
+                                    >
+                                        {n}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleRunUpdate}
+                            disabled={updateRunning}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-all disabled:opacity-60 shrink-0"
+                        >
+                            <RefreshCw size={14} className={updateRunning ? "animate-spin" : ""} />
+                            {updateRunning ? "Scanning..." : `Run Now (${updateBatchSize} Scholarships)`}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Update stats */}

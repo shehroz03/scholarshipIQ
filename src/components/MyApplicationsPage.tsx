@@ -391,11 +391,11 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                                 appearance: 'none'
                               }}
                             >
-                              <option value="Saved">Saved</option>
-                              <option value="Applied">Applied</option>
-                              <option value="Interview">Interview</option>
-                              <option value="Accepted">Accepted</option>
-                              <option value="Rejected">Rejected</option>
+                              <option value="Saved" style={{ background: '#1e293b', color: 'white' }}>Saved</option>
+                              <option value="Applied" style={{ background: '#1e293b', color: 'white' }}>Applied</option>
+                              <option value="Interview" style={{ background: '#1e293b', color: 'white' }}>Interview</option>
+                              <option value="Accepted" style={{ background: '#1e293b', color: 'white' }}>Accepted</option>
+                              <option value="Rejected" style={{ background: '#1e293b', color: 'white' }}>Rejected</option>
                             </select>
                             <ChevronRight size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none', opacity: 0.5 }} />
                           </div>

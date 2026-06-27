@@ -10,7 +10,7 @@ export const ProtectedRoute = () => {
         return <Navigate to="/login" replace />;
     }
 
-    const isTeacherRoute = location.pathname.startsWith("/teacher");
+    const isTeacherRoute = location.pathname === "/teacher" || location.pathname.startsWith("/teacher/");
     const isStudentOnlyRoute = [
         "/dashboard", 
         "/search", 

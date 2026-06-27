@@ -136,6 +136,21 @@ export function useToolChat(toolType: string) {
         setSessionId(data.session_id)
       }
 
+      // The backend may return HTTP 200 whose `content` is actually an AI-provider
+      // error payload, e.g. {"error": true, "message": "AI unavailable: Error code: 400 ..."}.
+      // Detect that and show a clean error instead of dumping raw JSON into the chat.
+      if (typeof data.content === 'string' && data.content.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(data.content)
+          if (parsed && parsed.error) {
+            const reason = typeof parsed.message === 'string' ? parsed.message : 'AI is temporarily unavailable.'
+            setError(`${reason} — try clearing this chat (trash icon) and asking again.`)
+            setMessages(prev => prev.slice(0, -1)) // drop the unanswered user message
+            return
+          }
+        } catch { /* not an error payload — treat as a normal reply */ }
+      }
+
       setMessages(prev => {
         if (prev.length > 0) {
           const lastMsg = prev[prev.length - 1]

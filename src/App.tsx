@@ -1,41 +1,60 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Routes, Route, useNavigate, Navigate, useParams } from "react-router-dom";
+
+// Eager — first-paint public pages, route guard, and global UI
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
 import { TeacherLoginPage } from "./components/TeacherLoginPage";
 import { SignupPage } from "./components/SignupPage";
 import { AuthRequiredPage } from "./components/AuthRequiredPage";
-import { DashboardPage } from "./components/DashboardPage";
-import { SearchPage } from "./components/SearchPage";
-import { DetailPage } from "./components/DetailPage";
-import { SavedPage } from "./components/SavedPage";
-import { MyApplicationsPage } from "./components/MyApplicationsPage";
-import { TravelGuidePage } from "./components/TravelGuidePage";
-import { SettingsPage } from "./components/SettingsPage";
-import { ConsultantPage } from "./components/ConsultantPage";
-import { PricingPage } from "./components/PricingPage";
-
-import { Chatbot } from "./components/Chatbot";
-import AdminDashboard from "./components/AdminDashboard";
-import { UniversityMatcher } from "./pages/UniversityMatcher";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Toaster } from "./components/ui/sonner";
 import { Toaster as HotToaster } from "react-hot-toast";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-
-
-import { DocumentChecklistPage } from "./components/DocumentChecklistPage";
-import { ApplicationTimeline } from "./pages/ApplicationTimeline";
-import VisaGuidanceLandingPage from './components/VisaGuidance/VisaGuidanceLandingPage';
-import TeacherDashboard from './components/teacher/TeacherDashboard';
-import CoursesPage from './pages/CoursesPage';
-import CourseDetailPage from './pages/CourseDetailPage';
-import TeacherProfilePage from './pages/TeacherProfilePage';
-import VisaProfileFormPage from "./components/VisaGuidance/VisaProfileFormPage";
-import VisaChecklistResultPage from "./components/VisaGuidance/VisaChecklistResultPage";
 
 import { CurrencyProvider } from "./context/CurrencyContext";
 import { UserProvider } from "./context/UserContext";
 import { ThemeProvider } from "./context/ThemeContext";
+
+// Lazy — heavy / authenticated pages are code-split so each one is downloaded
+// only when its route is first visited. This keeps the initial bundle small
+// and makes the whole app load far faster.
+const DashboardPage = lazy(() => import("./components/DashboardPage").then(m => ({ default: m.DashboardPage })));
+const SearchPage = lazy(() => import("./components/SearchPage").then(m => ({ default: m.SearchPage })));
+const DetailPage = lazy(() => import("./components/DetailPage").then(m => ({ default: m.DetailPage })));
+const SavedPage = lazy(() => import("./components/SavedPage").then(m => ({ default: m.SavedPage })));
+const MyApplicationsPage = lazy(() => import("./components/MyApplicationsPage").then(m => ({ default: m.MyApplicationsPage })));
+const TravelGuidePage = lazy(() => import("./components/TravelGuidePage").then(m => ({ default: m.TravelGuidePage })));
+const SettingsPage = lazy(() => import("./components/SettingsPage").then(m => ({ default: m.SettingsPage })));
+const ConsultantPage = lazy(() => import("./components/ConsultantPage").then(m => ({ default: m.ConsultantPage })));
+const Chatbot = lazy(() => import("./components/Chatbot").then(m => ({ default: m.Chatbot })));
+const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
+const UniversityMatcher = lazy(() => import("./pages/UniversityMatcher").then(m => ({ default: m.UniversityMatcher })));
+const DocumentChecklistPage = lazy(() => import("./components/DocumentChecklistPage").then(m => ({ default: m.DocumentChecklistPage })));
+const ApplicationTimeline = lazy(() => import("./pages/ApplicationTimeline").then(m => ({ default: m.ApplicationTimeline })));
+const VisaGuidanceLandingPage = lazy(() => import("./components/VisaGuidance/VisaGuidanceLandingPage"));
+const TeacherDashboard = lazy(() => import("./components/teacher/TeacherDashboard"));
+const CoursesPage = lazy(() => import("./pages/CoursesPage"));
+const CourseDetailPage = lazy(() => import("./pages/CourseDetailPage"));
+const TeacherProfilePage = lazy(() => import("./pages/TeacherProfilePage"));
+const VisaProfileFormPage = lazy(() => import("./components/VisaGuidance/VisaProfileFormPage"));
+const VisaChecklistResultPage = lazy(() => import("./components/VisaGuidance/VisaChecklistResultPage"));
+
+// Lightweight fallback shown only while a route's chunk is being fetched.
+function PageLoader() {
+  return (
+    <div style={{
+      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      background: "#060818",
+    }}>
+      <div style={{
+        width: 38, height: 38, borderRadius: "50%",
+        border: "3px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1",
+        animation: "spin 0.8s linear infinite",
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
 
 // Wrapper for DetailPage to extract ID from URL without modifying the component itself
 const DetailPageWrapper = ({ onNavigate }: { onNavigate: any }) => {
@@ -91,6 +110,7 @@ export default function App() {
       <UserProvider>
         <CurrencyProvider>
         <div className="animate-in fade-in duration-500">
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage onNavigate={handleNavigate} />} />
@@ -133,8 +153,9 @@ export default function App() {
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        </Suspense>
       </div>
-      {isLoggedIn() && <Chatbot />}
+      {isLoggedIn() && <Suspense fallback={null}><Chatbot /></Suspense>}
       <Toaster position="top-right" richColors />
       <HotToaster position="top-right" toastOptions={{ duration: 3000 }} />
       </CurrencyProvider>

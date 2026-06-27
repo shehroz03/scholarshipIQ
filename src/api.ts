@@ -784,8 +784,13 @@ export const api = {
   teacherReviews: {
     // Submit a review for a teacher (student only)
     async submitReview(teacherId: number, rating: number, reviewText?: string) {
-      return apiBase.request(`/teacher-reviews/${teacherId}?rating=${rating}${reviewText ? `&review_text=${encodeURIComponent(reviewText)}` : ""}`, {
-        method: "POST"
+      // Try JSON body first (FastAPI @router.post with Pydantic body)
+      // Also send as query params as fallback for Query() style endpoints
+      const params = new URLSearchParams({ rating: String(rating) });
+      if (reviewText) params.set("review_text", reviewText);
+      return apiBase.request(`/teacher-reviews/${teacherId}?${params.toString()}`, {
+        method: "POST",
+        body: JSON.stringify({ rating, review_text: reviewText || "" }),
       });
     },
 

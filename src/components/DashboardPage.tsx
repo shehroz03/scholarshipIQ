@@ -26,13 +26,13 @@ import {
   Bot
 } from "lucide-react";
 import { api } from "../api";
+import { toast } from "sonner";
 import { CurrencySelector } from "./CurrencySelector";
 import { useCurrency } from "../context/CurrencyContext";
 import { NotificationBell } from "./NotificationBell";
 import { useUser } from "../context/UserContext";
 import { useTheme } from "../context/ThemeContext";
 import { Sidebar } from "./Sidebar";
-import { SyncingRadar } from "./SyncingRadar";
 import { AIScholarshipButton } from "./AIScholarshipButton";
 
 interface Scholarship {
@@ -56,30 +56,66 @@ interface SummaryData {
   user_name: string;
 }
 
+// Module-level cache so returning to Overview is instant (stale-while-revalidate).
+// The radar only shows on the very first load; afterwards we render cached data
+// localStorage cache — survives tab close/reopen, bound to user token with 48 hours TTL
+function readCache() {
+  try {
+    const token = localStorage.getItem("token") || "anonymous";
+    const raw = localStorage.getItem(`dashboardCache_${token}`);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    // 48 hours expiration check
+    if (Date.now() - (p.timestamp || 0) > 48 * 60 * 60 * 1000) {
+      localStorage.removeItem(`dashboardCache_${token}`);
+      return null;
+    }
+    return {
+      summary: p.summary ?? null,
+      recommendations: p.recommendations ?? [],
+      savedScholarships: new Set<number>(p.savedScholarships ?? []),
+    };
+  } catch { return null; }
+}
+function writeCache(summary: any, recommendations: any[], savedScholarships: Set<number>) {
+  try {
+    const token = localStorage.getItem("token") || "anonymous";
+    localStorage.setItem(`dashboardCache_${token}`, JSON.stringify({
+      summary, 
+      recommendations, 
+      savedScholarships: [...savedScholarships],
+      timestamp: Date.now()
+    }));
+  } catch { /* storage full — ignore */ }
+}
+
 export function DashboardPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
   const { status: userStatus } = useUser();
   const { isDark } = useTheme();
   const { convertAndFormat } = useCurrency();
-  const [summary, setSummary] = useState<SummaryData | null>(null);
-  const [recommendations, setRecommendations] = useState<Scholarship[]>([]);
-  const [savedScholarships, setSavedScholarships] = useState<Set<number>>(new Set());
+
+  const cached = readCache();
+  const [summary, setSummary] = useState<SummaryData | null>(cached?.summary ?? null);
+  const [recommendations, setRecommendations] = useState<Scholarship[]>(cached?.recommendations ?? []);
+  const [savedScholarships, setSavedScholarships] = useState<Set<number>>(cached?.savedScholarships ?? new Set());
   const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!cached); // only true on very first visit
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      const startTime = Date.now();
+    // If cache exists, do a silent background refresh after 300ms; otherwise fetch immediately
+    const delay = cached ? 300 : 0;
+    const timer = setTimeout(async () => {
       try {
         const [sumData, appsData, recData] = await Promise.all([
-          api.dashboard.getSummary().catch(e => { console.error("Summary error", e); return null; }),
-          api.applications.list().catch(e => { console.error("Apps error", e); return []; }),
-          api.recommendations.list({ limit: 5 }).catch(e => { console.error("Recs error", e); return { top_scholarships: [] }; })
+          api.dashboard.getSummary().catch(() => null),
+          api.applications.list().catch(() => []),
+          api.recommendations.list({ limit: 5 }).catch(() => ({ top_scholarships: [] }))
         ]);
         if (sumData) setSummary(sumData);
-        
+
         const savedIds = new Set<number>(appsData.map((a: any) => a.scholarship_id));
         setSavedScholarships(savedIds);
-        
+
         const recs = (recData.top_scholarships || []).map((item: any) => ({
           id: item.id,
           title: item.title,
@@ -94,13 +130,14 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
           ai_insight: item.short_reason || "Matching your academic profile perfectly."
         }));
         setRecommendations(recs);
+        writeCache(sumData ?? null, recs, savedIds);
       } catch (err) {
-        console.error("Dashboard data fetch failed", err);
+        console.error("Dashboard fetch failed", err);
       } finally {
         setIsLoading(false);
       }
-    };
-    fetchInitialData();
+    }, delay);
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleSave = async (scholarshipId: number) => {
@@ -108,23 +145,35 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
 
     setSavingIds(prev => new Set(prev).add(scholarshipId));
     const isCurrentlySaved = savedScholarships.has(scholarshipId);
-    
+
+    // Keep both component state and the module cache in sync so the saved
+    // status survives navigating away and back to Overview.
+    const applySaved = (saved: boolean) => {
+      setSavedScholarships(prev => {
+        const next = new Set(prev);
+        if (saved) next.add(scholarshipId); else next.delete(scholarshipId);
+        writeCache(summary, recommendations, next);
+        return next;
+      });
+    };
+
     try {
       if (isCurrentlySaved) {
         const apps = await api.applications.list();
         const appToDelete = apps.find((a: any) => a.scholarship_id === scholarshipId);
         if (appToDelete) await api.applications.delete(appToDelete.id);
-        setSavedScholarships(prev => {
-          const next = new Set(prev);
-          next.delete(scholarshipId);
-          return next;
-        });
+        applySaved(false);
+        toast.info("Removed from saved");
       } else {
         await api.applications.save(scholarshipId, "Saved");
-        setSavedScholarships(prev => new Set(prev).add(scholarshipId));
+        applySaved(true);
+        toast.success("Saved to your Application Tracker 🚀");
       }
-    } catch (err) {
+    } catch (err: any) {
+      // Surface the real reason instead of failing silently, so the user knows
+      // why a save didn't go through (e.g. session expired, plan limit, network).
       console.error("Toggle save failed", err);
+      toast.error(err?.message || "Could not save. Please try again.");
     } finally {
       setSavingIds(prev => {
         const next = new Set(prev);
@@ -133,10 +182,6 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
       });
     }
   };
-
-  if (isLoading) {
-    return <SyncingRadar />;
-  }
 
   const stats = [
     { label: "Pipeline", value: savedScholarships.size, icon: <Target size={22} />, color: '#6366f1', glow: 'rgba(99,102,241,0.2)' },

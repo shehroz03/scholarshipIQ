@@ -17,6 +17,7 @@ export function AutoUpdater() {
     const [archiveResult, setArchiveResult] = useState<any>(null);
     const [cleanupLog, setCleanupLog] = useState<any[]>([]);
     const [cleanupStats, setCleanupStats] = useState<any>(null);
+    const [batchSize, setBatchSize] = useState<number>(6);
 
     const fetchData = async () => {
         try {
@@ -59,7 +60,7 @@ export function AutoUpdater() {
         setIsRunning(true);
         toast.info("AI Auto-Update scan started... This may take 1-2 minutes.");
         try {
-            const result = await api.admin.triggerAutoUpdate(6);
+            const result = await api.admin.triggerAutoUpdate(batchSize);
             setLastResult(result);
             toast.success(`Scan complete! Checked: ${result.checked} | Updated: ${result.updated}`);
             fetchData();
@@ -87,14 +88,50 @@ export function AutoUpdater() {
                         Uses Serper (Google) + GPT-4o to detect scholarship changes automatically every 4 days
                     </p>
                 </div>
-                <Button
-                    onClick={handleRun}
-                    disabled={isRunning}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6"
-                >
-                    <RefreshCw className={`w-4 h-4 mr-2 ${isRunning ? "animate-spin" : ""}`} />
-                    {isRunning ? "Running Scan..." : "Run Now (6 Scholarships)"}
-                </Button>
+                <div className="flex items-center gap-3">
+                    {/* Batch size control */}
+                    <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                            <label className="text-xs text-gray-500 font-semibold whitespace-nowrap">
+                                Batch Size: <span className="text-indigo-600 font-black">{batchSize}</span>
+                            </label>
+                            <input
+                                type="range"
+                                min={1}
+                                max={50}
+                                value={batchSize}
+                                onChange={e => setBatchSize(Number(e.target.value))}
+                                disabled={isRunning}
+                                className="w-28 accent-indigo-600"
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            {[6, 10, 25, 50].map(n => (
+                                <button
+                                    key={n}
+                                    onClick={() => setBatchSize(n)}
+                                    disabled={isRunning}
+                                    className={`text-[11px] px-2 py-0.5 rounded font-bold border transition-all ${
+                                        batchSize === n
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-400 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    {n}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <Button
+                        onClick={handleRun}
+                        disabled={isRunning}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 shrink-0"
+                    >
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isRunning ? "animate-spin" : ""}`} />
+                        {isRunning ? "Running Scan..." : `Run Now (${batchSize} Scholarships)`}
+                    </Button>
+                </div>
             </div>
 
             {/* Status Cards */}
