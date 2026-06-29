@@ -80,6 +80,7 @@ ALWAYS respond in clear, warm, professional English regardless of how the user w
 - Be encouraging but grounded: "Aapke CGPA ke hisaab se chances strong hain"
 - When giving tough news: be honest and constructive — "Seedha baat karta hoon..."  
 - Never start with filler phrases like "Absolutely!", "Great question!", "Of course!" — go straight to the answer
+- DEADLINE DISPLAY RULE: If a scholarship deadline is unknown or not provided in the database, NEVER write "TBD". ALWAYS write "Deadline varies by intake. Please verify on the official website."
 
 ---
 
@@ -307,12 +308,13 @@ STRICT RESPONSE CONTRACT (Return valid JSON only):
     "total_yearly": X
   }},
   
-  "one_time_costs": {{
-    "visa_fee": {{"amount": X, "note": "Processing + Biometrics"}},
-    "flight": {{"amount": X, "note": "One-way from Pakistan"}},
-    "setup_costs": {{"amount": X, "note": "Housing deposit + Essentials"}},
-    "total": {{"amount": X}}
-  }},
+  "one_time_costs": {
+    "visa_fee": {"amount": X, "note": "Processing + Biometrics"},
+    "flight": {"amount": X, "note": "One-way from Pakistan"},
+    "health_insurance": {"amount": X, "note": "IHS / Student Health Cover"},
+    "setup_costs": {"amount": X, "note": "Housing deposit + Essentials"},
+    "total": {"amount": X}
+  },
   
   "grand_total_budget": {{
     "without_scholarship": X,
@@ -659,6 +661,7 @@ RULES:
 2. Group scholarships appropriately (a scholarship can be in multiple sections if relevant).
 3. Ensure match_score is a number 0-100.
 4. Return ONLY valid JSON.
+5. DEADLINE DISPLAY RULE: If a scholarship deadline is unknown or not provided in the database, NEVER write "TBD". ALWAYS write "Deadline varies by intake. Please verify on the official website."
 """
 
 SYSTEM_PROMPT_EMAIL = """
@@ -684,14 +687,17 @@ Dear [Appropriate salutation - Prof./Dr./Admissions Team],
 
 Warm regards,
 {student_name}
-[Pakistani National | {field} | CGPA: {cgpa}]
+Email: {email}
+Phone: {phone}
+Country: {country}
 
 ---
 Follow-up Strategy: [1 specific tip - when and how to follow up if no response]
 Pro Tip: [1 tip to increase response rate]
 
 STRICT RULES:
-- Write the COMPLETE email - no placeholders like [your name] or [add details]
+- Write the COMPLETE email - no placeholders like [your name], [Your Contact Information] or [add details]
+- Use the exact Email, Phone, and Country provided above in the signature block
 - Make it specific to {university_name} - not a generic template
 - Tone: Professional, confident, not desperate
 - Length: 150-200 words for the email body
@@ -707,13 +713,25 @@ LANGUAGE RULE: Always respond in professional English.
 - English reply: "Welcome {student_name}! Let's begin your mock interview session..."
 
 CONDUCT THE INTERVIEW:
-1. Ask ONE question at a time — wait for the student's answer
-2. After each answer give structured feedback in the SAME language as student:
+1. Ask ONE question at a time — wait for the student's answer.
+2. For EVERY question you ask (including the very first one), you MUST append this exact progress block at the bottom of your message:
+
+Question [X] / 10
+Difficulty: Medium
+Time Remaining: 02:00
+
+(Where [X] is the current question number from 1 to 10).
+
+3. After each answer give structured feedback in the SAME language as student:
    - ✅ Strength: What they did well (1 sentence)
    - ⚠️ Weakness: What to improve (1 sentence)  
    - 💡 Better Answer: A 1-2 line improved version
-   Then ask the NEXT question.
-3. Real interview questions:
+   Then ask the NEXT question, and again append the progress block at the bottom:
+   Question [X+1] / 10
+   Difficulty: Medium
+   Time Remaining: 02:00
+
+4. Real interview questions:
    - Tell me about yourself and your academic journey.
    - Why have you chosen this specific scholarship over others?
    - What is the biggest challenge in your field in Pakistan and how will your degree address it?
@@ -721,7 +739,7 @@ CONDUCT THE INTERVIEW:
    - How will you give back to Pakistan after your studies?
    - Describe a time you showed leadership under pressure.
    - Why this country/university specifically?
-4. After 5 questions, give final assessment:
+5. After 5 questions, give final assessment:
    - 🏆 Overall Score: X/10
    - Top 2 strengths
    - Top 2 areas to improve
@@ -731,7 +749,7 @@ STRICT RULES:
 - NEVER list scholarships or go off-topic
 - Be encouraging but honest with feedback
 - Language: Always respond in professional English. NO casual words.
-- Start in English: "Welcome {student_name} to your ScholarIQ Mock Interview. Treat this like a real interview — it will sharpen your preparation significantly. Let's begin! Question 1: Tell me about yourself and your academic background."
+- Start in English: "Welcome {student_name} to your ScholarIQ Mock Interview. Treat this like a real interview — it will sharpen your preparation significantly. Let's begin!\n\nQuestion 1: Tell me about yourself and your academic background.\n\nQuestion 1 / 10\n\nDifficulty: Medium\n\nTime Remaining: 02:00"
 """
 
 SYSTEM_PROMPT_SOP_CHAT = """
@@ -1363,6 +1381,9 @@ async def draft_email(
     system_prompt = SYSTEM_PROMPT_EMAIL.format(
         university_name=university_name,
         email_purpose=purpose,
+        email=current_user.email or "shehroz@example.com",
+        phone=getattr(current_user, "phone", None) or "+92 300 1234567",
+        country="Pakistan",
         **context
     )
     reply, tokens = _call_ai([], system_prompt, response_format="json")
@@ -1643,7 +1664,10 @@ async def send_session_message(
             field=context["field"],
             cgpa=context["cgpa"],
             email_purpose="admission_inquiry",
-            university_name=university_name.title()
+            university_name=university_name.title(),
+            email=current_user.email or "shehroz@example.com",
+            phone=getattr(current_user, "phone", None) or "+92 300 1234567",
+            country="Pakistan"
         )
     elif tool_type == "mock_interview":
         system_prompt = SYSTEM_PROMPT_MOCK_INTERVIEW.format(
