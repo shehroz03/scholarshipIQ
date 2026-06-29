@@ -204,37 +204,37 @@ function isDeadlinePassed(deadlineStr: string): boolean {
 const ScholarshipMiniCard = ({ title, university, deadline, country, funding }: any) => {
   const passed = isDeadlinePassed(deadline);
   return (
-    <div className={`my-4 p-5 rounded-2xl border hover:border-indigo-500/30 transition-all group/card shadow-xl ${
-      passed ? 'bg-red-950/20 border-red-900/30' : 'bg-white/5 border-white/5'
+    <div className={`my-4 p-5 rounded-2xl border hover:border-indigo-500/50 transition-all group/card shadow-xl ${
+      passed ? 'bg-red-950/20 border-red-900/40' : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700'
     }`}>
       <div className="flex justify-between items-start mb-3">
-        <h4 className="font-black text-white text-base group-hover/card:text-indigo-400 transition-colors line-clamp-1">{title}</h4>
+        <h4 className="font-black text-slate-900 dark:text-white text-base group-hover/card:text-indigo-600 dark:group-hover/card:text-indigo-400 transition-colors line-clamp-1">{title}</h4>
         <div className="flex items-center gap-2">
           {passed && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/40">
               ⚠️ Deadline Passed
             </span>
           )}
-          <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 text-[8px] font-black uppercase tracking-widest">{funding}</Badge>
+          <Badge variant="outline" className="bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-500/30 text-[8px] font-black uppercase tracking-widest">{funding}</Badge>
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-          <GraduationCap size={12} className="text-indigo-500" />
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+          <GraduationCap size={12} className="text-indigo-600 dark:text-indigo-400" />
           <span>{university}</span>
         </div>
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
               <Globe size={10} /> {country}
             </div>
             <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest ${
-              passed ? 'text-red-400 line-through' : 'text-amber-500'
+              passed ? 'text-red-600 dark:text-red-400 line-through' : 'text-amber-700 dark:text-amber-500'
             }`}>
               <Clock size={10} /> {deadline}
             </div>
           </div>
-          <button className="text-[10px] font-black text-indigo-400 hover:text-indigo-300 uppercase tracking-widest flex items-center gap-1">
+          <button className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 hover:text-indigo-600 uppercase tracking-widest flex items-center gap-1">
             View <ChevronRight size={10} />
           </button>
         </div>
@@ -247,60 +247,58 @@ const AIRecommendationCard = () => {
   const { isDark } = useTheme();
   return (
     <div className="my-6 rounded-3xl p-6 lg:p-8 border shadow-2xl transition-all" style={{
-      background: isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)' : 'linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)',
-      borderColor: isDark ? 'rgba(244, 196, 78, 0.3)' : 'rgba(244, 196, 78, 0.4)',
-      boxShadow: '0 20px 40px -15px rgba(244, 196, 78, 0.15)'
+      background: isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)' : 'linear-gradient(135deg, rgba(241, 245, 249, 0.95) 0%, rgba(226, 232, 240, 0.95) 100%)',
+      borderColor: isDark ? 'rgba(244, 196, 78, 0.4)' : 'rgba(244, 196, 78, 0.6)',
+      boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.2)'
     }}>
-      <div className="flex items-center gap-3 mb-6 border-b pb-4" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
-        <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-          <Star size={22} className="fill-amber-400 text-amber-400 animate-pulse" />
+      <div className="flex items-center gap-3 mb-6 border-b pb-4" style={{ borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)' }}>
+        <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 flex items-center justify-center">
+          <Star size={22} className="fill-amber-500 text-amber-600 dark:text-amber-400 animate-pulse" />
         </div>
         <div>
-          <h4 className="text-lg font-black flex items-center gap-2" style={{ color: isDark ? '#fff' : '#1e293b' }}>
-            AI Recommendation <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-black uppercase tracking-wider">Smart Match</span>
+          <h4 className="text-lg font-black flex items-center gap-2" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+            AI Recommendation <span className="text-[10px] bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 px-2.5 py-0.5 rounded-full border border-indigo-500/40 font-black uppercase tracking-wider">Smart Match</span>
           </h4>
-          <p className="text-xs text-slate-400 font-semibold mt-0.5" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Based on your academic profile & preferences:</p>
+          <p className="text-xs font-bold mt-0.5" style={{ color: isDark ? '#e2e8f0' : '#334155' }}>Based on your academic profile & preferences:</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-        <div className="p-6 rounded-2xl border transition-all hover:-translate-y-1" style={{
-          backgroundColor: isDark ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.04)',
-          borderColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.3)'
+        <div className="p-6 rounded-2xl border transition-all hover:-translate-y-1 bg-white/60 dark:bg-slate-800/80 shadow-md" style={{
+          borderColor: isDark ? 'rgba(59, 130, 246, 0.4)' : 'rgba(59, 130, 246, 0.5)'
         }}>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-base font-black flex items-center gap-2" style={{ color: isDark ? '#60a5fa' : '#2563eb' }}>
-              <CheckCircle2 size={18} className="text-blue-500" /> ✔ UK
+            <span className="text-base font-black flex items-center gap-2" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }}>
+              <CheckCircle2 size={18} className="text-blue-600 dark:text-blue-500" /> ✔ UK
             </span>
-            <span className="text-[10px] bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded-full">1-Year Route</span>
+            <span className="text-[10px] bg-blue-500/20 text-blue-700 dark:text-blue-400 font-black px-2.5 py-0.5 rounded-full border border-blue-500/30">1-Year Route</span>
           </div>
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Best if you want:</p>
-          <ul className="space-y-2.5 text-sm font-bold" style={{ color: isDark ? '#e2e8f0' : '#334155' }}>
-            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" /> Faster graduation</li>
-            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" /> English environment</li>
-            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" /> 1-year Masters</li>
+          <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Best if you want:</p>
+          <ul className="space-y-2.5 text-sm font-black" style={{ color: isDark ? '#f8fafc' : '#0f172a' }}>
+            <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500 shrink-0" /> Faster graduation</li>
+            <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500 shrink-0" /> English environment</li>
+            <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500 shrink-0" /> 1-year Masters</li>
           </ul>
         </div>
 
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex w-10 h-10 rounded-full bg-slate-900 border border-amber-500/40 text-amber-400 text-xs font-black items-center justify-center shadow-xl z-10">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex w-10 h-10 rounded-full bg-slate-900 border-2 border-amber-500 text-amber-400 text-xs font-black items-center justify-center shadow-xl z-10">
           OR
         </div>
 
-        <div className="p-6 rounded-2xl border transition-all hover:-translate-y-1" style={{
-          backgroundColor: isDark ? 'rgba(16, 185, 129, 0.05)' : 'rgba(16, 185, 129, 0.04)',
-          borderColor: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.3)'
+        <div className="p-6 rounded-2xl border transition-all hover:-translate-y-1 bg-white/60 dark:bg-slate-800/80 shadow-md" style={{
+          borderColor: isDark ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.5)'
         }}>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-base font-black flex items-center gap-2" style={{ color: isDark ? '#34d399' : '#059669' }}>
-              <CheckCircle2 size={18} className="text-emerald-500" /> ✔ Germany
+            <span className="text-base font-black flex items-center gap-2" style={{ color: isDark ? '#34d399' : '#047857' }}>
+              <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-500" /> ✔ Germany
             </span>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-full">Research & PR</span>
+            <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-black px-2.5 py-0.5 rounded-full border border-emerald-500/30">Research & PR</span>
           </div>
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Best if you prefer:</p>
-          <ul className="space-y-2.5 text-sm font-bold" style={{ color: isDark ? '#e2e8f0' : '#334155' }}>
-            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Lower cost</li>
-            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Research</li>
-            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Long-term career</li>
+          <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Best if you prefer:</p>
+          <ul className="space-y-2.5 text-sm font-black" style={{ color: isDark ? '#f8fafc' : '#0f172a' }}>
+            <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-500 shrink-0" /> Lower cost</li>
+            <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-500 shrink-0" /> Research</li>
+            <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-500 shrink-0" /> Long-term career</li>
           </ul>
         </div>
       </div>
@@ -311,33 +309,31 @@ const AIRecommendationCard = () => {
 const ScholarshipImprovementCards = () => {
   const { isDark } = useTheme();
   const cards = [
-    { title: 'Academic Profile', icon: <GraduationCap size={20} className="text-blue-500" />, bg: 'border-blue-500/30', tip: 'Target top 5% GPA ranking' },
-    { title: 'IELTS', icon: <FileText size={20} className="text-amber-500" />, bg: 'border-amber-500/30', tip: 'Secure 7.5+ overall band' },
-    { title: 'Projects', icon: <Target size={20} className="text-emerald-500" />, bg: 'border-emerald-500/30', tip: 'Showcase real-world impact' },
-    { title: 'SOP', icon: <Star size={20} className="text-indigo-500" />, bg: 'border-indigo-500/30', tip: 'Write a tailored narrative' },
-    { title: 'Recommendation Letters', icon: <Users size={20} className="text-purple-500" />, bg: 'border-purple-500/30', tip: '2 academic, 1 professional' },
-    { title: 'Extra Activities', icon: <Award size={20} className="text-pink-500" />, bg: 'border-pink-500/30', tip: 'Demonstrate active leadership' },
-    { title: 'Financial Planning', icon: <Coins size={20} className="text-yellow-500" />, bg: 'border-yellow-500/30', tip: 'Calculate visa living costs' },
-    { title: 'Apply Early', icon: <Clock size={20} className="text-teal-500" />, bg: 'border-teal-500/30', tip: 'Submit 2 weeks before deadline' },
+    { title: 'Academic Profile', icon: <GraduationCap size={20} className="text-blue-600 dark:text-blue-400" />, border: 'border-blue-500/40', tip: 'Target top 5% GPA ranking' },
+    { title: 'IELTS', icon: <FileText size={20} className="text-amber-600 dark:text-amber-400" />, border: 'border-amber-500/40', tip: 'Secure 7.5+ overall band' },
+    { title: 'Projects', icon: <Target size={20} className="text-emerald-600 dark:text-emerald-400" />, border: 'border-emerald-500/40', tip: 'Showcase real-world impact' },
+    { title: 'SOP', icon: <Star size={20} className="text-indigo-600 dark:text-indigo-400" />, border: 'border-indigo-500/40', tip: 'Write a tailored narrative' },
+    { title: 'Recommendation Letters', icon: <Users size={20} className="text-purple-600 dark:text-purple-400" />, border: 'border-purple-500/40', tip: '2 academic, 1 professional' },
+    { title: 'Extra Activities', icon: <Award size={20} className="text-pink-600 dark:text-pink-400" />, border: 'border-pink-500/40', tip: 'Demonstrate active leadership' },
+    { title: 'Financial Planning', icon: <Coins size={20} className="text-yellow-600 dark:text-yellow-400" />, border: 'border-yellow-500/40', tip: 'Calculate visa living costs' },
+    { title: 'Apply Early', icon: <Clock size={20} className="text-teal-600 dark:text-teal-400" />, border: 'border-teal-500/40', tip: 'Submit 2 weeks before deadline' },
   ];
 
   return (
     <div className="my-8">
-      <h4 className="text-lg font-black mb-6 flex items-center gap-2" style={{ color: isDark ? '#fff' : '#1e293b' }}>
-        <Sparkles size={20} className="text-amber-400" /> Actionable Profile Improvement Strategy
+      <h4 className="text-lg font-black mb-6 flex items-center gap-2" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+        <Sparkles size={20} className="text-amber-500 dark:text-amber-400" /> Actionable Profile Improvement Strategy
       </h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c, i) => (
-          <div key={i} className={`p-5 rounded-2xl border transition-all hover:-translate-y-1 shadow-lg ${c.bg}`} style={{
-            backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)'
-          }}>
+          <div key={i} className={`p-5 rounded-2xl border-2 transition-all hover:-translate-y-1 shadow-lg bg-white dark:bg-slate-800 ${c.border}`}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
+              <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center shadow-inner">
                 {c.icon}
               </div>
-              <span className="font-bold text-sm leading-tight" style={{ color: isDark ? '#e2e8f0' : '#1e293b' }}>{c.title}</span>
+              <span className="font-black text-sm leading-tight text-slate-900 dark:text-white">{c.title}</span>
             </div>
-            <p className="text-[12px] font-semibold text-slate-400 border-t pt-3 mt-1" style={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+            <p className="text-[12px] font-bold text-slate-700 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 pt-3 mt-1">
               💡 {c.tip}
             </p>
           </div>
@@ -350,66 +346,62 @@ const ScholarshipImprovementCards = () => {
 const ScholarshipReadinessWidget = () => {
   const { isDark } = useTheme();
   return (
-    <div className="my-6 p-6 lg:p-8 rounded-3xl border shadow-2xl transition-all" style={{
-      backgroundColor: isDark ? 'rgba(30, 41, 59, 0.4)' : 'rgba(241, 245, 249, 0.8)',
-      borderColor: isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)',
-      backdropFilter: 'blur(16px)'
-    }}>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 border-b pb-4" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+    <div className="my-6 p-6 lg:p-8 rounded-3xl border-2 shadow-2xl transition-all bg-slate-100 dark:bg-slate-800/90 border-indigo-500/40 dark:border-indigo-500/40">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 border-b border-slate-300 dark:border-slate-700 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-            <TrendingUp size={22} className="text-indigo-400" />
+          <div className="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-500/40 flex items-center justify-center">
+            <TrendingUp size={22} className="text-indigo-700 dark:text-indigo-400" />
           </div>
           <div>
-            <h4 className="text-lg font-black flex items-center gap-2" style={{ color: isDark ? '#fff' : '#1e293b' }}>
-              Scholarship Readiness <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 font-black px-2.5 py-0.5 rounded-full">AI Evaluation</span>
+            <h4 className="text-lg font-black flex items-center gap-2 text-slate-900 dark:text-white">
+              Scholarship Readiness <span className="text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/40 font-black px-2.5 py-0.5 rounded-full">AI Evaluation</span>
             </h4>
-            <p className="text-xs text-slate-400 font-semibold mt-0.5" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Dynamic multi-parameter candidate appraisal</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 font-bold mt-0.5">Dynamic multi-parameter candidate appraisal</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-2xl shadow-inner">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-400" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Overall Score</span>
-          <span className="text-2xl font-black text-indigo-400">82%</span>
+        <div className="flex items-center gap-3 bg-indigo-500/15 border border-indigo-500/30 px-4 py-2 rounded-2xl shadow-inner">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Overall Score</span>
+          <span className="text-2xl font-black text-indigo-700 dark:text-indigo-400">82%</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 rounded-2xl border bg-white/5 border-white/5 flex flex-col gap-2 shadow-sm">
+        <div className="p-4 rounded-2xl border bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 flex flex-col gap-2 shadow-md">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-400" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Academic Profile</span>
-            <span className="text-sm font-black text-blue-400">90%</span>
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Academic Profile</span>
+            <span className="text-sm font-black text-blue-700 dark:text-blue-400">90%</span>
           </div>
-          <div className="w-full bg-slate-700/30 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-blue-500 h-full rounded-full" style={{ width: '90%' }} />
+          <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 overflow-hidden">
+            <div className="bg-blue-600 dark:bg-blue-500 h-full rounded-full" style={{ width: '90%' }} />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl border bg-white/5 border-white/5 flex flex-col gap-2 shadow-sm">
+        <div className="p-4 rounded-2xl border bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 flex flex-col gap-2 shadow-md">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-400" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Research</span>
-            <span className="text-sm font-black text-amber-400">70%</span>
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Research</span>
+            <span className="text-sm font-black text-amber-700 dark:text-amber-400">70%</span>
           </div>
-          <div className="w-full bg-slate-700/30 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-amber-500 h-full rounded-full" style={{ width: '70%' }} />
+          <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 overflow-hidden">
+            <div className="bg-amber-600 dark:bg-amber-500 h-full rounded-full" style={{ width: '70%' }} />
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl border bg-white/5 border-white/5 flex flex-col gap-2 shadow-sm">
+        <div className="p-4 rounded-2xl border bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 flex flex-col gap-2 shadow-md">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-400" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Language</span>
-            <span className="text-sm font-black text-emerald-400">85%</span>
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Language</span>
+            <span className="text-sm font-black text-emerald-700 dark:text-emerald-400">85%</span>
           </div>
-          <div className="w-full bg-slate-700/30 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full" style={{ width: '85%' }} />
+          <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 overflow-hidden">
+            <div className="bg-emerald-600 dark:bg-emerald-500 h-full rounded-full" style={{ width: '85%' }} />
           </div>
         </div>
       </div>
 
-      <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3.5 shadow-md">
-        <Sparkles size={22} className="text-amber-400 shrink-0" />
+      <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center gap-3.5 shadow-md">
+        <Sparkles size={22} className="text-amber-600 dark:text-amber-400 shrink-0" />
         <div className="flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Expert Recommendation</span>
-          <span className="text-xs font-bold text-slate-200 mt-0.5" style={{ color: isDark ? '#f8fafc' : '#1e293b' }}>Improve SOP and research experience.</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">Expert Recommendation</span>
+          <span className="text-xs font-black text-slate-900 dark:text-white mt-0.5">Improve SOP and research experience.</span>
         </div>
       </div>
     </div>
@@ -419,47 +411,43 @@ const ScholarshipReadinessWidget = () => {
 const MatchConfidenceWidget = () => {
   const { isDark } = useTheme();
   const matches = [
-    { name: 'TU Delft', conf: 92, color: 'text-emerald-400', bg: 'bg-emerald-500', note: 'Strong research fit' },
-    { name: 'DAAD', conf: 89, color: 'text-blue-400', bg: 'bg-blue-500', note: 'High academic alignment' },
-    { name: 'Leiden', conf: 83, color: 'text-indigo-400', bg: 'bg-indigo-500', note: 'Excellent eligibility match' },
+    { name: 'TU Delft', conf: 92, color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-600 dark:bg-emerald-500', note: 'Strong research fit' },
+    { name: 'DAAD', conf: 89, color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-600 dark:bg-blue-500', note: 'High academic alignment' },
+    { name: 'Leiden', conf: 83, color: 'text-indigo-700 dark:text-indigo-400', bg: 'bg-indigo-600 dark:bg-indigo-500', note: 'Excellent eligibility match' },
   ];
 
   return (
-    <div className="my-6 p-6 lg:p-8 rounded-3xl border shadow-2xl transition-all" style={{
-      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',
-      borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
-      backdropFilter: 'blur(16px)'
-    }}>
-      <div className="flex items-center gap-3 mb-6 border-b pb-4" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
-        <div className="p-2.5 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center">
-          <Target size={22} className="text-blue-400" />
+    <div className="my-6 p-6 lg:p-8 rounded-3xl border-2 shadow-2xl transition-all bg-slate-100 dark:bg-slate-800/90 border-blue-500/40 dark:border-blue-500/40">
+      <div className="flex items-center gap-3 mb-6 border-b border-slate-300 dark:border-slate-700 pb-4">
+        <div className="p-2.5 rounded-2xl bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/40 flex items-center justify-center">
+          <Target size={22} className="text-blue-700 dark:text-blue-400" />
         </div>
         <div>
-          <h4 className="text-lg font-black flex items-center gap-2" style={{ color: isDark ? '#fff' : '#1e293b' }}>
-            Match Confidence <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 font-black px-2.5 py-0.5 rounded-full">Smart Match Engine</span>
+          <h4 className="text-lg font-black flex items-center gap-2 text-slate-900 dark:text-white">
+            Match Confidence <span className="text-[10px] bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/40 font-black px-2.5 py-0.5 rounded-full">Smart Match Engine</span>
           </h4>
-          <p className="text-xs text-slate-400 font-semibold mt-0.5" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Neural alignment with university acceptance profiles</p>
+          <p className="text-xs text-slate-700 dark:text-slate-300 font-bold mt-0.5">Neural alignment with university acceptance profiles</p>
         </div>
       </div>
 
       <div className="space-y-4">
         {matches.map((m, i) => (
-          <div key={i} className="p-4 rounded-2xl border bg-white/5 border-white/5 flex items-center justify-between gap-4 hover:bg-white/10 transition-colors shadow-sm">
+          <div key={i} className="p-4 rounded-2xl border bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-650 transition-colors shadow-md">
             <div className="flex items-center gap-4 flex-1">
-              <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center text-sm font-black text-slate-200 shadow-md">
+              <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-white/20 flex items-center justify-center text-sm font-black text-slate-100 shadow-lg">
                 🎓
               </div>
               <div className="flex flex-col flex-1">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-bold text-sm" style={{ color: isDark ? '#f8fafc' : '#1e293b' }}>{m.name}</span>
+                  <span className="font-black text-sm text-slate-900 dark:text-white">{m.name}</span>
                   <span className={`text-sm font-black ${m.color}`}>{m.conf}%</span>
                 </div>
-                <div className="w-full bg-slate-700/30 rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 overflow-hidden">
                   <div className={`${m.bg} h-full rounded-full`} style={{ width: `${m.conf}%` }} />
                 </div>
               </div>
             </div>
-            <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-slate-400 bg-white/5 border border-white/10 px-3 py-1. rounded-xl">
+            <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-black text-slate-800 dark:text-slate-200 bg-slate-200 dark:bg-slate-600 border border-slate-300 dark:border-slate-500 px-3 py-1.5 rounded-xl shadow-sm">
               {m.note}
             </div>
           </div>
@@ -475,12 +463,12 @@ function renderTextWithBadges(children: any, isDark: boolean): any {
     const parts = children.split(regex);
     if (parts.length === 1) return children;
     return parts.map((part, index) => {
-      if (part === '🇬🇧 UK') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/15 border border-blue-500/30 text-blue-500 mx-1 shadow-sm">🇬🇧 United Kingdom</span>;
-      if (part === '🇩🇪 Germany') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-500 mx-1 shadow-sm">🇩🇪 Germany</span>;
-      if (part === '🇺🇸 USA') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/15 border border-purple-500/30 text-purple-500 mx-1 shadow-sm">🇺🇸 USA</span>;
-      if (part === '🇨🇦 Canada') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-500/15 border border-red-500/30 text-red-500 mx-1 shadow-sm">🇨🇦 Canada</span>;
-      if (part === '🇦🇺 Australia') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-500 mx-1 shadow-sm">🇦🇺 Australia</span>;
-      if (part === '🇳🇱 Netherlands') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-500/15 border border-orange-500/30 text-orange-500 mx-1 shadow-sm">🇳🇱 Netherlands</span>;
+      if (part === '🇬🇧 UK') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-500/20 border border-blue-500/40 text-blue-700 dark:text-blue-400 mx-1 shadow-sm">🇬🇧 United Kingdom</span>;
+      if (part === '🇩🇪 Germany') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-400 mx-1 shadow-sm">🇩🇪 Germany</span>;
+      if (part === '🇺🇸 USA') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-purple-500/20 border border-purple-500/40 text-purple-700 dark:text-purple-400 mx-1 shadow-sm">🇺🇸 USA</span>;
+      if (part === '🇨🇦 Canada') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-red-500/20 border border-red-500/40 text-red-700 dark:text-red-400 mx-1 shadow-sm">🇨🇦 Canada</span>;
+      if (part === '🇦🇺 Australia') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-500/20 border border-indigo-500/40 text-indigo-700 dark:text-indigo-400 mx-1 shadow-sm">🇦🇺 Australia</span>;
+      if (part === '🇳🇱 Netherlands') return <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-orange-500/20 border border-orange-500/40 text-orange-700 dark:text-orange-400 mx-1 shadow-sm">🇳🇱 Netherlands</span>;
       return part;
     });
   }
@@ -509,28 +497,28 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
       className="flex flex-col gap-4 max-w-[90%] lg:max-w-[800px] group mb-4"
     >
       <div className="flex items-center gap-3 ml-2">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 border border-white/10 relative">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-700 to-violet-700 flex items-center justify-center shadow-lg shadow-indigo-500/30 border border-white/20 relative">
           <Brain size={18} className="text-white" />
-          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-slate-900 rounded-full" />
+          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-600 border-2 border-slate-900 rounded-full" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-400 leading-none mb-1">ScholarIQ Consultant</span>
-          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Active Intelligence Engine</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-700 dark:text-indigo-400 leading-none mb-1">ScholarIQ Consultant</span>
+          <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest">Active Intelligence Engine</span>
         </div>
       </div>
 
       <div 
-        className="relative overflow-hidden p-6 lg:p-10 rounded-[2.5rem] border transition-all duration-500 hover:shadow-indigo-500/5 group-hover:border-indigo-500/30"
+        className="relative overflow-hidden p-6 lg:p-10 rounded-[2.5rem] border-2 transition-all duration-500 shadow-xl group-hover:border-indigo-500/50"
         style={{
-          backgroundColor: isDark ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.9)',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+          backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.98)',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
           backdropFilter: 'blur(20px)',
-          boxShadow: isDark ? '0 25px 50px -12px rgba(0,0,0,0.5)' : '0 15px 35px -10px rgba(0,0,0,0.08)'
+          boxShadow: isDark ? '0 25px 50px -12px rgba(0,0,0,0.7)' : '0 20px 40px -10px rgba(0,0,0,0.15)'
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/[0.02] to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/[0.04] to-transparent pointer-events-none" />
         
-        <div className="relative" style={{ color: isDark ? '#cbd5e1' : '#1e293b' }}>
+        <div className="relative text-slate-900 dark:text-slate-100 font-medium">
            {isFinancial ? (
              <FinancialPlanResult content={content} />
            ) : (
@@ -541,61 +529,61 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
              <ReactMarkdown 
                remarkPlugins={[remarkGfm]}
                components={{
-                 h1: ({children}) => <h1 style={{ color: isDark ? '#fff' : '#1e293b' }} className="text-2xl font-black mb-6 tracking-tight border-b pb-4" >{children}</h1>,
-                 h2: ({children}) => <h2 style={{ color: isDark ? '#fff' : '#1e293b' }} className="text-lg font-black mt-8 mb-4 flex items-center gap-2">
-                   <div className="w-1.5 h-6 bg-indigo-500 rounded-full shrink-0" /> {children}
+                 h1: ({children}) => <h1 className="text-2xl font-black mb-6 tracking-tight border-b border-slate-300 dark:border-slate-700 pb-4 text-slate-900 dark:text-white" >{children}</h1>,
+                 h2: ({children}) => <h2 className="text-lg font-black mt-8 mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
+                   <div className="w-2 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full shrink-0" /> {children}
                  </h2>,
-                 h3: ({children}) => <h3 className="text-base font-black text-indigo-400 mt-6 mb-3">{children}</h3>,
-                 p: ({children}) => <p className="text-[15px] lg:text-[16px] leading-[1.9] font-medium mb-5 last:mb-0" style={{ color: isDark ? 'rgba(203,213,225,0.9)' : '#334155' }}>{renderTextWithBadges(children, isDark)}</p>,
+                 h3: ({children}) => <h3 className="text-base font-black text-indigo-700 dark:text-indigo-400 mt-6 mb-3">{children}</h3>,
+                 p: ({children}) => <p className="text-[15px] lg:text-[16px] leading-[1.9] font-bold mb-5 last:mb-0 text-slate-900 dark:text-slate-100">{renderTextWithBadges(children, isDark)}</p>,
                  ul: ({children}) => <div className="space-y-3 mb-6 ml-1">{children}</div>,
                  ol: ({children}) => <ol className="space-y-3 mb-6 ml-1 list-none">{children}</ol>,
                  li: ({node, index, ordered, ...props}: any) => {
                     if (ordered) {
                       return (
-                        <div className="flex items-start gap-3 text-[15px] leading-relaxed">
-                          <div className="min-w-[26px] h-6 rounded-full bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-[11px] font-black text-indigo-400 shrink-0 mt-0.5">
+                        <div className="flex items-start gap-3 text-[15px] leading-relaxed font-bold">
+                          <div className="min-w-[26px] h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-[11px] font-black text-indigo-700 dark:text-indigo-400 shrink-0 mt-0.5">
                             {(index ?? 0) + 1}
                           </div>
-                          <span className="flex-1 pt-0.5" style={{ color: isDark ? 'rgba(203,213,225,0.85)' : '#334155' }}>{renderTextWithBadges(props.children, isDark)}</span>
+                          <span className="flex-1 pt-0.5 text-slate-900 dark:text-slate-100">{renderTextWithBadges(props.children, isDark)}</span>
                         </div>
                       );
                     }
                     return (
-                      <div className="flex items-start gap-3 text-[15px] leading-relaxed group/li">
-                        <div className="mt-2 w-1.5 h-1.5 rounded-full bg-indigo-500/50 group-hover/li:bg-indigo-500 transition-colors shrink-0" />
-                        <span className="flex-1" style={{ color: isDark ? 'rgba(203,213,225,0.85)' : '#334155' }}>{renderTextWithBadges(props.children, isDark)}</span>
+                      <div className="flex items-start gap-3 text-[15px] leading-relaxed font-bold group/li">
+                        <div className="mt-2 w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-500 shrink-0" />
+                        <span className="flex-1 text-slate-900 dark:text-slate-100">{renderTextWithBadges(props.children, isDark)}</span>
                       </div>
                     );
                  },
-                 strong: ({children}) => <strong className="font-black" style={{ color: isDark ? '#fff' : '#1e293b' }}>{renderTextWithBadges(children, isDark)}</strong>,
-                 em: ({children}) => <em className="text-indigo-400 not-italic text-[13px]">{children}</em>,
-                 hr: () => <div className="h-px w-full my-6" style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.06)' }} />,
-                 code: ({children}) => <code className="px-2 py-0.5 rounded-md text-[13px] font-mono bg-indigo-500/10 text-indigo-400">{children}</code>,
+                 strong: ({children}) => <strong className="font-black text-slate-950 dark:text-white">{renderTextWithBadges(children, isDark)}</strong>,
+                 em: ({children}) => <em className="text-indigo-700 dark:text-indigo-400 not-italic text-[13px] font-black">{children}</em>,
+                 hr: () => <div className="h-px w-full my-6 bg-slate-300 dark:bg-slate-700" />,
+                 code: ({children}) => <code className="px-2 py-0.5 rounded-md text-[13px] font-mono font-bold bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30">{children}</code>,
                  blockquote: ({children}) => (
-                   <div className="border-l-4 border-indigo-500/50 bg-indigo-500/5 px-5 py-4 rounded-xl my-5 text-sm" style={{ color: isDark ? '#94a3b8' : '#475569' }}>
+                   <div className="border-l-4 border-indigo-600 dark:border-indigo-500 bg-indigo-500/15 px-5 py-4 rounded-xl my-5 text-sm font-bold text-slate-900 dark:text-slate-200">
                      {children}
                    </div>
                  ),
                  table: ({children}) => (
-                   <div className="overflow-x-auto my-6 rounded-2xl border" style={{ borderColor: isDark ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.08)' }}>
-                     <table className="w-full text-sm border-collapse">{children}</table>
+                   <div className="overflow-x-auto my-6 rounded-2xl border-2 border-slate-300 dark:border-slate-700 shadow-md">
+                     <table className="w-full text-sm border-collapse bg-white dark:bg-slate-800">{children}</table>
                    </div>
                  ),
                  thead: ({children}) => (
-                   <thead style={{ backgroundColor: isDark ? 'rgba(244,196,78,0.15)' : 'rgba(244,196,78,0.08)' }}>{children}</thead>
+                   <thead className="bg-amber-500/20 border-b-2 border-slate-300 dark:border-slate-700">{children}</thead>
                  ),
                  tbody: ({children}) => <tbody>{children}</tbody>,
                  tr: ({children}) => (
-                   <tr className="border-b transition-colors" style={{ borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>{children}</tr>
+                   <tr className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors">{children}</tr>
                  ),
                  th: ({children}) => (
-                   <th className="px-4 py-3 text-left text-[12px] font-black uppercase tracking-wider" style={{ color: '#f4c44e' }}>{children}</th>
+                   <th className="px-4 py-3 text-left text-[12px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">{children}</th>
                  ),
                  td: ({children}) => (
-                   <td className="px-4 py-3 text-[13px] font-medium" style={{ color: isDark ? 'rgba(203,213,225,0.9)' : '#334155' }}>{renderTextWithBadges(children, isDark)}</td>
+                   <td className="px-4 py-3 text-[13px] font-black text-slate-900 dark:text-slate-100">{renderTextWithBadges(children, isDark)}</td>
                  ),
                  a: ({href, children}) => (
-                   <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 transition-all my-1 shadow-sm">
+                   <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 text-indigo-700 dark:text-indigo-400 transition-all my-1 shadow-md">
                      🎓 {children} <ExternalLink size={12} />
                    </a>
                  )
@@ -606,11 +594,10 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
              {showImprovementCards && <ScholarshipImprovementCards />}
              {/* Deadline + Source disclaimer — shown on scholarship-related responses */}
              {(content.toLowerCase().includes('deadline') || content.toLowerCase().includes('scholarship')) && (
-               <div className="mt-6 flex items-start gap-3 px-4 py-3 rounded-2xl"
-                 style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)' }}>
-                 <span className="text-amber-400 text-base shrink-0 mt-0.5">⚠️</span>
-                 <p className="text-[12px] leading-relaxed" style={{ color: '#fbbf24' }}>
-                   <strong>Important:</strong> Deadlines shown are AI-matched estimates. Please verify current deadlines and eligibility on the official university or scholarship website before applying.
+               <div className="mt-6 flex items-start gap-3 px-5 py-4 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 shadow-sm">
+                 <span className="text-amber-600 dark:text-amber-400 text-lg shrink-0 mt-0.5">⚠️</span>
+                 <p className="text-[13px] leading-relaxed font-bold text-amber-900 dark:text-amber-200">
+                   <strong className="font-black text-amber-950 dark:text-amber-400">Important:</strong> Deadlines shown are AI-matched estimates. Please verify current deadlines and eligibility on the official university or scholarship website before applying.
                  </p>
                </div>
              )}
@@ -620,10 +607,10 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
       </div>
       
       <div className="flex items-center gap-4 ml-4 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Generated at {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+         <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest">Generated at {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
          <div className="flex gap-2">
-            <button className="p-1.5 hover:bg-white/5 rounded-lg text-slate-500 hover:text-white transition-colors"><Star size={12} /></button>
-            <button className="p-1.5 hover:bg-white/5 rounded-lg text-slate-500 hover:text-white transition-colors"><Bookmark size={12} /></button>
+            <button className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"><Star size={12} /></button>
+            <button className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"><Bookmark size={12} /></button>
          </div>
       </div>
     </motion.div>
