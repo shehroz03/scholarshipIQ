@@ -245,7 +245,7 @@ export function AdminAIChat() {
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 uppercase tracking-wider">AI</span>
                             </div>
                             <div className="flex items-center gap-3 mt-1">
-                                <p className="text-xs text-gray-500">Live DB · Urdu &amp; English · Analytics</p>
+                                <p className="text-xs text-gray-500">Live DB · English · Analytics</p>
                                 {msgCount > 0 && (
                                     <span className="text-[10px] text-gray-600 flex items-center gap-1">
                                         <MessageSquare size={9} /> {msgCount} message{msgCount > 1 ? "s" : ""}

@@ -16,24 +16,16 @@ import {
   Sparkles,
   Info,
   ShieldCheck,
-  Stethoscope,
   PlaneTakeoff,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Check
 } from 'lucide-react';
 import { api } from '../../api';
 import { useUser } from '../../context/UserContext';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '../ui/select';
 import { Sidebar } from '../Sidebar';
+import { darkTheme } from '../../styles/theme';
+import { ThemeToggle } from '../ThemeToggle';
 
 const VisaProfileFormPage: React.FC = () => {
   const { country } = useParams();
@@ -41,6 +33,7 @@ const VisaProfileFormPage: React.FC = () => {
   const { status: userStatus, loading: loadingUser } = useUser();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const theme = darkTheme;
 
   const getInitialIntake = () => {
     const now = new Date();
@@ -80,7 +73,7 @@ const VisaProfileFormPage: React.FC = () => {
       const checklist = await api.request('/visa/checklist/generate', {
         method: 'POST'
       });
-      toast.success('AI Visa Strategy Generated!');
+      toast.success('AI Visa Strategy Generated Successfully!');
       navigate(`/visa/checklist/${checklist.id}`);
     } catch (error: any) {
       toast.error(error.message || 'Something went wrong. Please try again.');
@@ -89,128 +82,187 @@ const VisaProfileFormPage: React.FC = () => {
     }
   };
 
-  const glassCardStyle = { 
-    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backdropFilter: 'blur(30px)',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.1)'
-  };
-
   if (loadingUser) return null;
 
+  const countryDisplay = (country || 'au').toUpperCase();
+
   return (
-    <div className="min-h-screen flex w-full" style={{ backgroundColor: '#f8fafc', color: '#0f172a' }}>
+    <div className="min-h-screen flex w-full" style={{ backgroundColor: theme.bg, color: theme.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Sidebar */}
       <div className="hidden lg:block shrink-0 relative z-50" style={{ width: '260px' }}>
         <Sidebar onNavigate={(p) => navigate(`/${p}`)} currentPage="visa" />
       </div>
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
         {/* Header */}
-        <header className="h-16 border-b flex items-center justify-between px-8 shrink-0 z-40 bg-white" style={{ borderColor: '#e2e8f0' }}>
+        <header className="h-20 border-b flex items-center justify-between px-8 shrink-0 z-40" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-md">
-              <PlaneTakeoff className="text-white w-5 h-5" />
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <PlaneTakeoff className="text-white w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-black text-slate-800 leading-none">Visa Architect</h2>
-              <p className="text-[10px] font-semibold text-slate-400 mt-0.5 uppercase tracking-widest">AI-Powered Strategy</p>
+              <h2 className="text-xl font-black text-white leading-none">Visa Architect</h2>
+              <p className="text-xs font-bold text-indigo-400 mt-1 uppercase tracking-widest">AI Strategy Engine</p>
             </div>
           </div>
-          <button onClick={() => navigate('/visa')} className="px-5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 font-semibold text-xs transition-all">
-            ← Back
-          </button>
+
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <button 
+              onClick={() => navigate('/visa')} 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                borderRadius: '14px',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                border: `1px solid ${theme.border}`,
+                color: theme.text,
+                fontWeight: '700',
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = '#6366f1'; }}
+              onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = theme.border; }}
+            >
+              <ChevronLeft size={18} /> Exit Architect
+            </button>
+          </div>
         </header>
 
-        {/* Main */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar">
-          {/* Hero Banner */}
-          <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6366f1 100%)' }}>
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-            <div className="relative max-w-3xl mx-auto px-6 lg:px-10 py-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 mb-4">
-                <Globe className="w-3 h-3 text-white" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white">Target: {country?.toUpperCase() || 'AU'}</span>
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                <span className="text-[10px] font-semibold text-emerald-200">AI Ready</span>
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto custom-scrollbar" style={{ padding: '40px 20px' }}>
+          <div className="max-w-4xl mx-auto">
+            
+            {/* Hero Banner */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%)',
+              border: '1px solid rgba(99, 102, 241, 0.3)',
+              borderRadius: '28px',
+              padding: '40px',
+              marginBottom: '40px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)'
+            }}>
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-white/20 mb-6 backdrop-blur-md shadow-inner">
+                  <Globe className="w-4 h-4 text-indigo-400" />
+                  <span className="text-xs font-black uppercase tracking-widest text-white">Target Destination: {countryDisplay}</span>
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-1" />
+                  <span className="text-xs font-bold text-emerald-400">AI Co-Pilot Active</span>
+                </div>
+                <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 tracking-tight leading-none">
+                  Build Your <span style={{ background: 'linear-gradient(135deg, #818cf8 0%, #c084fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Visa Strategy</span>
+                </h1>
+                <p className="text-indigo-200 text-base font-medium max-w-xl line-clamp-2 leading-relaxed">
+                  Complete these 4 rapid strategic steps. Our AI engine will run a comprehensive immigration rules check to formulate your bulletproof success plan.
+                </p>
               </div>
-              <h1 className="text-3xl lg:text-4xl font-black text-white leading-tight">
-                Build Your Visa Strategy
-              </h1>
-              <p className="mt-2 text-indigo-100 text-sm font-medium max-w-lg">
-                Answer 4 quick steps — our AI generates a personalised document checklist and visa success plan.
-              </p>
             </div>
-          </div>
 
-          <div className="max-w-3xl mx-auto px-6 lg:px-10 py-8">
-
-            {/* Stepper */}
-            <div className="flex items-center gap-0 mb-8 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-              {[
-                { n: 1, label: 'Timeline',  icon: Calendar },
-                { n: 2, label: 'Academic',  icon: GraduationCap },
-                { n: 3, label: 'Documents', icon: IdCard },
-                { n: 4, label: 'Final',     icon: Sparkles },
-              ].map(({ n, label, icon: Icon }, i, arr) => (
-                <React.Fragment key={n}>
-                  <div className="flex flex-col items-center gap-1.5 flex-1">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all duration-300 ${
-                      n < step  ? 'bg-indigo-600 border-indigo-600 shadow-md' :
-                      n === step ? 'bg-indigo-50 border-indigo-500' :
-                                   'bg-slate-50 border-slate-200'
-                    }`}>
-                      {n < step
-                        ? <CheckCircle2 className="w-5 h-5 text-white" />
-                        : <Icon className={`w-4.5 h-4.5 ${n === step ? 'text-indigo-600' : 'text-slate-400'}`} />
-                      }
+            {/* Stepper Navigation */}
+            <div style={{
+              backgroundColor: theme.bgSecondary,
+              border: `1px solid ${theme.border}`,
+              borderRadius: '24px',
+              padding: '24px 32px',
+              marginBottom: '40px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+            }}>
+              <div className="flex items-center justify-between gap-2">
+                {[
+                  { n: 1, label: 'Timeline',  icon: Calendar },
+                  { n: 2, label: 'Academic',  icon: GraduationCap },
+                  { n: 3, label: 'Finance',   icon: IdCard },
+                  { n: 4, label: 'Strategy',  icon: Sparkles },
+                ].map(({ n, label, icon: Icon }, i, arr) => (
+                  <React.Fragment key={n}>
+                    <div 
+                      onClick={() => n <= step && setStep(n)} 
+                      className="flex flex-col items-center gap-2 flex-1 cursor-pointer group"
+                    >
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-300 ${
+                        n < step ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-500/20' :
+                        n === step ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/30' :
+                        'bg-white/5 border-white/10 text-slate-500 group-hover:border-white/20'
+                      }`}>
+                        {n < step
+                          ? <Check className="w-6 h-6 text-emerald-400" />
+                          : <Icon className={`w-5 h-5 ${n === step ? 'text-white' : 'text-slate-500 group-hover:text-slate-400'}`} />
+                        }
+                      </div>
+                      <span className={`text-xs font-black uppercase tracking-wider ${n === step ? 'text-white' : n < step ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {label}
+                      </span>
                     </div>
-                    <span className={`text-[9px] font-black uppercase tracking-wider ${n === step ? 'text-indigo-600' : n < step ? 'text-indigo-400' : 'text-slate-400'}`}>{label}</span>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <div className="h-px w-8 mb-4 shrink-0" style={{ background: n < step ? '#6366f1' : '#e2e8f0' }} />
-                  )}
-                </React.Fragment>
-              ))}
+                    {i < arr.length - 1 && (
+                      <div className="h-1 flex-1 rounded-full mb-6 transition-all duration-300" style={{ background: n < step ? '#10b981' : 'rgba(255,255,255,0.05)' }} />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
 
-            {/* Form Card */}
+            {/* Form Steps Container */}
             <AnimatePresence mode="wait">
-              <motion.div key={step} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }}>
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 mb-5">
+              <motion.div key={step} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.25 }}>
+                <div style={{
+                  backgroundColor: theme.bgSecondary,
+                  border: `1px solid ${theme.border}`,
+                  borderRadius: '32px',
+                  padding: '40px',
+                  marginBottom: '32px',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.35)'
+                }}>
 
-                  {/* Step 1 — Intake Timeline */}
+                  {/* STEP 1 — INTAKE TIMELINE */}
                   {step === 1 && (
-                    <div className="space-y-7">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                          <Calendar className="text-indigo-600 w-6 h-6" />
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-6 pb-6 border-b border-white/10">
+                        <div className="w-16 h-16 rounded-3xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-xl shadow-indigo-500/10">
+                          <Calendar className="w-8 h-8" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-0.5">Step 1 of 4</p>
-                          <h3 className="text-xl font-black text-slate-800">Intake Timeline</h3>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5">When do you plan to start your studies?</p>
+                          <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-1">Step 1 of 4</p>
+                          <h3 className="text-2xl font-black text-white">Intake Timeline & Window</h3>
+                          <p className="text-sm text-slate-400 font-medium mt-1">Select your prospective enrollment intake to align visa buffer days.</p>
                         </div>
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Select Your Planned Intake</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <p className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-4">Select Proposed Intake Window</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                           {['Fall 2025', 'Spring 2026', 'Fall 2026', 'Spring 2027', 'Fall 2027'].map(term => {
                             const isFall = term.startsWith('Fall');
                             const selected = formData.intake_term === term;
                             return (
-                              <button key={term} onClick={() => handleInputChange('intake_term', term)}
-                                className={`relative p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
-                                  selected ? 'border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-100' : 'border-slate-100 bg-slate-50 hover:border-indigo-200 hover:bg-indigo-50/50'
-                                }`}
+                              <button 
+                                key={term} 
+                                onClick={() => handleInputChange('intake_term', term)}
+                                style={{
+                                  padding: '24px',
+                                  borderRadius: '20px',
+                                  backgroundColor: selected ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.03)',
+                                  border: `2px solid ${selected ? '#6366f1' : theme.border}`,
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  position: 'relative',
+                                  boxShadow: selected ? '0 10px 25px rgba(99, 102, 241, 0.25)' : 'none'
+                                }}
+                                onMouseOver={(e) => !selected && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOut={(e) => !selected && (e.currentTarget.style.borderColor = theme.border)}
                               >
-                                <div className="text-2xl mb-2">{isFall ? '🍂' : '🌸'}</div>
-                                <div className={`text-sm font-black ${selected ? 'text-indigo-700' : 'text-slate-700'}`}>{term}</div>
-                                <div className={`text-[10px] font-semibold mt-0.5 ${selected ? 'text-indigo-400' : 'text-slate-400'}`}>{isFall ? 'Aug – Dec' : 'Jan – May'}</div>
+                                <div className="text-3xl mb-4">{isFall ? '🍂' : '🌸'}</div>
+                                <div className={`text-lg font-black mb-1 ${selected ? 'text-white' : 'text-slate-300'}`}>{term}</div>
+                                <div className={`text-xs font-bold ${selected ? 'text-indigo-400' : 'text-slate-500'}`}>{isFall ? 'Aug – Dec Departure' : 'Jan – May Departure'}</div>
                                 {selected && (
-                                  <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                  <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                                    <Check className="w-4 h-4 text-white" />
                                   </div>
                                 )}
                               </button>
@@ -219,71 +271,112 @@ const VisaProfileFormPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                          <Globe className="w-4 h-4 text-indigo-600" />
+                      <div className="flex items-center gap-5 p-6 rounded-2xl border border-white/10" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/30">
+                          <Globe className="w-6 h-6 text-indigo-400" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Destination</p>
-                          <p className="text-sm font-black text-slate-800 mt-0.5">{country?.toUpperCase() || 'AU'}</p>
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Locked Destination</p>
+                          <p className="text-lg font-black text-white mt-0.5">{countryDisplay}</p>
                         </div>
-                        <div className="ml-auto px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600">Confirmed</span>
+                        <div className="ml-auto px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 shadow-inner">
+                          <span className="text-xs font-black uppercase tracking-wider text-emerald-400">Embassy Rulebase Active</span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Step 2 — Academic Status */}
+                  {/* STEP 2 — ACADEMIC STATUS */}
                   {step === 2 && (
-                    <div className="space-y-7">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center">
-                          <GraduationCap className="text-violet-600 w-6 h-6" />
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-6 pb-6 border-b border-white/10">
+                        <div className="w-16 h-16 rounded-3xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-xl shadow-purple-500/10">
+                          <GraduationCap className="w-8 h-8" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-violet-500 mb-0.5">Step 2 of 4</p>
-                          <h3 className="text-xl font-black text-slate-800">Academic Status</h3>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5">Your offer letter and scholarship situation</p>
+                          <p className="text-xs font-black uppercase tracking-widest text-purple-400 mb-1">Step 2 of 4</p>
+                          <h3 className="text-2xl font-black text-white">Admission & Scholarship Profile</h3>
+                          <p className="text-sm text-slate-400 font-medium mt-1">Specify your official university acceptance status and funding support.</p>
                         </div>
                       </div>
+
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Admission Status</p>
-                        <div className="grid grid-cols-2 gap-3">
+                        <p className="text-xs font-bold uppercase tracking-widest text-purple-400 mb-4">University Offer Status</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {[
-                            { v: 'no_offer',      label: 'No Offer Yet',        icon: '⏳', desc: 'Still applying' },
-                            { v: 'conditional',   label: 'Conditional Offer',   icon: '📋', desc: 'Conditions pending' },
-                            { v: 'unconditional', label: 'Unconditional Offer', icon: '✅', desc: 'Fully accepted' },
-                            { v: 'cas_issued',    label: 'CAS / CoE Issued',    icon: '🎓', desc: 'Ready for visa' },
+                            { v: 'no_offer',      label: 'No Offer Yet',        icon: '⏳', desc: 'Preparing applications / Waiting' },
+                            { v: 'conditional',   label: 'Conditional Offer',   icon: '📋', desc: 'Pending final degree / IELTS' },
+                            { v: 'unconditional', label: 'Unconditional Offer', icon: '✅', desc: 'Full academic confirmation' },
+                            { v: 'cas_issued',    label: 'CAS / CoE Issued',    icon: '🎓', desc: 'Immediate visa lodgement ready' },
                           ].map(({ v, label, icon, desc }) => {
                             const sel = formData.admission_status === v;
                             return (
-                              <button key={v} onClick={() => handleInputChange('admission_status', v)}
-                                className={`p-4 rounded-2xl border-2 text-left transition-all ${sel ? 'border-violet-400 bg-violet-50 shadow-sm shadow-violet-100' : 'border-slate-100 bg-slate-50 hover:border-violet-200'}`}
+                              <button 
+                                key={v} 
+                                onClick={() => handleInputChange('admission_status', v)}
+                                style={{
+                                  padding: '24px',
+                                  borderRadius: '20px',
+                                  backgroundColor: sel ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255,255,255,0.03)',
+                                  border: `2px solid ${sel ? '#a855f7' : theme.border}`,
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  position: 'relative',
+                                  boxShadow: sel ? '0 10px 25px rgba(168, 85, 247, 0.25)' : 'none'
+                                }}
+                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOut={(e) => !sel && (e.currentTarget.style.borderColor = theme.border)}
                               >
-                                <div className="text-xl mb-2">{icon}</div>
-                                <div className={`text-xs font-black ${sel ? 'text-violet-700' : 'text-slate-700'}`}>{label}</div>
-                                <div className={`text-[10px] mt-0.5 font-medium ${sel ? 'text-violet-400' : 'text-slate-400'}`}>{desc}</div>
+                                <div className="text-3xl mb-4">{icon}</div>
+                                <div className={`text-lg font-black mb-1 ${sel ? 'text-white' : 'text-slate-300'}`}>{label}</div>
+                                <div className={`text-xs font-semibold ${sel ? 'text-purple-300' : 'text-slate-500'}`}>{desc}</div>
+                                {sel && (
+                                  <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
+                                    <Check className="w-4 h-4 text-white" />
+                                  </div>
+                                )}
                               </button>
                             );
                           })}
                         </div>
                       </div>
+
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Scholarship Status</p>
-                        <div className="grid grid-cols-3 gap-3">
+                        <p className="text-xs font-bold uppercase tracking-widest text-purple-400 mb-4">Scholarship Status</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           {[
-                            { v: 'none',    label: 'Self Funded',      icon: '💳' },
-                            { v: 'applied', label: 'Applied / Pending', icon: '📨' },
-                            { v: 'awarded', label: 'Awarded',          icon: '🏆' },
-                          ].map(({ v, label, icon }) => {
+                            { v: 'none',    label: 'Self Funded',       icon: '💳', desc: 'Full fee payment' },
+                            { v: 'applied', label: 'Applied / Pending', icon: '📨', desc: 'Decision awaited' },
+                            { v: 'awarded', label: 'Awarded',           icon: '🏆', desc: 'Partial / Full fee waiver' },
+                          ].map(({ v, label, icon, desc }) => {
                             const sel = formData.scholarship_status === v;
                             return (
-                              <button key={v} onClick={() => handleInputChange('scholarship_status', v)}
-                                className={`p-4 rounded-2xl border-2 text-left transition-all ${sel ? 'border-indigo-400 bg-indigo-50 shadow-sm shadow-indigo-100' : 'border-slate-100 bg-slate-50 hover:border-indigo-200'}`}
+                              <button 
+                                key={v} 
+                                onClick={() => handleInputChange('scholarship_status', v)}
+                                style={{
+                                  padding: '24px',
+                                  borderRadius: '20px',
+                                  backgroundColor: sel ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.03)',
+                                  border: `2px solid ${sel ? '#6366f1' : theme.border}`,
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  position: 'relative',
+                                  boxShadow: sel ? '0 10px 25px rgba(99, 102, 241, 0.25)' : 'none'
+                                }}
+                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOut={(e) => !sel && (e.currentTarget.style.borderColor = theme.border)}
                               >
-                                <div className="text-xl mb-2">{icon}</div>
-                                <div className={`text-xs font-black ${sel ? 'text-indigo-700' : 'text-slate-700'}`}>{label}</div>
+                                <div className="text-3xl mb-4">{icon}</div>
+                                <div className={`text-lg font-black mb-1 ${sel ? 'text-white' : 'text-slate-300'}`}>{label}</div>
+                                <div className={`text-xs font-semibold ${sel ? 'text-indigo-300' : 'text-slate-500'}`}>{desc}</div>
+                                {sel && (
+                                  <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                                    <Check className="w-4 h-4 text-white" />
+                                  </div>
+                                )}
                               </button>
                             );
                           })}
@@ -292,162 +385,326 @@ const VisaProfileFormPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Step 3 — Travel & Finance */}
+                  {/* STEP 3 — TRAVEL & FINANCE */}
                   {step === 3 && (
-                    <div className="space-y-7">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                          <IdCard className="text-blue-600 w-6 h-6" />
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-6 pb-6 border-b border-white/10">
+                        <div className="w-16 h-16 rounded-3xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-xl shadow-blue-500/10">
+                          <IdCard className="w-8 h-8" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-0.5">Step 3 of 4</p>
-                          <h3 className="text-xl font-black text-slate-800">Travel & Finance</h3>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5">Passport, funding and bank statement</p>
+                          <p className="text-xs font-black uppercase tracking-widest text-blue-400 mb-1">Step 3 of 4</p>
+                          <h3 className="text-2xl font-black text-white">Travel Documents & Financial Proof</h3>
+                          <p className="text-sm text-slate-400 font-medium mt-1">Embassy evaluation depends strictly on valid passports and bank statement readiness.</p>
                         </div>
                       </div>
+
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Passport Status</p>
-                        <div className="grid grid-cols-3 gap-3">
+                        <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-4">Passport Verification Status</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           {[
-                            { v: 'valid',   label: 'Valid',    icon: '🛂', desc: 'Ready' },
-                            { v: 'expired', label: 'Expired',  icon: '⚠️', desc: 'Renewal needed' },
-                            { v: 'applied', label: 'Applied',  icon: '📭', desc: 'Pending' },
+                            { v: 'valid',   label: 'Valid Passport',   icon: '🛂', desc: '6+ months validity' },
+                            { v: 'expired', label: 'Expired',          icon: '⚠️', desc: 'Needs urgent renewal' },
+                            { v: 'applied', label: 'Recently Applied', icon: '📭', desc: 'Waiting for issuance' },
                           ].map(({ v, label, icon, desc }) => {
                             const sel = formData.passport_status === v;
                             return (
-                              <button key={v} onClick={() => handleInputChange('passport_status', v)}
-                                className={`p-4 rounded-2xl border-2 text-left transition-all ${sel ? 'border-blue-400 bg-blue-50 shadow-sm shadow-blue-100' : 'border-slate-100 bg-slate-50 hover:border-blue-200'}`}
+                              <button 
+                                key={v} 
+                                onClick={() => handleInputChange('passport_status', v)}
+                                style={{
+                                  padding: '24px',
+                                  borderRadius: '20px',
+                                  backgroundColor: sel ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.03)',
+                                  border: `2px solid ${sel ? '#3b82f6' : theme.border}`,
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  position: 'relative',
+                                  boxShadow: sel ? '0 10px 25px rgba(59, 130, 246, 0.25)' : 'none'
+                                }}
+                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOut={(e) => !sel && (e.currentTarget.style.borderColor = theme.border)}
                               >
-                                <div className="text-xl mb-2">{icon}</div>
-                                <div className={`text-xs font-black ${sel ? 'text-blue-700' : 'text-slate-700'}`}>{label}</div>
-                                <div className={`text-[10px] mt-0.5 font-medium ${sel ? 'text-blue-400' : 'text-slate-400'}`}>{desc}</div>
+                                <div className="text-3xl mb-4">{icon}</div>
+                                <div className={`text-lg font-black mb-1 ${sel ? 'text-white' : 'text-slate-300'}`}>{label}</div>
+                                <div className={`text-xs font-semibold ${sel ? 'text-blue-300' : 'text-slate-500'}`}>{desc}</div>
+                                {sel && (
+                                  <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
+                                    <Check className="w-4 h-4 text-white" />
+                                  </div>
+                                )}
                               </button>
                             );
                           })}
                         </div>
                       </div>
+
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Primary Funding</p>
-                        <div className="grid grid-cols-2 gap-3">
+                        <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-4">Primary Source of Living Expense</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {[
-                            { v: 'self',        label: 'Self Funded',    icon: '💰', desc: 'Personal savings' },
-                            { v: 'family',      label: 'Family Sponsor', icon: '👨‍👩‍👧', desc: 'Sponsored' },
-                            { v: 'scholarship', label: 'Scholarship',    icon: '🎓', desc: 'Full award' },
-                            { v: 'loan',        label: 'Bank Loan',      icon: '🏦', desc: 'Education loan' },
+                            { v: 'self',        label: 'Self Funded',    icon: '💰', desc: 'Personal savings / liquid assets' },
+                            { v: 'family',      label: 'Family Sponsor', icon: '👨‍👩‍👧', desc: 'Parents / blood relative statement' },
+                            { v: 'scholarship', label: 'Scholarship',    icon: '🎓', desc: 'Official government/university award' },
+                            { v: 'loan',        label: 'Bank Loan',      icon: '🏦', desc: 'Approved educational bank loan' },
                           ].map(({ v, label, icon, desc }) => {
                             const sel = formData.funding_source === v;
                             return (
-                              <button key={v} onClick={() => handleInputChange('funding_source', v)}
-                                className={`p-4 rounded-2xl border-2 text-left transition-all ${sel ? 'border-cyan-400 bg-cyan-50 shadow-sm shadow-cyan-100' : 'border-slate-100 bg-slate-50 hover:border-cyan-200'}`}
+                              <button 
+                                key={v} 
+                                onClick={() => handleInputChange('funding_source', v)}
+                                style={{
+                                  padding: '24px',
+                                  borderRadius: '20px',
+                                  backgroundColor: sel ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255,255,255,0.03)',
+                                  border: `2px solid ${sel ? '#06b6d4' : theme.border}`,
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  position: 'relative',
+                                  boxShadow: sel ? '0 10px 25px rgba(6, 182, 212, 0.25)' : 'none'
+                                }}
+                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOut={(e) => !sel && (e.currentTarget.style.borderColor = theme.border)}
                               >
-                                <div className="text-xl mb-2">{icon}</div>
-                                <div className={`text-xs font-black ${sel ? 'text-cyan-700' : 'text-slate-700'}`}>{label}</div>
-                                <div className={`text-[10px] mt-0.5 font-medium ${sel ? 'text-cyan-500' : 'text-slate-400'}`}>{desc}</div>
+                                <div className="text-3xl mb-4">{icon}</div>
+                                <div className={`text-lg font-black mb-1 ${sel ? 'text-white' : 'text-slate-300'}`}>{label}</div>
+                                <div className={`text-xs font-semibold ${sel ? 'text-cyan-300' : 'text-slate-500'}`}>{desc}</div>
+                                {sel && (
+                                  <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-cyan-600 flex items-center justify-center shadow-md">
+                                    <Check className="w-4 h-4 text-white" />
+                                  </div>
+                                )}
                               </button>
                             );
                           })}
                         </div>
                       </div>
-                      <button onClick={() => handleInputChange('bank_statement_available', !formData.bank_statement_available)}
-                        className={`w-full p-5 rounded-2xl border-2 flex items-center gap-4 transition-all ${formData.bank_statement_available ? 'border-emerald-400 bg-emerald-50 shadow-sm shadow-emerald-100' : 'border-slate-100 bg-slate-50 hover:border-emerald-200'}`}
+
+                      <button 
+                        onClick={() => handleInputChange('bank_statement_available', !formData.bank_statement_available)}
+                        style={{
+                          width: '100%',
+                          padding: '28px',
+                          borderRadius: '24px',
+                          backgroundColor: formData.bank_statement_available ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
+                          border: `2px solid ${formData.bank_statement_available ? '#10b981' : theme.border}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '24px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: formData.bank_statement_available ? '0 15px 30px rgba(16, 185, 129, 0.25)' : 'none'
+                        }}
                       >
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all ${formData.bank_statement_available ? 'bg-emerald-500' : 'bg-slate-100'}`}>
-                          <ShieldCheck className={`w-5 h-5 ${formData.bank_statement_available ? 'text-white' : 'text-slate-400'}`} />
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-all ${formData.bank_statement_available ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white/10 text-slate-400'}`}>
+                          <ShieldCheck className="w-7 h-7" />
                         </div>
                         <div className="text-left flex-1">
-                          <p className={`text-sm font-black ${formData.bank_statement_available ? 'text-emerald-700' : 'text-slate-600'}`}>Bank Statement Ready</p>
-                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Minimum required bank balance proof available</p>
+                          <p className={`text-xl font-black mb-1 ${formData.bank_statement_available ? 'text-white' : 'text-slate-300'}`}>Bank Statement Proof Available</p>
+                          <p className={`text-xs font-bold ${formData.bank_statement_available ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            {formData.bank_statement_available ? '✓ Required living balance is confirmed and ready for embassy lodgement' : 'Click to confirm you hold the mandatory living expenses balance in your bank account'}
+                          </p>
                         </div>
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${formData.bank_statement_available ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
-                          {formData.bank_statement_available && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${formData.bank_statement_available ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'}`}>
+                          {formData.bank_statement_available && <Check className="w-5 h-5 text-white" />}
                         </div>
                       </button>
                     </div>
                   )}
 
-                  {/* Step 4 — Final Checks */}
+                  {/* STEP 4 — FINAL CHECKS & SCAN */}
                   {step === 4 && (
-                    <div className="space-y-7">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-                          <Sparkles className="text-emerald-600 w-6 h-6" />
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-6 pb-6 border-b border-white/10">
+                        <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-xl shadow-emerald-500/10">
+                          <Sparkles className="w-8 h-8" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-0.5">Step 4 of 4</p>
-                          <h3 className="text-xl font-black text-slate-800">Final Checks</h3>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5">Last details for your AI visa strategy</p>
+                          <p className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-1">Step 4 of 4</p>
+                          <h3 className="text-2xl font-black text-white">Refusal History & Final Scan</h3>
+                          <p className="text-sm text-slate-400 font-medium mt-1">Accurate refusal declarations ensure our AI tailors a bulletproof Letter of Intent.</p>
                         </div>
                       </div>
+
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Previous Visa Refusals?</p>
-                        <div className="grid grid-cols-2 gap-4">
-                          <button onClick={() => handleInputChange('previous_visa_refusal', true)}
-                            className={`p-5 rounded-2xl border-2 text-left transition-all ${formData.previous_visa_refusal ? 'border-red-400 bg-red-50 shadow-sm shadow-red-100' : 'border-slate-100 bg-slate-50 hover:border-red-200'}`}
+                        <p className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-4">Any Previous Visa Refusals?</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <button 
+                            onClick={() => handleInputChange('previous_visa_refusal', true)}
+                            style={{
+                              padding: '24px',
+                              borderRadius: '20px',
+                              backgroundColor: formData.previous_visa_refusal ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                              border: `2px solid ${formData.previous_visa_refusal ? '#ef4444' : theme.border}`,
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              position: 'relative',
+                              boxShadow: formData.previous_visa_refusal ? '0 10px 25px rgba(239, 68, 68, 0.25)' : 'none'
+                            }}
                           >
-                            <div className="text-2xl mb-2">⛔</div>
-                            <div className={`text-sm font-black ${formData.previous_visa_refusal ? 'text-red-700' : 'text-slate-600'}`}>Yes, I Have</div>
-                            <div className={`text-[10px] mt-1 font-medium ${formData.previous_visa_refusal ? 'text-red-400' : 'text-slate-400'}`}>Refusal on record</div>
+                            <div className="text-3xl mb-4">⛔</div>
+                            <div className={`text-lg font-black mb-1 ${formData.previous_visa_refusal ? 'text-white' : 'text-slate-300'}`}>Yes, I Have a Refusal</div>
+                            <div className={`text-xs font-semibold ${formData.previous_visa_refusal ? 'text-red-300' : 'text-slate-500'}`}>Our AI will build a strong mitigation strategy</div>
+                            {formData.previous_visa_refusal && (
+                              <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-red-600 flex items-center justify-center shadow-md">
+                                <Check className="w-4 h-4 text-white" />
+                              </div>
+                            )}
                           </button>
-                          <button onClick={() => handleInputChange('previous_visa_refusal', false)}
-                            className={`p-5 rounded-2xl border-2 text-left transition-all ${!formData.previous_visa_refusal ? 'border-emerald-400 bg-emerald-50 shadow-sm shadow-emerald-100' : 'border-slate-100 bg-slate-50 hover:border-emerald-200'}`}
+
+                          <button 
+                            onClick={() => handleInputChange('previous_visa_refusal', false)}
+                            style={{
+                              padding: '24px',
+                              borderRadius: '20px',
+                              backgroundColor: !formData.previous_visa_refusal ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
+                              border: `2px solid ${!formData.previous_visa_refusal ? '#10b981' : theme.border}`,
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              position: 'relative',
+                              boxShadow: !formData.previous_visa_refusal ? '0 10px 25px rgba(16, 185, 129, 0.25)' : 'none'
+                            }}
                           >
-                            <div className="text-2xl mb-2">✅</div>
-                            <div className={`text-sm font-black ${!formData.previous_visa_refusal ? 'text-emerald-700' : 'text-slate-600'}`}>No, Never</div>
-                            <div className={`text-[10px] mt-1 font-medium ${!formData.previous_visa_refusal ? 'text-emerald-400' : 'text-slate-400'}`}>Clean history</div>
+                            <div className="text-3xl mb-4">✅</div>
+                            <div className={`text-lg font-black mb-1 ${!formData.previous_visa_refusal ? 'text-white' : 'text-slate-300'}`}>No, Never Refused</div>
+                            <div className={`text-xs font-semibold ${!formData.previous_visa_refusal ? 'text-emerald-300' : 'text-slate-500'}`}>Clean global immigration record</div>
+                            {!formData.previous_visa_refusal && (
+                              <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center shadow-md">
+                                <Check className="w-4 h-4 text-white" />
+                              </div>
+                            )}
                           </button>
                         </div>
                       </div>
+
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Additional Notes <span className="text-slate-300 normal-case font-normal">(Optional)</span></p>
-                        <textarea value={formData.notes} onChange={(e) => handleInputChange('notes', e.target.value)}
-                          placeholder="Study gaps, previous travels, specific concerns..."
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Additional Application Notes <span className="text-slate-500 normal-case font-normal">(Optional)</span></p>
+                        <textarea 
+                          value={formData.notes} 
+                          onChange={(e) => handleInputChange('notes', e.target.value)}
+                          placeholder="Study gaps, previous travels, specific embassy appointment concerns..."
                           rows={4}
-                          className="w-full rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-indigo-300 outline-none p-4 text-slate-700 text-sm font-medium transition-all resize-none placeholder:text-slate-300"
+                          style={{
+                            width: '100%',
+                            borderRadius: '20px',
+                            backgroundColor: 'rgba(0,0,0,0.3)',
+                            border: `1px solid ${theme.border}`,
+                            padding: '20px',
+                            color: '#fff',
+                            fontSize: '15px',
+                            outline: 'none',
+                            resize: 'none',
+                            transition: 'border-color 0.2s'
+                          }}
+                          onFocus={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                          onBlur={(e) => e.currentTarget.style.borderColor = theme.border}
                         />
                       </div>
-                      <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Sparkles className="w-4 h-4 text-indigo-500" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Scan Summary</span>
+
+                      <div className="p-6 rounded-3xl border border-indigo-500/30" style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)' }}>
+                        <div className="flex items-center gap-3 mb-4">
+                          <Sparkles className="w-5 h-5 text-indigo-400" />
+                          <span className="text-xs font-black uppercase tracking-widest text-indigo-400">AI Pre-Flight Scan Summary</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="text-slate-500">🎯 Target: <span className="text-slate-800 font-bold">{country?.toUpperCase()}</span></div>
-                          <div className="text-slate-500">📅 Intake: <span className="text-slate-800 font-bold">{formData.intake_term}</span></div>
-                          <div className="text-slate-500">🎓 Admission: <span className="text-slate-800 font-bold capitalize">{formData.admission_status.replace('_', ' ')}</span></div>
-                          <div className="text-slate-500">💰 Funding: <span className="text-slate-800 font-bold capitalize">{formData.funding_source}</span></div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                          <div className="text-slate-400">🎯 Target: <div className="text-white font-black text-base mt-1">{countryDisplay}</div></div>
+                          <div className="text-slate-400">📅 Intake: <div className="text-white font-black text-base mt-1">{formData.intake_term}</div></div>
+                          <div className="text-slate-400">🎓 Admission: <div className="text-white font-black text-base mt-1 capitalize">{formData.admission_status.replace('_', ' ')}</div></div>
+                          <div className="text-slate-400">💰 Funding: <div className="text-white font-black text-base mt-1 capitalize">{formData.funding_source}</div></div>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between">
-                  <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/visa')}
-                    className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-500 hover:bg-slate-50 font-bold text-xs uppercase tracking-widest transition-all"
+                {/* Navigation Footer */}
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <button 
+                    onClick={() => step > 1 ? setStep(step - 1) : navigate('/visa')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '16px 32px',
+                      borderRadius: '18px',
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${theme.border}`,
+                      color: theme.text,
+                      fontWeight: '800',
+                      fontSize: '15px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = '#fff'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = theme.border; }}
                   >
-                    <ChevronLeft size={15} /> {step === 1 ? 'Back' : 'Previous'}
+                    <ChevronLeft size={18} /> {step === 1 ? 'Exit Form' : 'Previous Step'}
                   </button>
+
                   {step < 4 ? (
-                    <button onClick={() => setStep(step + 1)}
-                      className="flex items-center gap-2 px-10 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95"
+                    <button 
+                      onClick={() => setStep(step + 1)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '16px 40px',
+                        borderRadius: '18px',
+                        backgroundColor: '#6366f1',
+                        color: '#fff',
+                        border: 'none',
+                        fontWeight: '800',
+                        fontSize: '15px',
+                        cursor: 'pointer',
+                        boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4)',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
                     >
-                      Next Step <ChevronRight size={15} />
+                      Next Step <ChevronRight size={18} />
                     </button>
                   ) : (
-                    <button onClick={handleSubmit} disabled={loading}
-                      className="flex items-center gap-2 px-10 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-60"
+                    <button 
+                      onClick={handleSubmit} 
+                      disabled={loading}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '16px 48px',
+                        borderRadius: '18px',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        fontWeight: '800',
+                        fontSize: '16px',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 10px 30px rgba(16, 185, 129, 0.4)',
+                        transition: 'all 0.2s',
+                        opacity: loading ? 0.7 : 1
+                      }}
+                      onMouseOver={(e) => !loading && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                      onMouseOut={(e) => !loading && (e.currentTarget.style.transform = 'none')}
                     >
-                      {loading ? <><Clock className="w-4 h-4 animate-spin" /> Processing</> : <>Generate AI Checklist <ArrowRight size={15} /></>}
+                      {loading ? (
+                        <><Clock className="w-5 h-5 animate-spin" /> Compiling AI Strategy...</>
+                      ) : (
+                        <>Generate AI Checklist & Strategy <ArrowRight size={18} /></>
+                      )}
                     </button>
                   )}
                 </div>
               </motion.div>
             </AnimatePresence>
 
-            <div className="mt-6 flex items-center justify-center gap-2 text-slate-300">
-              <ShieldCheck size={13} />
-              <span className="text-[9px] font-semibold uppercase tracking-widest">Encrypted & secure</span>
+            <div className="mt-12 flex items-center justify-center gap-2 text-slate-500">
+              <ShieldCheck size={16} className="text-indigo-500" />
+              <span className="text-xs font-bold uppercase tracking-widest">End-to-End Encrypted & Secure</span>
             </div>
           </div>
         </main>
@@ -458,14 +715,14 @@ const VisaProfileFormPage: React.FC = () => {
           width: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(0,0,0,0.05);
+          background: rgba(0,0,0,0.15);
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(99, 102, 241, 0.2);
+          background: rgba(99, 102, 241, 0.3);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(99, 102, 241, 0.4);
+          background: rgba(99, 102, 241, 0.5);
         }
       `}</style>
     </div>
@@ -473,3 +730,4 @@ const VisaProfileFormPage: React.FC = () => {
 };
 
 export default VisaProfileFormPage;
+

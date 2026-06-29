@@ -26,7 +26,7 @@ The platform currently ships with a seeded database of **189 scholarships** acro
 | Module | Description |
 |---|---|
 | 🔍 **Smart Search** | Multi-filter discovery by country, degree, field, funding, CGPA & IELTS |
-| 🤖 **AI Chatbot (RAG)** | Trilingual (Urdu / Roman Urdu / English) assistant with verified-data grounding, document analysis & university comparison |
+| 🤖 **AI Chatbot (RAG)** | AI assistant in professional English with verified-data grounding, document analysis & university comparison |
 | 🎯 **Recommendation Engine** | Hybrid 60% rule-based + 40% ML matching with cold-start fallback |
 | 🛡️ **Fraud Detection** | Multi-layer rule + ML pipeline that flags scam listings |
 | 🔄 **Auto-Update Bot** | GPT-4o + Serper agent that verifies & refreshes scholarship data every 4 days |

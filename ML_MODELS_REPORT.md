@@ -127,7 +127,7 @@ final_fit_score = 0.6 × rule_based_score + 0.4 × ML_probability
 
 **(a) Prompt Engineering / System Prompts** — `app/services/chatbot.py` (`SYSTEM_PROMPTS`)
 - Three **role-specific system prompts** (student / teacher / admin) define GPT's persona, rules, and output format.
-- Example rules: reply in the user's language (Urdu/Roman-Urdu/English), warn about scam scholarships, output university comparisons as a table, never invent data.
+- Example rules: reply in clear professional English, warn about scam scholarships, output university comparisons as a table, never invent data.
 
 **(b) RAG — Retrieval-Augmented Generation (grounding)** — `app/services/chatbot.py` + `embedding_cache.py`
 - Before answering, the system retrieves **verified scholarships from the database** (via the MiniLM embedding model) and injects them into the prompt with an explicit *"answer ONLY from this data"* instruction.
