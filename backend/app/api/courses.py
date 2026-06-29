@@ -3,13 +3,19 @@ Courses API — Student Side
 Browse, enroll, take lessons and quizzes.
 """
 import json
+import os
+import uuid
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Form, File, UploadFile
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.db.session import get_db
 from app.db import models
 from app.api.deps import get_current_user
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "payment_screenshots")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
 
@@ -320,12 +326,46 @@ def enroll_course(course_id: int, db: Session = Depends(get_db), current_user: m
     }
 
 
+@router.get("/{course_id}/payment-info")
+def get_payment_info(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Return teacher's active payment methods for this course so student knows where to send money."""
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    methods = db.query(models.TeacherPaymentMethod).filter(
+        models.TeacherPaymentMethod.teacher_id == course.teacher_id,
+        models.TeacherPaymentMethod.is_active == True,
+    ).all()
+    return {
+        "course_id": course_id,
+        "course_title": course.title,
+        "amount": course.price,
+        "payment_methods": [
+            {
+                "id": m.id,
+                "method_type": m.method_type,
+                "account_title": m.account_title,
+                "account_number": m.account_number,
+                "bank_name": m.bank_name,
+                "instructions": m.instructions,
+            }
+            for m in methods
+        ],
+    }
+
+
 @router.post("/{course_id}/submit-payment")
 def submit_payment(
     course_id: int,
-    payment_method: str = Body(...),
-    payment_reference: str = Body(...),
-    amount_paid: Optional[float] = Body(None),
+    payment_method: str = Form(...),
+    payment_reference: str = Form(...),
+    amount_paid: Optional[float] = Form(None),
+    payment_method_id: Optional[int] = Form(None),
+    screenshot: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -342,10 +382,23 @@ def submit_payment(
         raise HTTPException(400, "Enroll in the course first")
     if enrollment.payment_status == "paid":
         raise HTTPException(400, "Fee already paid")
+
     enrollment.payment_method = payment_method.strip()
     enrollment.payment_reference = payment_reference.strip()
     enrollment.amount_paid = amount_paid if amount_paid is not None else course.price
     enrollment.payment_status = "submitted"
+    if payment_method_id:
+        enrollment.payment_method_id = payment_method_id
+
+    # Save screenshot if provided
+    if screenshot and screenshot.filename:
+        ext = os.path.splitext(screenshot.filename)[1] or ".jpg"
+        fname = f"{uuid.uuid4().hex}{ext}"
+        fpath = os.path.join(UPLOAD_DIR, fname)
+        with open(fpath, "wb") as f:
+            f.write(screenshot.file.read())
+        enrollment.payment_screenshot_url = f"/uploads/payment_screenshots/{fname}"
+
     db.commit()
     return {
         "message": "Payment submitted! Teacher will verify and unlock your access.",
@@ -423,6 +476,15 @@ def get_approved_teachers(
             ).first()
             courses_data.append(_serialize_course(c, c.id in [e.course_id for e in db.query(models.Enrollment).filter(models.Enrollment.user_id == current_user.id).all()], enrollment.progress_percent if enrollment else 0, enrollment))
         
+        stats = db.query(
+            func.avg(models.TeacherReview.rating).label("average_rating"),
+            func.count(models.TeacherReview.id).label("total_reviews")
+        ).filter(
+            models.TeacherReview.teacher_id == teacher.id,
+            models.TeacherReview.is_visible == True,
+            models.TeacherReview.is_removed_by_admin == False
+        ).first()
+        
         result.append({
             "teacher_id": teacher.id,
             "user_id": teacher.user_id,
@@ -439,6 +501,8 @@ def get_approved_teachers(
             "profile_picture_url": teacher.profile_picture_url,
             "courses": courses_data,
             "total_courses": len(courses_data),
+            "average_rating": round(stats.average_rating, 2) if stats.average_rating else 0,
+            "total_reviews": stats.total_reviews or 0,
             "approved_at": teacher.approved_at.isoformat() if teacher.approved_at else None,
         })
     
@@ -483,6 +547,15 @@ def get_teacher_detail(
         models.Course.teacher_id == teacher.id
     ).count()
     
+    stats = db.query(
+        func.avg(models.TeacherReview.rating).label("average_rating"),
+        func.count(models.TeacherReview.id).label("total_reviews")
+    ).filter(
+        models.TeacherReview.teacher_id == teacher.id,
+        models.TeacherReview.is_visible == True,
+        models.TeacherReview.is_removed_by_admin == False
+    ).first()
+    
     return {
         "teacher_id": teacher.id,
         "user_id": teacher.user_id,
@@ -500,6 +573,8 @@ def get_teacher_detail(
         "courses": courses_data,
         "total_courses": len(courses_data),
         "total_students": total_students,
+        "average_rating": round(stats.average_rating, 2) if stats.average_rating else 0,
+        "total_reviews": stats.total_reviews or 0,
         "approved_at": teacher.approved_at.isoformat() if teacher.approved_at else None,
     }
 

@@ -1,5 +1,5 @@
 ScholarIQ Fraud Detection Model — Training Report
-Generated: 2026-06-12 12:24
+Generated: 2026-06-29 18:23
 =======================================================
 
 Dataset
@@ -22,7 +22,7 @@ Confusion Matrix (rows=actual, cols=predicted):
    [FN=0  TP=195]]
 
 ROC-AUC Score : 1.0000
-Best Threshold (max F1 on fraud class): 0.9667
+Best Threshold (max F1 on fraud class): 0.9678
 
 ANTI-LEAKAGE DESIGN (read before interpreting scores):
   Labels come from rule-based fraud heuristics (keywords + suspicious
@@ -38,26 +38,26 @@ ANTI-LEAKAGE DESIGN (read before interpreting scores):
   Trained features: url_reachable, trusted_domain, scholarship_amount_ratio, deadline_too_close, has_official_email, cgpa_min_zero, has_apply_steps, description_length, short_description
 
 Gini Feature Importances (impurity-based)
-  description_length                  0.5251
-  scholarship_amount_ratio            0.3065
-  deadline_too_close                  0.1042
-  has_apply_steps                     0.0602
-  has_official_email                  0.0027
-  trusted_domain                      0.0014
+  description_length                  0.5093
+  scholarship_amount_ratio            0.2884
+  deadline_too_close                  0.1468
+  has_apply_steps                     0.0527
+  has_official_email                  0.0015
+  trusted_domain                      0.0013
   url_reachable                       0.0000
   cgpa_min_zero                       0.0000
   short_description                   0.0000
 
 Permutation Importances (model-agnostic leakage diagnostic)
-  description_length                  0.3392
+  description_length                  0.3108
   url_reachable                       0.0000
   trusted_domain                      0.0000
   scholarship_amount_ratio            0.0000
   has_official_email                  0.0000
   cgpa_min_zero                       0.0000
   short_description                   0.0000
-  deadline_too_close                  -0.0010
   has_apply_steps                     -0.0010
+  deadline_too_close                  -0.0015
 
 HONEST INTERPRETATION OF RESULTS
   Permutation importance shows 'description_length' carries 100% of the model's discriminative signal.

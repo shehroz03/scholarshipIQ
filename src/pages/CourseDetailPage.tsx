@@ -5,16 +5,16 @@ import { toast } from "sonner";
 import {
   BookOpen, Play, CheckCircle, Clock, Zap, Calendar, Users,
   ChevronDown, ChevronUp, ExternalLink, ArrowLeft, Lock, Star,
-  Award, BarChart2, Timer
+  Award, BarChart2, Timer, Smartphone, CreditCard, Building2, X, DollarSign
 } from "lucide-react";
 
 const TEST_COLORS: Record<string, { from: string; to: string; accent: string }> = {
   IELTS:    { from: "#1d4ed8", to: "#3b82f6", accent: "#2563eb" },
-  TOEFL:    { from: "#6d28d9", to: "#8b5cf6", accent: "#7c3aed" },
+  TOEFL:    { from: "#6d28d9", to: "#8b5cf6", accent: "#d4a017" },
   GRE:      { from: "#065f46", to: "#10b981", accent: "#059669" },
   GMAT:     { from: "#92400e", to: "#f59e0b", accent: "#d97706" },
   PTE:      { from: "#991b1b", to: "#ef4444", accent: "#dc2626" },
-  TestDaF:  { from: "#0f172a", to: "#334155", accent: "#1e293b" },
+  TestDaF:  { from: "#f0f4ff", to: "#334155", accent: "#1e293b" },
   Duolingo: { from: "#3f6212", to: "#84cc16", accent: "#65a30d" },
   SAT:      { from: "#0c4a6e", to: "#0ea5e9", accent: "#0891b2" },
 };
@@ -38,13 +38,29 @@ export default function CourseDetailPage() {
   const [quizLoading, setQuizLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [quizTimer, setQuizTimer] = useState(0);
-  const [paymentForm, setPaymentForm] = useState({ payment_method: "JazzCash", payment_reference: "", amount_paid: 0 });
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [selectedPayMethodId, setSelectedPayMethodId] = useState<number | null>(null);
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const load = async () => {
     try {
       const c = await api.request(`/courses/${id}`);
       setCourse(c);
+      // load teacher's payment methods for this course
+      try {
+        const info = await api.request(`/courses/${id}/payment-info`);
+        const methods = info?.payment_methods ?? [];
+        setPaymentMethods(methods);
+        if (methods.length === 1) setSelectedPayMethodId(methods[0].id);
+      } catch {
+        // fallback to localStorage
+        const { getLocalPaymentMethods } = await import("../components/teacher/TeacherPaymentMethods");
+        const local = getLocalPaymentMethods();
+        setPaymentMethods(local);
+        if (local.length === 1) setSelectedPayMethodId(local[0].id);
+      }
     } catch { toast.error("Course not found"); navigate("/courses"); }
     finally { setLoading(false); }
   };
@@ -62,21 +78,27 @@ export default function CourseDetailPage() {
     try {
       const res = await api.request(`/courses/${id}/enroll`, { method: "POST" });
       toast.success(res.message || "Enrolled!");
-      if (res.fee_required) setPaymentForm(p => ({ ...p, amount_paid: res.fee_required }));
       load();
     } catch (e: any) { toast.error(e.message); }
     finally { setEnrolling(false); }
   };
 
   const handleSubmitPayment = async () => {
-    if (!paymentForm.payment_reference.trim()) { toast.error("Transaction ID required"); return; }
+    if (!selectedPayMethodId) { toast.error("Select a payment method"); return; }
+    if (!paymentReference.trim()) { toast.error("Transaction ID / reference required"); return; }
     setSubmittingPayment(true);
     try {
-      await api.request(`/courses/${id}/submit-payment`, {
-        method: "POST",
-        body: JSON.stringify(paymentForm),
-      });
+      const chosenMethod = paymentMethods.find((m: any) => m.id === selectedPayMethodId);
+      const fd = new FormData();
+      fd.append("payment_method", chosenMethod?.method_type ?? String(selectedPayMethodId));
+      fd.append("payment_method_id", String(selectedPayMethodId));
+      fd.append("payment_reference", paymentReference.trim());
+      fd.append("amount_paid", String(course?.price ?? 0));
+      if (paymentScreenshot) fd.append("screenshot", paymentScreenshot);
+      await api.courses.submitPayment(Number(id), fd);
       toast.success("Payment submitted! Teacher will verify soon.");
+      setPaymentReference("");
+      setPaymentScreenshot(null);
       load();
     } catch (e: any) { toast.error(e.message); }
     finally { setSubmittingPayment(false); }
@@ -115,7 +137,7 @@ export default function CourseDetailPage() {
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-        <div style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#6366f1", animation: "spin 0.8s linear infinite" }} />
+        <div style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#f4c44e", animation: "spin 0.8s linear infinite" }} />
         <span style={{ color: "#94a3b8", fontSize: 14, fontWeight: 600 }}>Loading course...</span>
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -123,7 +145,7 @@ export default function CourseDetailPage() {
   );
   if (!course) return null;
 
-  const tc = TEST_COLORS[course.test_type] || { from: "#4f46e5", to: "#6366f1", accent: "#6366f1" };
+  const tc = TEST_COLORS[course.test_type] || { from: "#e8b43a", to: "#f4c44e", accent: "#f4c44e" };
   const accent = tc.accent;
   const completedCount = course.lessons?.filter((l: any) => l.completed).length || 0;
   const totalLessons = course.lessons?.length || 0;
@@ -146,9 +168,9 @@ export default function CourseDetailPage() {
 
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 28px 0" }}>
           {/* back */}
-          <button onClick={() => navigate("/courses")} style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 100, padding: "7px 16px", cursor: "pointer", marginBottom: 28, transition: "all 0.2s" }}
+          <button onClick={() => navigate("/courses")} style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, background: "rgba(0,0,0,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 100, padding: "7px 16px", cursor: "pointer", marginBottom: 28, transition: "all 0.2s" }}
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.14)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
           >
             <ArrowLeft size={14} /> All Courses
           </button>
@@ -172,7 +194,7 @@ export default function CourseDetailPage() {
                   { icon: <Calendar size={13} />, val: `${course.upcoming_live_classes} Live Classes` },
                   { icon: <Users size={13} />, val: `${course.total_students} Students` },
                 ].map((s, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 100, padding: "6px 14px", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 700 }}>
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 100, padding: "6px 14px", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 700 }}>
                     {s.icon} {s.val}
                   </div>
                 ))}
@@ -195,7 +217,7 @@ export default function CourseDetailPage() {
                   </div>
                   <div>
                     <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 600 }}>Instructor</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a" }}>{course.teacher_name}</div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: "#1e293b" }}>{course.teacher_name}</div>
                   </div>
                 </div>
               </div>
@@ -220,26 +242,103 @@ export default function CourseDetailPage() {
                     </div>
 
                     {!course.has_access && !course.is_free && (
-                      <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 14, marginTop: 12 }}>
+                      <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 16, marginTop: 16 }}>
                         {course.payment_status === "submitted" ? (
-                          <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "10px 14px", fontSize: 12, color: "#92400e", fontWeight: 700, textAlign: "center" }}>
+                          <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 14, padding: "12px 16px", fontSize: 13, color: "#92400e", fontWeight: 700, textAlign: "center" }}>
                             ⏳ Payment under review
                           </div>
-                        ) : (
-                          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>Submit Payment</div>
-                            <select style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px", fontSize: 12, color: "#374151", fontWeight: 600, outline: "none", background: "#f8fafc" }}
-                              value={paymentForm.payment_method} onChange={e => setPaymentForm(p => ({ ...p, payment_method: e.target.value }))}>
-                              {["JazzCash", "Easypaisa", "Bank Transfer"].map(m => <option key={m}>{m}</option>)}
-                            </select>
-                            <input style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px", fontSize: 12, color: "#374151", outline: "none", boxSizing: "border-box" }}
-                              placeholder="Transaction ID *" value={paymentForm.payment_reference} onChange={e => setPaymentForm(p => ({ ...p, payment_reference: e.target.value }))} />
-                            <button onClick={handleSubmitPayment} disabled={submittingPayment}
-                              style={{ width: "100%", background: "#f59e0b", color: "#fff", border: "none", borderRadius: 12, padding: "11px 0", fontSize: 13, fontWeight: 900, cursor: "pointer", opacity: submittingPayment ? 0.6 : 1 }}>
-                              {submittingPayment ? "Submitting..." : "Submit Payment →"}
-                            </button>
-                          </div>
-                        )}
+                        ) : (() => {
+                          const colorMap: Record<string, string> = { JazzCash: "#dc2626", Easypaisa: "#059669", Bank: "#2563eb" };
+                          const bgMap: Record<string, string> = { JazzCash: "#fef2f2", Easypaisa: "#f0fdf4", Bank: "#eff6ff" };
+                          const iconMap: Record<string, any> = { JazzCash: <Smartphone size={18} />, Easypaisa: <CreditCard size={18} />, Bank: <Building2 size={18} /> };
+                          const chosenMethod = paymentMethods.find((m: any) => m.id === selectedPayMethodId);
+                          const canSubmit = !!selectedPayMethodId && paymentReference.trim().length > 0;
+                          return (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: "#1e293b" }}>Complete Payment</div>
+                              
+                              {/* Step 1: Select Method */}
+                              <div>
+                                <div style={{ fontSize: 11, fontWeight: 800, color: "#64748b", letterSpacing: "0.05em", marginBottom: 8 }}>1. CHOOSE PAYMENT METHOD</div>
+                                {paymentMethods.length === 0 ? (
+                                  <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px", fontSize: 12, color: "#92400e" }}>
+                                    ⚠️ Teacher's payment details not configured yet. Contact teacher directly, then enter reference below.
+                                  </div>
+                                ) : (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                    {paymentMethods.map((m: any) => {
+                                      const sel = selectedPayMethodId === m.id;
+                                      const color = colorMap[m.method_type] ?? "#64748b";
+                                      const bg = bgMap[m.method_type] ?? "#f8fafc";
+                                      return (
+                                        <button key={m.id} onClick={() => setSelectedPayMethodId(m.id)}
+                                          style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 14, border: `2px solid ${sel ? color : "#e2e8f0"}`, background: sel ? bg : "#fafafa", cursor: "pointer", textAlign: "left", transition: "all 0.15s", width: "100%", boxSizing: "border-box" }}>
+                                          <div style={{ width: 34, height: 34, borderRadius: 10, background: sel ? color : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                                            <span style={{ color: sel ? "#fff" : color }}>{iconMap[m.method_type] ?? <CreditCard size={18} />}</span>
+                                          </div>
+                                          <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                                              <span style={{ fontSize: 13, fontWeight: 800, color: sel ? color : "#1e293b" }}>{m.method_type}</span>
+                                              {m.bank_name && <span style={{ fontSize: 10, color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.bank_name}</span>}
+                                            </div>
+                                            <div style={{ fontSize: 13, fontWeight: 900, color: sel ? color : "#1e3a7a", fontFamily: "monospace" }}>{m.account_number}</div>
+                                            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.account_title}</div>
+                                            {m.instructions && <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2, fontStyle: "italic" }}>{m.instructions}</div>}
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Step 2: Reference */}
+                              <div>
+                                <div style={{ fontSize: 11, fontWeight: 800, color: "#64748b", letterSpacing: "0.05em", marginBottom: 8 }}>2. TRANSACTION REFERENCE</div>
+                                <input type="text" value={paymentReference} onChange={e => setPaymentReference(e.target.value)}
+                                  placeholder="e.g. 1234567890 or JZC-ABC123"
+                                  style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #e2e8f0", borderRadius: 12, fontSize: 13, fontWeight: 700, color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box" }}
+                                  onFocus={e => (e.target.style.borderColor = "#f4c44e")} onBlur={e => (e.target.style.borderColor = "#e2e8f0")}
+                                />
+                              </div>
+
+                              {/* Step 3: Screenshot */}
+                              <div>
+                                <div style={{ fontSize: 11, fontWeight: 800, color: "#64748b", letterSpacing: "0.05em", marginBottom: 8 }}>3. PAYMENT SCREENSHOT <span style={{ fontWeight: 500, color: "#94a3b8" }}>(opt)</span></div>
+                                {paymentScreenshot ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#f0fdf4", border: "2px solid #86efac", borderRadius: 12 }}>
+                                    <img src={URL.createObjectURL(paymentScreenshot)} alt="Screenshot preview" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", border: "1px solid #86efac" }} />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: 11, fontWeight: 700, color: "#166534" }}>Screenshot added</div>
+                                      <div style={{ fontSize: 11, color: "#15803d", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{paymentScreenshot.name}</div>
+                                    </div>
+                                    <button onClick={() => setPaymentScreenshot(null)} style={{ width: 24, height: 24, borderRadius: 6, background: "#fef2f2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                      <X size={12} color="#ef4444" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "16px 14px", background: "#f8fafc", border: "2px dashed #e2e8f0", borderRadius: 12, cursor: "pointer", transition: "all 0.15s", boxSizing: "border-box" }}
+                                    onMouseOver={e => { (e.currentTarget.style.borderColor = "#f4c44e"); (e.currentTarget.style.background = "#fffbeb"); }}
+                                    onMouseOut={e => { (e.currentTarget.style.borderColor = "#e2e8f0"); (e.currentTarget.style.background = "#f8fafc"); }}>
+                                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) setPaymentScreenshot(f); }} />
+                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                      <DollarSign size={18} color="#94a3b8" />
+                                    </div>
+                                    <div style={{ textAlign: "center" }}>
+                                      <div style={{ fontSize: 12, fontWeight: 700, color: "#1e293b" }}>Click to upload screenshot</div>
+                                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>JPG, PNG or WebP</div>
+                                    </div>
+                                  </label>
+                                )}
+                              </div>
+
+                              <button onClick={handleSubmitPayment} disabled={!canSubmit || submittingPayment}
+                                style={{ width: "100%", background: canSubmit ? "linear-gradient(135deg,#f4c44e,#e8b43a)" : "#e2e8f0", color: canSubmit ? "#1e293b" : "#94a3b8", border: "none", borderRadius: 12, padding: "12px 0", fontSize: 13, fontWeight: 900, cursor: canSubmit && !submittingPayment ? "pointer" : "not-allowed", transition: "all 0.2s", boxShadow: canSubmit ? "0 4px 14px rgba(244,196,78,0.3)" : "none" }}>
+                                {submittingPayment ? "Submitting..." : "Submit Payment →"}
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -268,7 +367,7 @@ export default function CourseDetailPage() {
                 <BookOpen size={16} color={accent} />
               </div>
               <div>
-                <h2 style={{ fontSize: 16, fontWeight: 900, color: "#0f172a", margin: 0 }}>Course Lessons</h2>
+                <h2 style={{ fontSize: 16, fontWeight: 900, color: "#1e293b", margin: 0 }}>Course Lessons</h2>
                 <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 600 }}>{completedCount} of {totalLessons} completed</div>
               </div>
             </div>
@@ -284,7 +383,7 @@ export default function CourseDetailPage() {
                         : <span style={{ fontSize: 13, fontWeight: 900, color: accent }}>{i + 1}</span>}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>{l.title}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>{l.title}</div>
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                         {l.duration_minutes > 0 && (
                           <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>
@@ -343,12 +442,12 @@ export default function CourseDetailPage() {
             <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }} className="cd-fade">
               <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", background: `linear-gradient(135deg,${tc.from}08,${tc.to}08)` }}>
                 <div>
-                  <h2 style={{ fontSize: 17, fontWeight: 900, color: "#0f172a", margin: "0 0 4px" }}>{quizData.title}</h2>
+                  <h2 style={{ fontSize: 17, fontWeight: 900, color: "#1e293b", margin: "0 0 4px" }}>{quizData.title}</h2>
                   <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>{quizData.section} · {quizData.questions.length} questions · {quizData.time_limit_minutes} min</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 16px" }}>
                   <Timer size={14} color={accent} />
-                  <span style={{ fontSize: 15, fontWeight: 900, fontFamily: "monospace", color: "#0f172a" }}>{Math.floor(quizTimer / 60)}:{String(quizTimer % 60).padStart(2, "0")}</span>
+                  <span style={{ fontSize: 15, fontWeight: 900, fontFamily: "monospace", color: "#1e293b" }}>{Math.floor(quizTimer / 60)}:{String(quizTimer % 60).padStart(2, "0")}</span>
                 </div>
               </div>
               <div style={{ padding: "24px" }}>
@@ -356,7 +455,7 @@ export default function CourseDetailPage() {
                   {quizData.questions.map((q: any, qi: number) => (
                     <div key={q.id} style={{ border: "1px solid #e2e8f0", borderRadius: 16, overflow: "hidden" }}>
                       <div style={{ padding: "14px 18px", background: "#f8fafc", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", lineHeight: 1.5 }}><span style={{ color: accent, fontWeight: 900 }}>{qi + 1}.</span> {q.question}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", lineHeight: 1.5 }}><span style={{ color: accent, fontWeight: 900 }}>{qi + 1}.</span> {q.question}</div>
                         <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 100, flexShrink: 0,
                           background: q.difficulty === "Hard" ? "#fef2f2" : q.difficulty === "Medium" ? "#fffbeb" : "#f0fdf4",
                           color: q.difficulty === "Hard" ? "#dc2626" : q.difficulty === "Medium" ? "#d97706" : "#16a34a",
@@ -399,16 +498,16 @@ export default function CourseDetailPage() {
                   <span><Timer size={12} style={{ display: "inline", marginRight: 4 }} />{Math.floor(quizResult.time_taken_seconds / 60)}m {quizResult.time_taken_seconds % 60}s</span>
                 </div>
                 <button onClick={() => { setQuizResult(null); setQuizData(null); setActiveQuiz(null); }}
-                  style={{ marginTop: 18, background: quizResult.passed ? "#16a34a" : "#6366f1", color: "#fff", border: "none", borderRadius: 12, padding: "10px 28px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
+                  style={{ marginTop: 18, background: quizResult.passed ? "#16a34a" : "#f4c44e", color: "#fff", border: "none", borderRadius: 12, padding: "10px 28px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
                   Close
                 </button>
               </div>
               <div style={{ padding: "24px" }}>
-                <h3 style={{ fontSize: 15, fontWeight: 900, color: "#0f172a", marginBottom: 14 }}>Answer Review</h3>
+                <h3 style={{ fontSize: 15, fontWeight: 900, color: "#1e293b", marginBottom: 14 }}>Answer Review</h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {quizResult.result_detail.map((r: any, i: number) => (
                     <div key={i} style={{ padding: "14px 18px", borderRadius: 14, border: `1px solid ${r.is_correct ? "#86efac" : "#fca5a5"}`, background: r.is_correct ? "#f0fdf4" : "#fef2f2" }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>{i + 1}. {r.question}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 6 }}>{i + 1}. {r.question}</div>
                       <div style={{ display: "flex", gap: 16, fontSize: 12, fontWeight: 600, flexWrap: "wrap" }}>
                         <span style={{ color: "#64748b" }}>Your: <strong style={{ color: r.is_correct ? "#16a34a" : "#dc2626" }}>{r.selected || "—"}</strong></span>
                         {!r.is_correct && <span style={{ color: "#64748b" }}>Correct: <strong style={{ color: "#16a34a" }}>{r.correct_answer}</strong></span>}
@@ -432,7 +531,7 @@ export default function CourseDetailPage() {
                 <div style={{ width: 30, height: 30, borderRadius: 8, background: `${accent}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Zap size={14} color={accent} fill={accent} />
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 900, color: "#0f172a", margin: 0 }}>Practice Quizzes</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 900, color: "#1e293b", margin: 0 }}>Practice Quizzes</h3>
               </div>
               <div>
                 {course.quizzes.map((q: any, qi: number) => {
@@ -443,7 +542,7 @@ export default function CourseDetailPage() {
                     <div key={q.id} style={{ padding: "16px 20px", borderBottom: qi < course.quizzes.length - 1 ? "1px solid #f8fafc" : "none" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, gap: 8 }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 3 }}>{q.title}</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: "#1e293b", marginBottom: 3 }}>{q.title}</div>
                           <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{q.section} · {q.question_count} Qs · {q.time_limit_minutes}min</div>
                           {isScheduled && (
                             <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#d97706", fontWeight: 700, marginTop: 4 }}>
@@ -482,12 +581,12 @@ export default function CourseDetailPage() {
                 <div style={{ width: 30, height: 30, borderRadius: 8, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Calendar size={14} color="#16a34a" />
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 900, color: "#0f172a", margin: 0 }}>Live Classes</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 900, color: "#1e293b", margin: 0 }}>Live Classes</h3>
               </div>
               <div>
                 {course.upcoming_live_classes_detail.map((lc: any, li: number) => (
                   <div key={lc.id} style={{ padding: "14px 20px", borderBottom: li < course.upcoming_live_classes_detail.length - 1 ? "1px solid #f8fafc" : "none" }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>{lc.title}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#1e293b", marginBottom: 6 }}>{lc.title}</div>
                     <div style={{ display: "flex", gap: 10, fontSize: 11, color: "#94a3b8", fontWeight: 600, marginBottom: 8, flexWrap: "wrap" }}>
                       <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Calendar size={10} />{new Date(lc.scheduled_at).toLocaleString("en-PK")}</span>
                       <span>{lc.platform} · {lc.duration_minutes} min</span>
@@ -514,7 +613,7 @@ export default function CourseDetailPage() {
                   <div style={{ width: 30, height: 30, borderRadius: 8, background: `${accent}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <ExternalLink size={14} color={accent} />
                   </div>
-                  <h3 style={{ fontSize: 14, fontWeight: 900, color: "#0f172a", margin: 0 }}>Daily Class Links</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 900, color: "#1e293b", margin: 0 }}>Daily Class Links</h3>
                 </div>
                 <span style={{ fontSize: 10, fontWeight: 800, background: `${accent}15`, color: accent, border: `1px solid ${accent}30`, padding: "3px 10px", borderRadius: 100 }}>Paid Access</span>
               </div>
@@ -522,7 +621,7 @@ export default function CourseDetailPage() {
                 {course.meeting_links.map((ml: any, mi: number) => (
                   <div key={ml.id} style={{ padding: "14px 20px", borderBottom: mi < course.meeting_links.length - 1 ? `1px solid #f8fafc` : "none" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: "#0f172a" }}>{new Date(ml.date).toLocaleDateString()}</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "#1e293b" }}>{new Date(ml.date).toLocaleDateString()}</span>
                       {ml.time && <span style={{ fontSize: 11, fontWeight: 800, color: accent, background: `${accent}10`, padding: "2px 8px", borderRadius: 6 }}>{ml.time}</span>}
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, marginBottom: ml.description ? 4 : 10 }}>{ml.platform}</div>
@@ -545,7 +644,7 @@ export default function CourseDetailPage() {
                   <ExternalLink size={14} color="#94a3b8" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 14, fontWeight: 900, color: "#0f172a", margin: 0 }}>Daily Class Links</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 900, color: "#1e293b", margin: 0 }}>Daily Class Links</h3>
                   <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Enroll & pay to access</div>
                 </div>
               </div>
@@ -561,7 +660,7 @@ export default function CourseDetailPage() {
 
           {/* course highlights */}
           <div style={{ background: `linear-gradient(135deg,${tc.from}08,${tc.to}08)`, borderRadius: 20, border: `1px solid ${accent}20`, padding: "20px" }} className="cd-fade">
-            <h3 style={{ fontSize: 14, fontWeight: 900, color: "#0f172a", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 900, color: "#1e293b", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
               <Star size={14} color="#f59e0b" fill="#f59e0b" /> This Course Includes
             </h3>
             {[

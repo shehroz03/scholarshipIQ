@@ -673,7 +673,9 @@ class Enrollment(Base):
     # Fee / payment: pending → submitted (student sent proof) → paid (teacher approved)
     payment_status: Mapped[str] = mapped_column(String, default="paid")  # pending, submitted, paid, rejected
     payment_method: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # JazzCash, Easypaisa, Bank
+    payment_method_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("teacher_payment_methods.id"), nullable=True)
     payment_reference: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    payment_screenshot_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     amount_paid: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
@@ -735,4 +737,25 @@ TeacherProfile.reported_reviews = relationship("TeacherReview", foreign_keys="Te
 
 # Update User to include relationship
 User.teacher_reviews_given = relationship("TeacherReview", foreign_keys="TeacherReview.student_id", back_populates="student", lazy="dynamic")
+
+
+# ─────────────────────────────────────────────
+#   TEACHER PAYMENT METHODS
+# ─────────────────────────────────────────────
+
+class TeacherPaymentMethod(Base):
+    """Teacher's payment accounts — JazzCash, Easypaisa, or Bank"""
+    __tablename__ = "teacher_payment_methods"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    teacher_id: Mapped[int] = mapped_column(Integer, ForeignKey("teacher_profiles.id"), index=True)
+    method_type: Mapped[str] = mapped_column(String, nullable=False)        # JazzCash | Easypaisa | Bank
+    account_title: Mapped[str] = mapped_column(String, nullable=False)      # Account holder name
+    account_number: Mapped[str] = mapped_column(String, nullable=False)     # Phone number or IBAN
+    bank_name: Mapped[Optional[str]] = mapped_column(String, nullable=True) # Only for Bank type
+    instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+
+    teacher: Mapped["TeacherProfile"] = relationship("TeacherProfile", backref="payment_methods")
 

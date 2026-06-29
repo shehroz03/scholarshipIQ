@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { darkTheme } from "../../styles/theme";
+import { darkTheme, lightTheme } from "../../styles/theme";
 import { ThemeToggle } from "../ThemeToggle";
 import { 
   ChevronLeft, 
@@ -22,8 +22,8 @@ import {
 
 const VisaGuidanceLandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const isDark = true;
-  const theme = darkTheme;
+  const isDark = false;
+  const theme = lightTheme;
   const [expanded, setExpanded] = useState<string | null>('UK');
   const [activeEstimatorCountry, setActiveEstimatorCountry] = useState<string>('UK');
   const [currencyPref, setCurrencyPref] = useState<'LOCAL' | 'PKR'>('LOCAL');
@@ -36,7 +36,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
       flag: '🇬🇧',
       tagline: 'Student Route Visa (Tier 4)',
       accent: '#CF142B',
-      bgGradient: 'linear-gradient(135deg, rgba(207, 20, 43, 0.15) 0%, rgba(0, 0, 0, 0.4) 100%)',
+      bgGradient: 'linear-gradient(135deg, rgba(207, 20, 43, 0.15) 0%, rgba(0, 0, 0, 0.06) 100%)',
       languageLearn: '❌ No additional language — IELTS 6.5 (min 6.0 in each band)',
       ielts: '6.5 overall (no band below 6.0)',
       fee: '£490',
@@ -68,7 +68,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
       flag: '🇦🇺',
       tagline: 'Student Visa Subclass 500',
       accent: '#00008B',
-      bgGradient: 'linear-gradient(135deg, rgba(0, 0, 139, 0.15) 0%, rgba(0, 0, 0, 0.4) 100%)',
+      bgGradient: 'linear-gradient(135deg, rgba(0, 0, 139, 0.15) 0%, rgba(0, 0, 0, 0.06) 100%)',
       languageLearn: '❌ No additional language — IELTS 6.5 (min 6.0 in each band)',
       ielts: '6.5 overall (no band below 6.0)',
       fee: 'AUD $1,600 (Updated July 2024)',
@@ -101,7 +101,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
       flag: '🇩🇪',
       tagline: 'National Visa (Type D) — Tuition FREE',
       accent: '#DD0000',
-      bgGradient: 'linear-gradient(135deg, rgba(221, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.4) 100%)',
+      bgGradient: 'linear-gradient(135deg, rgba(221, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.06) 100%)',
       languageLearn: '⚠️ Optional — Most Master\'s in English. German A1/A2 highly recommended for daily life',
       ielts: '6.5 overall or German B2/C1 (depending on program)',
       fee: '€75',
@@ -134,7 +134,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
       flag: '🇨🇦',
       tagline: 'Study Permit (Outside Canada)',
       accent: '#FF0000',
-      bgGradient: 'linear-gradient(135deg, rgba(255, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.4) 100%)',
+      bgGradient: 'linear-gradient(135deg, rgba(255, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.06) 100%)',
       languageLearn: '❌ No additional language — IELTS 6.5 overall (min 6.0 in each band)',
       ielts: '6.5 overall (SDS Stream requires min 6.0 in all bands)',
       fee: 'CAD $150 + CAD $85 Biometrics',
@@ -167,7 +167,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
       flag: '🇺🇸',
       tagline: 'F-1 Non-Immigrant Student Visa',
       accent: '#3C3B6E',
-      bgGradient: 'linear-gradient(135deg, rgba(60, 59, 110, 0.15) 0%, rgba(0, 0, 0, 0.4) 100%)',
+      bgGradient: 'linear-gradient(135deg, rgba(60, 59, 110, 0.15) 0%, rgba(0, 0, 0, 0.06) 100%)',
       languageLearn: '❌ No additional language — TOEFL 80+ or IELTS 6.5',
       ielts: '6.5 overall or TOEFL iBT 80+',
       fee: '$185 (DS-160) + $350 SEVIS Fee',
@@ -200,7 +200,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
       flag: '🇹🇷',
       tagline: 'Student Visa + Türkiye Bursları',
       accent: '#E30A17',
-      bgGradient: 'linear-gradient(135deg, rgba(227, 10, 23, 0.15) 0%, rgba(0, 0, 0, 0.4) 100%)',
+      bgGradient: 'linear-gradient(135deg, rgba(227, 10, 23, 0.15) 0%, rgba(0, 0, 0, 0.06) 100%)',
       languageLearn: '✅ Turkish (FREE 1-Year Language Course included in scholarship)',
       ielts: '6.0 overall (Many programs offer flexible criteria or Turkish medium)',
       fee: '~PKR 14,000–18,000',
@@ -262,7 +262,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
                     transition: 'all 0.2s ease-in-out',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                onMouseOver={(e) => e.currentTarget.style.borderColor = '#f4c44e'}
                 onMouseOut={(e) => e.currentTarget.style.borderColor = theme.border}
             >
                 <ChevronLeft size={18} />
@@ -299,7 +299,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
             backgroundColor: 'rgba(99, 102, 241, 0.12)',
             border: '1px solid rgba(99, 102, 241, 0.25)',
             borderRadius: '25px',
-            color: '#818cf8',
+            color: '#f4c44e',
             fontSize: '14px',
             fontWeight: '700',
             marginBottom: '20px',
@@ -309,7 +309,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
             PHASE 2 PREMIUM AI MODULE
           </div>
           <h1 style={{ fontSize: '52px', fontWeight: '900', marginBottom: '16px', color: theme.text, letterSpacing: '-0.02em', lineHeight: '1.1' }}>
-            Smart Visa <span style={{ background: 'linear-gradient(135deg, #818cf8 0%, #c084fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Guidance & Strategy</span>
+            Smart Visa <span style={{ background: 'linear-gradient(135deg, #f4c44e 0%, #e8b43a 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Guidance & Strategy</span>
           </h1>
           <p style={{ color: theme.textSecondary, fontSize: '18px', maxWidth: '680px', margin: '0 auto', lineHeight: '1.6' }}>
             Get verified, up-to-date global visa criteria, exact financial proof structures, genuine student strategies, and absolute peace of mind for your study abroad journey.
@@ -320,15 +320,14 @@ const VisaGuidanceLandingPage: React.FC = () => {
         <div style={{ 
           backgroundColor: theme.bgSecondary, 
           borderRadius: '24px', 
-          border: '1px solid rgba(99, 102, 241, 0.3)', 
+          border: '1px solid rgba(0,0,0,0.08)', 
           padding: '32px', 
           marginBottom: '40px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.35), 0 0 30px rgba(99, 102, 241, 0.1)',
-          background: 'linear-gradient(180deg, rgba(30,32,48,0.8) 0%, rgba(20,22,34,0.95) 100%)'
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ padding: '10px', backgroundColor: 'rgba(99, 102, 241, 0.2)', borderRadius: '14px', color: '#818cf8' }}>
+              <div style={{ padding: '10px', backgroundColor: 'rgba(244,196,78,0.15)', borderRadius: '14px', color: '#f4c44e' }}>
                 <TrendingUp size={24} />
               </div>
               <div>
@@ -338,14 +337,14 @@ const VisaGuidanceLandingPage: React.FC = () => {
             </div>
 
             {/* Currency toggle */}
-            <div style={{ display: 'flex', backgroundColor: 'rgba(0,0,0,0.3)', padding: '4px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
+            <div style={{ display: 'flex', backgroundColor: 'rgba(0,0,0,0.06)', padding: '4px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
               <button 
                 onClick={() => setCurrencyPref('LOCAL')}
                 style={{
                   padding: '6px 14px',
                   borderRadius: '10px',
                   border: 'none',
-                  backgroundColor: currencyPref === 'LOCAL' ? '#6366f1' : 'transparent',
+                  backgroundColor: currencyPref === 'LOCAL' ? '#f4c44e' : 'transparent',
                   color: currencyPref === 'LOCAL' ? '#fff' : theme.textSecondary,
                   fontWeight: '700',
                   fontSize: '12px',
@@ -388,9 +387,9 @@ const VisaGuidanceLandingPage: React.FC = () => {
                     gap: '10px',
                     padding: '12px 20px',
                     borderRadius: '16px',
-                    backgroundColor: isSelected ? c.accent : 'rgba(255,255,255,0.03)',
+                    backgroundColor: isSelected ? c.accent : 'rgba(0,0,0,0.04)',
                     border: `1px solid ${isSelected ? c.accent : theme.border}`,
-                    color: '#fff',
+                    color: isSelected ? '#fff' : '#1e293b',
                     fontWeight: '700',
                     fontSize: '15px',
                     cursor: 'pointer',
@@ -410,9 +409,9 @@ const VisaGuidanceLandingPage: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
             
             {/* Box 1: Visa Fee */}
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '20px', padding: '24px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: '20px', padding: '24px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818cf8', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f4c44e', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
                   <DollarSign size={18} /> Official Visa Application Fee
                 </div>
                 <div style={{ fontSize: '26px', fontWeight: '900', color: theme.text, marginBottom: '8px', lineHeight: '1.2' }}>
@@ -428,7 +427,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
             </div>
 
             {/* Box 2: Financial Proof / Bank Statement */}
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '20px', padding: '24px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: '20px', padding: '24px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
                   <Landmark size={18} /> Mandatory Financial Proof
@@ -443,7 +442,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
             </div>
 
             {/* Box 3: Processing Time & Speed */}
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '20px', padding: '24px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: '20px', padding: '24px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
                   <Clock size={18} /> Estimated Processing Timeline
@@ -468,7 +467,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: `1px solid ${theme.border}`, fontSize: '12px', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
+              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: `1px solid ${theme.border}`, fontSize: '12px', color: '#f4c44e', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
                 <Briefcase size={14} /> Work: {currentEstimatorData.workRights.split(',')[0]}
               </div>
             </div>
@@ -477,11 +476,11 @@ const VisaGuidanceLandingPage: React.FC = () => {
         </div>
 
         {/* LANGUAGE SUMMARY QUICK TABLE */}
-        <div style={{ backgroundColor: theme.bgSecondary, borderRadius: '24px', border: `1px solid ${theme.border}`, padding: '32px', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+        <div style={{ backgroundColor: theme.bgSecondary, borderRadius: '24px', border: `1px solid ${theme.border}`, padding: '32px', marginBottom: '40px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
             <span style={{ fontSize: '28px' }}>🌍</span>
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: '800', margin: 0, color: theme.text }}>Language Summary — Koi Nai Language Seekhni?</h3>
+              <h3 style={{ fontSize: '20px', fontWeight: '800', margin: 0, color: theme.text }}>Language Summary — Do I Need to Learn a New Language?</h3>
               <p style={{ fontSize: '13px', color: theme.textSecondary, margin: '4px 0 0 0' }}>Quick language medium comparison across top destinations</p>
             </div>
           </div>
@@ -490,19 +489,19 @@ const VisaGuidanceLandingPage: React.FC = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${theme.border}` }}>
-                  {['Country', 'Language Seekhni?', 'IELTS / English Reqd', 'Study Medium'].map(h => (
-                    <th key={h} style={{ padding: '14px 16px', textAlign: 'left', color: '#818cf8', fontWeight: '700', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                  {['Country', 'Language Required?', 'IELTS / English Reqd', 'Study Medium'].map(h => (
+                    <th key={h} style={{ padding: '14px 16px', textAlign: 'left', color: '#f4c44e', fontWeight: '700', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { flag: '🇬🇧', name: 'UK', lang: '❌ Nahi — Sirf IELTS', ielts: '6.5 overall (min 6.0)', medium: 'English' },
-                  { flag: '🇺🇸', name: 'USA', lang: '❌ Nahi — Sirf TOEFL/IELTS', ielts: '6.5 / TOEFL 80+', medium: 'English' },
-                  { flag: '🇩🇪', name: 'Germany', lang: '⚠️ Optional (A1/A2 helpful)', ielts: '6.5 ya German B2', medium: 'English OR German' },
-                  { flag: '🇦🇺', name: 'Australia', lang: '❌ Nahi — Sirf IELTS', ielts: '6.5 overall (min 6.0)', medium: 'English' },
-                  { flag: '🇹🇷', name: 'Turkey', lang: '✅ Turkish (FREE 1yr course!)', ielts: '6.0 (flexible)', medium: 'Turkish + English' },
-                  { flag: '🇨🇦', name: 'Canada', lang: '❌ Nahi — Sirf IELTS', ielts: '6.5 overall (min 6.0)', medium: 'English' },
+                  { flag: '🇬🇧', name: 'UK', lang: '❌ No — Only IELTS', ielts: '6.5 overall (min 6.0)', medium: 'English' },
+                  { flag: '🇺🇸', name: 'USA', lang: '❌ No — Only TOEFL/IELTS', ielts: '6.5 / TOEFL 80+', medium: 'English' },
+                  { flag: '🇩🇪', name: 'Germany', lang: '⚠️ Optional (A1/A2 recommended)', ielts: '6.5 or German B2', medium: 'English OR German' },
+                  { flag: '🇦🇺', name: 'Australia', lang: '❌ No — Only IELTS', ielts: '6.5 overall (min 6.0)', medium: 'English' },
+                  { flag: '🇹🇷', name: 'Turkey', lang: '✅ Turkish (FREE 1-year course!)', ielts: '6.0 (flexible)', medium: 'Turkish + English' },
+                  { flag: '🇨🇦', name: 'Canada', lang: '❌ No — Only IELTS', ielts: '6.5 overall (min 6.0)', medium: 'English' },
                 ].map((r, i) => (
                   <tr key={i} style={{ borderBottom: `1px solid ${theme.border}`, transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <td style={{ padding: '16px', color: theme.text, fontWeight: '700', fontSize: '15px' }}>{r.flag} {r.name}</td>
@@ -519,7 +518,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
         {/* COUNTRY CARDS — FULL EXPANDABLE DETAILS */}
         <div style={{ marginBottom: '16px' }}>
           <h3 style={{ fontSize: '22px', fontWeight: '800', color: theme.text, margin: '0 0 20px 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FileCheck size={24} color="#6366f1" /> Complete Visa Requirements & Document Checklists
+            <FileCheck size={24} color="#f4c44e" /> Complete Visa Requirements & Document Checklists
           </h3>
         </div>
 
@@ -533,7 +532,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
                 border: `1px solid ${isOpen ? country.accent : theme.border}`,
                 overflow: 'hidden',
                 transition: 'all 0.3s ease-in-out',
-                boxShadow: isOpen ? `0 15px 35px rgba(0,0,0,0.3), 0 0 20px rgba(99,102,241,0.15)` : '0 5px 15px rgba(0,0,0,0.15)'
+                boxShadow: isOpen ? `0 15px 35px rgba(0,0,0,0.3), 0 0 20px rgba(244,196,78,0.15)` : '0 5px 15px rgba(0,0,0,0.15)'
               }}>
                 {/* Card Header */}
                 <div
@@ -552,7 +551,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
                     <span style={{ fontSize: '42px', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}>{country.flag}</span>
                     <div>
                       <div style={{ fontSize: '22px', fontWeight: '900', color: theme.text, letterSpacing: '-0.01em' }}>{country.name}</div>
-                      <div style={{ fontSize: '14px', color: isOpen ? '#818cf8' : country.accent, fontWeight: '700', marginTop: '2px' }}>{country.tagline}</div>
+                      <div style={{ fontSize: '14px', color: isOpen ? '#f4c44e' : country.accent, fontWeight: '700', marginTop: '2px' }}>{country.tagline}</div>
                     </div>
                   </div>
                   
@@ -564,10 +563,10 @@ const VisaGuidanceLandingPage: React.FC = () => {
                           fontSize: '12px', 
                           padding: '6px 14px', 
                           borderRadius: '20px', 
-                          backgroundColor: isOpen ? 'rgba(255,255,255,0.1)' : 'rgba(99,102,241,0.12)', 
-                          color: isOpen ? '#fff' : '#818cf8', 
+                          backgroundColor: isOpen ? 'rgba(244,196,78,0.15)' : 'rgba(244,196,78,0.12)', 
+                          color: isOpen ? '#1e3a7a' : '#f4c44e', 
                           fontWeight: '700', 
-                          border: `1px solid ${isOpen ? 'rgba(255,255,255,0.2)' : 'rgba(99,102,241,0.25)'}`,
+                          border: `1px solid ${isOpen ? 'rgba(255,255,255,0.2)' : 'rgba(244,196,78,0.25)'}`,
                           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                         }}>
                           {f}
@@ -578,7 +577,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
                       width: '36px', 
                       height: '36px', 
                       borderRadius: '18px', 
-                      backgroundColor: isOpen ? country.accent : 'rgba(255,255,255,0.05)', 
+                      backgroundColor: isOpen ? country.accent : 'rgba(0,0,0,0.06)', 
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
@@ -593,12 +592,12 @@ const VisaGuidanceLandingPage: React.FC = () => {
 
                 {/* Expanded Details */}
                 {isOpen && (
-                  <div style={{ borderTop: `1px solid ${theme.border}`, padding: '32px', backgroundColor: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ borderTop: `1px solid ${theme.border}`, padding: '32px', backgroundColor: 'rgba(0,0,0,0.02)' }}>
                     
                     {/* Key Stats Grid */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '28px' }}>
                       {[
-                        { label: '🗣️ Language Seekhni?', value: country.languageLearn },
+                        { label: '🗣️ Language Required?', value: country.languageLearn },
                         { label: '📝 IELTS Required', value: country.ielts },
                         { label: '💰 Visa Fee', value: `${country.fee} (${country.feePKR})` },
                         { label: '⏱️ Processing Time', value: country.processing },
@@ -608,7 +607,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
                         { label: '📍 Apply Via', value: country.applyVia },
                       ].map((item, i) => (
                         <div key={i} style={{ 
-                          backgroundColor: 'rgba(255,255,255,0.03)', 
+                          backgroundColor: 'rgba(0,0,0,0.04)', 
                           borderRadius: '16px', 
                           padding: '18px 20px', 
                           border: `1px solid ${theme.border}`,
@@ -622,18 +621,18 @@ const VisaGuidanceLandingPage: React.FC = () => {
 
                     {/* Documents Checklist */}
                     <div style={{ 
-                      backgroundColor: 'rgba(99, 102, 241, 0.08)', 
+                      backgroundColor: 'rgba(244,196,78,0.06)', 
                       borderRadius: '20px', 
                       padding: '24px', 
                       marginBottom: '24px', 
                       border: '1px solid rgba(99, 102, 241, 0.2)' 
                     }}>
-                      <div style={{ fontSize: '15px', fontWeight: '800', color: '#818cf8', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ fontSize: '15px', fontWeight: '800', color: '#f4c44e', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <FileCheck size={18} /> 📋 Mandatory Required Documents ({country.keyDocs.length} items)
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
                         {country.keyDocs.map((doc, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: theme.text, fontWeight: '500', backgroundColor: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: theme.text, fontWeight: '500', backgroundColor: 'rgba(0,0,0,0.04)', padding: '10px 14px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
                             <span style={{ color: '#10b981', fontSize: '16px', fontWeight: 'bold', minWidth: '16px' }}>✓</span>
                             <span>{doc}</span>
                           </div>
@@ -663,7 +662,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
                         style={{ 
                           padding: '14px 28px', 
                           borderRadius: '14px', 
-                          backgroundColor: '#6366f1', 
+                          backgroundColor: '#f4c44e', 
                           color: 'white', 
                           border: 'none', 
                           fontWeight: '800', 
@@ -699,7 +698,7 @@ const VisaGuidanceLandingPage: React.FC = () => {
                           gap: '10px',
                           transition: 'all 0.2s'
                         }}
-                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = '#818cf8'; }}
+                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = '#f4c44e'; }}
                         onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = theme.border; }}
                       >
                         <ExternalLink size={18} /> Official Embassy Website

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { api } from "../../api";
 import {
     Send, Sparkles, Bot, User, Trash2, Copy, Check,
@@ -34,7 +34,7 @@ function renderMarkdown(text: string) {
             .replace(/\*\*\*(.*?)\*\*\*/g, '<strong style="color:#e2e8f0;font-weight:700"><em>$1</em></strong>')
             .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#e9d5ff;font-weight:700">$1</strong>')
             .replace(/\*(.*?)\*/g, '<em style="color:#c4b5fd">$1</em>')
-            .replace(/`([^`]+)`/g, '<code style="background:rgba(99,102,241,0.2);color:#a78bfa;padding:2px 7px;border-radius:5px;font-family:monospace;font-size:0.78em;border:1px solid rgba(139,92,246,0.25)">$1</code>');
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(244,196,78,0.2);color:#a78bfa;padding:2px 7px;border-radius:5px;font-family:monospace;font-size:0.78em;border:1px solid rgba(232,180,58,0.25)">$1</code>');
         return <span dangerouslySetInnerHTML={{ __html: html }} />;
     };
 
@@ -54,7 +54,7 @@ function renderMarkdown(text: string) {
         } else if (line.startsWith("## ")) {
             nodes.push(
                 <p key={i} className="font-extrabold text-white text-base mt-5 mb-2 pb-1.5"
-                    style={{ borderBottom: "1px solid rgba(139,92,246,0.2)" }}>
+                    style={{ borderBottom: "1px solid rgba(232,180,58,0.2)" }}>
                     {parseInline(line.slice(3))}
                 </p>
             );
@@ -88,7 +88,7 @@ function renderMarkdown(text: string) {
             nodes.push(<ul key={`ul-${i}`} className="space-y-0.5 my-3 list-none">{items}</ul>);
             continue;
         } else if (/^---+$/.test(line.trim())) {
-            nodes.push(<hr key={i} className="my-4" style={{ borderColor: "rgba(139,92,246,0.2)" }} />);
+            nodes.push(<hr key={i} className="my-4" style={{ borderColor: "rgba(232,180,58,0.2)" }} />);
         } else if (line.trim() === "") {
             nodes.push(<div key={i} className="h-2" />);
         } else if (isStatLine(line)) {
@@ -97,7 +97,7 @@ function renderMarkdown(text: string) {
             if (match) {
                 nodes.push(
                     <div key={i} className="flex items-start gap-3 my-1.5 px-3 py-2.5 rounded-xl"
-                        style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(139,92,246,0.15)" }}>
+                        style={{ background: "rgba(244,196,78,0.08)", border: "1px solid rgba(232,180,58,0.15)" }}>
                         <span className="w-1.5 h-1.5 rounded-full bg-violet-400 mt-2 shrink-0" style={{ boxShadow: "0 0 6px rgba(167,139,250,0.7)" }} />
                         <p className="text-sm leading-relaxed text-gray-200">
                             <strong style={{ color: "#c4b5fd", fontWeight: 600 }}>{match[1]}</strong>
@@ -147,7 +147,7 @@ const STORAGE_KEY = "admin_ai_chat_history";
 
 const INITIAL_MSG: Message = {
     role: "assistant",
-    content: "👋 **Salam! Main ScholarIQ Admin Intelligence hoon.**\n\nMain aapka dedicated AI assistant hoon jo live database access ke saath kaam karta hai.\n\n## Main kya kar sakta hoon:\n- Platform analytics aur user statistics\n- Fraud detection patterns ka analysis\n- Pipeline aur auto-verify status\n- Teacher approvals management\n- Scholarship data quality reports\n\nNeeche se koi quick topic select karein ya apna sawaal directly type karein! 🚀",
+    content: "👋 **Hello! I am ScholarIQ Admin Intelligence.**\n\nI am your dedicated AI assistant with live database access.\n\n## What I can do:\n- Platform analytics and user statistics\n- Fraud detection pattern analysis\n- Pipeline and auto-verify status\n- Teacher approvals management\n- Scholarship data quality reports\n\nSelect a quick topic below or type your question directly! 🚀",
     ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
 };
 
@@ -220,17 +220,17 @@ export function AdminAIChat() {
 
     return (
         <div className="flex flex-col h-full overflow-hidden rounded-2xl shadow-2xl"
-            style={{ minHeight: 0, background: "linear-gradient(160deg, #0f0c1d 0%, #0a0a14 40%, #0c0f1e 100%)", border: "1px solid rgba(139,92,246,0.2)" }}>
+            style={{ minHeight: 0, background: "linear-gradient(160deg, #0f0c1d 0%, #0a0a14 40%, #0c0f1e 100%)", border: "1px solid rgba(232,180,58,0.2)" }}>
 
             {/* ── HEADER ── */}
             <div className="shrink-0 px-6 py-4"
-                style={{ background: "linear-gradient(135deg, rgba(109,40,217,0.3) 0%, rgba(10,10,20,0.98) 60%, rgba(37,99,235,0.2) 100%)", borderBottom: "1px solid rgba(139,92,246,0.2)" }}>
+                style={{ background: "linear-gradient(135deg, rgba(109,40,217,0.3) 0%, rgba(10,10,20,0.98) 60%, rgba(37,99,235,0.2) 100%)", borderBottom: "1px solid rgba(232,180,58,0.2)" }}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         {/* AI Avatar */}
                         <div className="relative shrink-0">
                             <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl"
-                                style={{ background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #2563eb 100%)", boxShadow: "0 0 30px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.15)" }}>
+                                style={{ background: "linear-gradient(135deg, #d4a017 0%, #e8b43a 50%, #2563eb 100%)", boxShadow: "0 0 30px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.15)" }}>
                                 <Sparkles size={24} className="text-white drop-shadow-lg" />
                             </div>
                             <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-gray-950 animate-pulse shadow-lg shadow-emerald-500/50" />
@@ -239,7 +239,7 @@ export function AdminAIChat() {
                         <div>
                             <div className="flex items-center gap-2">
                                 <h2 className="text-xl font-black tracking-tight"
-                                    style={{ background: "linear-gradient(135deg, #c4b5fd 0%, #818cf8 50%, #60a5fa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                                    style={{ background: "linear-gradient(135deg, #c4b5fd 0%, #f4c44e 50%, #60a5fa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                                     Admin Intelligence
                                 </h2>
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 uppercase tracking-wider">AI</span>
@@ -273,9 +273,9 @@ export function AdminAIChat() {
                         {QUICK_PROMPTS.map((p, i) => (
                             <button key={i} onClick={() => handleSend(p.text)} disabled={loading}
                                 className="group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all disabled:opacity-40 hover:scale-105 active:scale-95"
-                                style={{ background: "rgba(20,18,40,0.8)", border: "1px solid rgba(139,92,246,0.2)", color: "#9ca3af" }}
-                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(139,92,246,0.5)"; (e.currentTarget as HTMLElement).style.color = "#c4b5fd"; }}
-                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(139,92,246,0.2)"; (e.currentTarget as HTMLElement).style.color = "#9ca3af"; }}>
+                                style={{ background: "rgba(20,18,40,0.8)", border: "1px solid rgba(232,180,58,0.2)", color: "#9ca3af" }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(232,180,58,0.5)"; (e.currentTarget as HTMLElement).style.color = "#c4b5fd"; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(232,180,58,0.2)"; (e.currentTarget as HTMLElement).style.color = "#9ca3af"; }}>
                                 <span className={`w-5 h-5 rounded-lg bg-gradient-to-br ${p.color} flex items-center justify-center shadow`}>
                                     <p.icon size={10} className="text-white" />
                                 </span>
@@ -294,7 +294,7 @@ export function AdminAIChat() {
                 {showPrompts && messages.length === 1 && (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                         <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
-                            style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.2), rgba(37,99,235,0.2))", border: "1px solid rgba(139,92,246,0.2)" }}>
+                            style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.2), rgba(37,99,235,0.2))", border: "1px solid rgba(232,180,58,0.2)" }}>
                             <Sparkles size={28} className="text-violet-400" />
                         </div>
                         <p className="text-gray-500 text-sm">Select a quick action above or type your question below</p>
@@ -307,21 +307,21 @@ export function AdminAIChat() {
                         {/* Bot avatar */}
                         {msg.role === "assistant" && (
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-lg"
-                                style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)", boxShadow: "0 0 14px rgba(124,58,237,0.35)" }}>
+                                style={{ background: "linear-gradient(135deg, #d4a017, #2563eb)", boxShadow: "0 0 14px rgba(124,58,237,0.35)" }}>
                                 <Bot size={15} className="text-white" />
                             </div>
                         )}
 
                         <div className={`group flex flex-col max-w-[80%] ${msg.role === "user" ? "items-end" : "items-start"}`}>
                             {/* Role label */}
-                            <span className="text-[10px] font-semibold mb-1 px-1" style={{ color: msg.role === "user" ? "#818cf8" : "#6b7280" }}>
+                            <span className="text-[10px] font-semibold mb-1 px-1" style={{ color: msg.role === "user" ? "#f4c44e" : "#6b7280" }}>
                                 {msg.role === "user" ? "You" : "Admin AI"}
                             </span>
 
                             <div className={`relative rounded-2xl px-5 py-4 ${msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"}`}
                                 style={msg.role === "user"
-                                    ? { background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 60%, #2563eb 100%)", boxShadow: "0 4px 24px rgba(124,58,237,0.4)", color: "white" }
-                                    : { background: "rgba(20,18,42,0.95)", border: "1px solid rgba(139,92,246,0.18)", boxShadow: "0 4px 24px rgba(0,0,0,0.4)", color: "#e2e8f0" }}>
+                                    ? { background: "linear-gradient(135deg, #d4a017 0%, #e8b43a 60%, #2563eb 100%)", boxShadow: "0 4px 24px rgba(124,58,237,0.4)", color: "white" }
+                                    : { background: "rgba(20,18,42,0.95)", border: "1px solid rgba(232,180,58,0.18)", boxShadow: "0 4px 24px rgba(0,0,0,0.4)", color: "#e2e8f0" }}>
 
                                 {msg.role === "user" ? (
                                     <p className="text-sm leading-relaxed">{msg.content}</p>
@@ -347,7 +347,7 @@ export function AdminAIChat() {
                         {/* User avatar */}
                         {msg.role === "user" && (
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-lg"
-                                style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)", boxShadow: "0 0 14px rgba(79,70,229,0.35)" }}>
+                                style={{ background: "linear-gradient(135deg, #e8b43a, #d4a017)", boxShadow: "0 0 14px rgba(244,196,78,0.35)" }}>
                                 <User size={15} className="text-white" />
                             </div>
                         )}
@@ -358,11 +358,11 @@ export function AdminAIChat() {
                 {loading && (
                     <div className="flex gap-3 justify-start animate-in fade-in duration-200">
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                            style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)", boxShadow: "0 0 14px rgba(124,58,237,0.35)" }}>
+                            style={{ background: "linear-gradient(135deg, #d4a017, #2563eb)", boxShadow: "0 0 14px rgba(124,58,237,0.35)" }}>
                             <Bot size={15} className="text-white" />
                         </div>
                         <div className="rounded-2xl rounded-tl-sm px-5 py-3.5"
-                            style={{ background: "rgba(20,18,42,0.95)", border: "1px solid rgba(139,92,246,0.18)" }}>
+                            style={{ background: "rgba(20,18,42,0.95)", border: "1px solid rgba(232,180,58,0.18)" }}>
                             <div className="flex items-center gap-2">
                                 <TypingDots />
                                 <span className="text-xs text-gray-600">Thinking...</span>
@@ -375,7 +375,7 @@ export function AdminAIChat() {
 
             {/* ── INPUT ── */}
             <div className="shrink-0 px-6 py-4"
-                style={{ background: "rgba(10,9,20,0.97)", borderTop: "1px solid rgba(139,92,246,0.15)" }}>
+                style={{ background: "rgba(10,9,20,0.97)", borderTop: "1px solid rgba(232,180,58,0.15)" }}>
                 <div className="flex gap-3 items-center">
                     <div className="flex-1 relative">
                         <input
@@ -387,16 +387,16 @@ export function AdminAIChat() {
                             placeholder="Ask anything about users, fraud, pipeline, scholarships..."
                             disabled={loading}
                             className="w-full rounded-2xl pl-6 pr-6 focus:outline-none transition-all disabled:opacity-50"
-                            style={{ background: "rgba(25,22,50,0.9)", border: "1px solid rgba(139,92,246,0.25)", outline: "none", color: "#f1f5f9", caretColor: "#a78bfa", height: "56px", fontSize: "15px", lineHeight: "56px" }}
-                            onFocus={e => { e.target.style.borderColor = "rgba(139,92,246,0.6)"; e.target.style.boxShadow = "0 0 0 3px rgba(139,92,246,0.1)"; }}
-                            onBlur={e => { e.target.style.borderColor = "rgba(139,92,246,0.25)"; e.target.style.boxShadow = "none"; }}
+                            style={{ background: "rgba(25,22,50,0.9)", border: "1px solid rgba(232,180,58,0.25)", outline: "none", color: "#f1f5f9", caretColor: "#a78bfa", height: "56px", fontSize: "15px", lineHeight: "56px" }}
+                            onFocus={e => { e.target.style.borderColor = "rgba(232,180,58,0.6)"; e.target.style.boxShadow = "0 0 0 3px rgba(232,180,58,0.1)"; }}
+                            onBlur={e => { e.target.style.borderColor = "rgba(232,180,58,0.25)"; e.target.style.boxShadow = "none"; }}
                         />
                     </div>
                     <button
                         onClick={() => handleSend()}
                         disabled={loading || !input.trim()}
                         className="w-14 rounded-2xl text-white flex items-center justify-center transition-all disabled:opacity-30 shrink-0 hover:scale-110 active:scale-95"
-                        style={{ height: "56px", background: input.trim() && !loading ? "linear-gradient(135deg, #7c3aed, #2563eb)" : "rgba(30,27,54,0.8)", boxShadow: input.trim() && !loading ? "0 0 24px rgba(124,58,237,0.5)" : "none", border: "1px solid rgba(139,92,246,0.3)", transition: "all 0.2s" }}>
+                        style={{ height: "56px", background: input.trim() && !loading ? "linear-gradient(135deg, #d4a017, #2563eb)" : "rgba(30,27,54,0.8)", boxShadow: input.trim() && !loading ? "0 0 24px rgba(124,58,237,0.5)" : "none", border: "1px solid rgba(232,180,58,0.3)", transition: "all 0.2s" }}>
                         <Send size={16} />
                     </button>
                 </div>

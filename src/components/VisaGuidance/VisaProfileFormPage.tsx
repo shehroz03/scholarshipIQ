@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -24,7 +24,7 @@ import {
 import { api } from '../../api';
 import { useUser } from '../../context/UserContext';
 import { Sidebar } from '../Sidebar';
-import { darkTheme } from '../../styles/theme';
+import { darkTheme, lightTheme } from '../../styles/theme';
 import { ThemeToggle } from '../ThemeToggle';
 
 const VisaProfileFormPage: React.FC = () => {
@@ -33,7 +33,8 @@ const VisaProfileFormPage: React.FC = () => {
   const { status: userStatus, loading: loadingUser } = useUser();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const theme = darkTheme;
+  const isDark = false;
+  const theme = lightTheme;
 
   const getInitialIntake = () => {
     const now = new Date();
@@ -97,12 +98,12 @@ const VisaProfileFormPage: React.FC = () => {
         {/* Header */}
         <header className="h-20 border-b flex items-center justify-between px-8 shrink-0 z-40" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <PlaneTakeoff className="text-white w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f4c44e, #e8b43a)", boxShadow: "0 4px 12px rgba(244,196,78,0.4)" }}>
+              <PlaneTakeoff className="w-6 h-6" style={{ color: '#1e293b' }} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white leading-none">Visa Architect</h2>
-              <p className="text-xs font-bold text-indigo-400 mt-1 uppercase tracking-widest">AI Strategy Engine</p>
+              <h2 className="text-xl font-black text-gray-900 leading-none">Visa Architect</h2>
+              <p className="text-xs font-bold mt-1 uppercase tracking-widest" style={{ color: "#e8b43a" }}>AI Strategy Engine</p>
             </div>
           </div>
 
@@ -116,7 +117,7 @@ const VisaProfileFormPage: React.FC = () => {
                 gap: '8px',
                 padding: '10px 20px',
                 borderRadius: '14px',
-                backgroundColor: 'rgba(255,255,255,0.05)',
+                backgroundColor: 'rgba(0,0,0,0.04)',
                 border: `1px solid ${theme.border}`,
                 color: theme.text,
                 fontWeight: '700',
@@ -124,8 +125,8 @@ const VisaProfileFormPage: React.FC = () => {
                 cursor: 'pointer',
                 transition: 'all 0.2s'
               }}
-              onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = '#6366f1'; }}
-              onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = theme.border; }}
+              onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(244,196,78,0.08)'; e.currentTarget.style.borderColor = '#f4c44e'; }}
+              onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = theme.border; }}
             >
               <ChevronLeft size={18} /> Exit Architect
             </button>
@@ -138,27 +139,27 @@ const VisaProfileFormPage: React.FC = () => {
             
             {/* Hero Banner */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
+              background: 'linear-gradient(135deg, #1e3a7a 0%, #162f6a 100%)',
+              border: '1px solid rgba(244,196,78,0.3)',
               borderRadius: '28px',
               padding: '40px',
               marginBottom: '40px',
               position: 'relative',
               overflow: 'hidden',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)'
+              boxShadow: '0 4px 20px rgba(30,58,122,0.15)'
             }}>
               <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
               <div className="relative z-10">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-white/20 mb-6 backdrop-blur-md shadow-inner">
-                  <Globe className="w-4 h-4 text-indigo-400" />
+                  <Globe className="w-4 h-4 text-amber-500" />
                   <span className="text-xs font-black uppercase tracking-widest text-white">Target Destination: {countryDisplay}</span>
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-1" />
                   <span className="text-xs font-bold text-emerald-400">AI Co-Pilot Active</span>
                 </div>
                 <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 tracking-tight leading-none">
-                  Build Your <span style={{ background: 'linear-gradient(135deg, #818cf8 0%, #c084fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Visa Strategy</span>
+                  Build Your <span style={{ background: 'linear-gradient(135deg, #f4c44e 0%, #e8b43a 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Visa Strategy</span>
                 </h1>
-                <p className="text-indigo-200 text-base font-medium max-w-xl line-clamp-2 leading-relaxed">
+                <p className="text-blue-100 text-base font-medium max-w-xl line-clamp-2 leading-relaxed">
                   Complete these 4 rapid strategic steps. Our AI engine will run a comprehensive immigration rules check to formulate your bulletproof success plan.
                 </p>
               </div>
@@ -171,7 +172,7 @@ const VisaProfileFormPage: React.FC = () => {
               borderRadius: '24px',
               padding: '24px 32px',
               marginBottom: '40px',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+              boxShadow: '0 2px 12px rgba(0,0,0,0.07)'
             }}>
               <div className="flex items-center justify-between gap-2">
                 {[
@@ -200,7 +201,7 @@ const VisaProfileFormPage: React.FC = () => {
                       </span>
                     </div>
                     {i < arr.length - 1 && (
-                      <div className="h-1 flex-1 rounded-full mb-6 transition-all duration-300" style={{ background: n < step ? '#10b981' : 'rgba(255,255,255,0.05)' }} />
+                      <div className="h-1 flex-1 rounded-full mb-6 transition-all duration-300" style={{ background: n < step ? '#10b981' : 'rgba(0,0,0,0.04)' }} />
                     )}
                   </React.Fragment>
                 ))}
@@ -216,25 +217,25 @@ const VisaProfileFormPage: React.FC = () => {
                   borderRadius: '32px',
                   padding: '40px',
                   marginBottom: '32px',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.35)'
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
                 }}>
 
                   {/* STEP 1 — INTAKE TIMELINE */}
                   {step === 1 && (
                     <div className="space-y-8">
                       <div className="flex items-center gap-6 pb-6 border-b border-white/10">
-                        <div className="w-16 h-16 rounded-3xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-xl shadow-indigo-500/10">
+                        <div className="w-16 h-16 rounded-3xl bg-amber-400/20 border border-indigo-500/40 flex items-center justify-center text-amber-500 shadow-xl shadow-indigo-500/10">
                           <Calendar className="w-8 h-8" />
                         </div>
                         <div>
-                          <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-1">Step 1 of 4</p>
+                          <p className="text-xs font-black uppercase tracking-widest text-amber-500 mb-1">Step 1 of 4</p>
                           <h3 className="text-2xl font-black text-white">Intake Timeline & Window</h3>
                           <p className="text-sm text-slate-400 font-medium mt-1">Select your prospective enrollment intake to align visa buffer days.</p>
                         </div>
                       </div>
 
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-4">Select Proposed Intake Window</p>
+                        <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#f4c44e' }}>Select Proposed Intake Window</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                           {['Fall 2025', 'Spring 2026', 'Fall 2026', 'Spring 2027', 'Fall 2027'].map(term => {
                             const isFall = term.startsWith('Fall');
@@ -246,23 +247,23 @@ const VisaProfileFormPage: React.FC = () => {
                                 style={{
                                   padding: '24px',
                                   borderRadius: '20px',
-                                  backgroundColor: selected ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.03)',
-                                  border: `2px solid ${selected ? '#6366f1' : theme.border}`,
+                                  backgroundColor: selected ? 'rgba(244,196,78,0.08)' : '#ffffff',
+                                  border: `2px solid ${selected ? '#f4c44e' : theme.border}`,
                                   textAlign: 'left',
                                   cursor: 'pointer',
                                   transition: 'all 0.2s',
                                   position: 'relative',
-                                  boxShadow: selected ? '0 10px 25px rgba(99, 102, 241, 0.25)' : 'none'
+                                  boxShadow: selected ? '0 4px 16px rgba(244,196,78,0.3)' : '0 2px 8px rgba(0,0,0,0.06)'
                                 }}
-                                onMouseOver={(e) => !selected && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOver={(e) => !selected && (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)')}
                                 onMouseOut={(e) => !selected && (e.currentTarget.style.borderColor = theme.border)}
                               >
                                 <div className="text-3xl mb-4">{isFall ? '🍂' : '🌸'}</div>
-                                <div className={`text-lg font-black mb-1 ${selected ? 'text-white' : 'text-slate-300'}`}>{term}</div>
-                                <div className={`text-xs font-bold ${selected ? 'text-indigo-400' : 'text-slate-500'}`}>{isFall ? 'Aug – Dec Departure' : 'Jan – May Departure'}</div>
+                                <div className="text-lg font-black mb-1" style={{ color: '#1e293b' }}>{term}</div>
+                                <div className="text-xs font-bold" style={{ color: selected ? '#f4c44e' : '#64748b' }}>{isFall ? 'Aug – Dec Departure' : 'Jan – May Departure'}</div>
                                 {selected && (
-                                  <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
-                                    <Check className="w-4 h-4 text-white" />
+                                  <div className="absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center shadow-md" style={{ backgroundColor: '#f4c44e' }}>
+                                    <Check className="w-4 h-4" style={{ color: "#1e3a7a" }} />
                                   </div>
                                 )}
                               </button>
@@ -272,8 +273,8 @@ const VisaProfileFormPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-5 p-6 rounded-2xl border border-white/10" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/30">
-                          <Globe className="w-6 h-6 text-indigo-400" />
+                        <div className="w-12 h-12 rounded-2xl bg-amber-400/20 flex items-center justify-center shrink-0 border border-indigo-500/30">
+                          <Globe className="w-6 h-6 text-amber-500" />
                         </div>
                         <div>
                           <p className="text-xs font-black uppercase tracking-widest text-slate-400">Locked Destination</p>
@@ -317,7 +318,7 @@ const VisaProfileFormPage: React.FC = () => {
                                 style={{
                                   padding: '24px',
                                   borderRadius: '20px',
-                                  backgroundColor: sel ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255,255,255,0.03)',
+                                  backgroundColor: sel ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0,0,0,0.03)',
                                   border: `2px solid ${sel ? '#a855f7' : theme.border}`,
                                   textAlign: 'left',
                                   cursor: 'pointer',
@@ -325,7 +326,7 @@ const VisaProfileFormPage: React.FC = () => {
                                   position: 'relative',
                                   boxShadow: sel ? '0 10px 25px rgba(168, 85, 247, 0.25)' : 'none'
                                 }}
-                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)')}
                                 onMouseOut={(e) => !sel && (e.currentTarget.style.borderColor = theme.border)}
                               >
                                 <div className="text-3xl mb-4">{icon}</div>
@@ -333,7 +334,7 @@ const VisaProfileFormPage: React.FC = () => {
                                 <div className={`text-xs font-semibold ${sel ? 'text-purple-300' : 'text-slate-500'}`}>{desc}</div>
                                 {sel && (
                                   <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
-                                    <Check className="w-4 h-4 text-white" />
+                                    <Check className="w-4 h-4" style={{ color: "#1e3a7a" }} />
                                   </div>
                                 )}
                               </button>
@@ -358,23 +359,23 @@ const VisaProfileFormPage: React.FC = () => {
                                 style={{
                                   padding: '24px',
                                   borderRadius: '20px',
-                                  backgroundColor: sel ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.03)',
-                                  border: `2px solid ${sel ? '#6366f1' : theme.border}`,
+                                  backgroundColor: sel ? 'rgba(99, 102, 241, 0.15)' : 'rgba(0,0,0,0.03)',
+                                  border: `2px solid ${sel ? '#f4c44e' : theme.border}`,
                                   textAlign: 'left',
                                   cursor: 'pointer',
                                   transition: 'all 0.2s',
                                   position: 'relative',
                                   boxShadow: sel ? '0 10px 25px rgba(99, 102, 241, 0.25)' : 'none'
                                 }}
-                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)')}
                                 onMouseOut={(e) => !sel && (e.currentTarget.style.borderColor = theme.border)}
                               >
                                 <div className="text-3xl mb-4">{icon}</div>
                                 <div className={`text-lg font-black mb-1 ${sel ? 'text-white' : 'text-slate-300'}`}>{label}</div>
-                                <div className={`text-xs font-semibold ${sel ? 'text-indigo-300' : 'text-slate-500'}`}>{desc}</div>
+                                <div className={`text-xs font-semibold ${sel ? 'text-amber-400' : 'text-slate-500'}`}>{desc}</div>
                                 {sel && (
                                   <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
-                                    <Check className="w-4 h-4 text-white" />
+                                    <Check className="w-4 h-4" style={{ color: "#1e3a7a" }} />
                                   </div>
                                 )}
                               </button>
@@ -415,7 +416,7 @@ const VisaProfileFormPage: React.FC = () => {
                                 style={{
                                   padding: '24px',
                                   borderRadius: '20px',
-                                  backgroundColor: sel ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.03)',
+                                  backgroundColor: sel ? 'rgba(59, 130, 246, 0.15)' : 'rgba(0,0,0,0.03)',
                                   border: `2px solid ${sel ? '#3b82f6' : theme.border}`,
                                   textAlign: 'left',
                                   cursor: 'pointer',
@@ -423,7 +424,7 @@ const VisaProfileFormPage: React.FC = () => {
                                   position: 'relative',
                                   boxShadow: sel ? '0 10px 25px rgba(59, 130, 246, 0.25)' : 'none'
                                 }}
-                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)')}
                                 onMouseOut={(e) => !sel && (e.currentTarget.style.borderColor = theme.border)}
                               >
                                 <div className="text-3xl mb-4">{icon}</div>
@@ -431,7 +432,7 @@ const VisaProfileFormPage: React.FC = () => {
                                 <div className={`text-xs font-semibold ${sel ? 'text-blue-300' : 'text-slate-500'}`}>{desc}</div>
                                 {sel && (
                                   <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
-                                    <Check className="w-4 h-4 text-white" />
+                                    <Check className="w-4 h-4" style={{ color: "#1e3a7a" }} />
                                   </div>
                                 )}
                               </button>
@@ -457,7 +458,7 @@ const VisaProfileFormPage: React.FC = () => {
                                 style={{
                                   padding: '24px',
                                   borderRadius: '20px',
-                                  backgroundColor: sel ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255,255,255,0.03)',
+                                  backgroundColor: sel ? 'rgba(6, 182, 212, 0.15)' : 'rgba(0,0,0,0.03)',
                                   border: `2px solid ${sel ? '#06b6d4' : theme.border}`,
                                   textAlign: 'left',
                                   cursor: 'pointer',
@@ -465,7 +466,7 @@ const VisaProfileFormPage: React.FC = () => {
                                   position: 'relative',
                                   boxShadow: sel ? '0 10px 25px rgba(6, 182, 212, 0.25)' : 'none'
                                 }}
-                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
+                                onMouseOver={(e) => !sel && (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)')}
                                 onMouseOut={(e) => !sel && (e.currentTarget.style.borderColor = theme.border)}
                               >
                                 <div className="text-3xl mb-4">{icon}</div>
@@ -473,7 +474,7 @@ const VisaProfileFormPage: React.FC = () => {
                                 <div className={`text-xs font-semibold ${sel ? 'text-cyan-300' : 'text-slate-500'}`}>{desc}</div>
                                 {sel && (
                                   <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-cyan-600 flex items-center justify-center shadow-md">
-                                    <Check className="w-4 h-4 text-white" />
+                                    <Check className="w-4 h-4" style={{ color: "#1e3a7a" }} />
                                   </div>
                                 )}
                               </button>
@@ -488,7 +489,7 @@ const VisaProfileFormPage: React.FC = () => {
                           width: '100%',
                           padding: '28px',
                           borderRadius: '24px',
-                          backgroundColor: formData.bank_statement_available ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
+                          backgroundColor: formData.bank_statement_available ? 'rgba(16, 185, 129, 0.15)' : 'rgba(0,0,0,0.03)',
                           border: `2px solid ${formData.bank_statement_available ? '#10b981' : theme.border}`,
                           display: 'flex',
                           alignItems: 'center',
@@ -536,7 +537,7 @@ const VisaProfileFormPage: React.FC = () => {
                             style={{
                               padding: '24px',
                               borderRadius: '20px',
-                              backgroundColor: formData.previous_visa_refusal ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                              backgroundColor: formData.previous_visa_refusal ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0,0,0,0.03)',
                               border: `2px solid ${formData.previous_visa_refusal ? '#ef4444' : theme.border}`,
                               textAlign: 'left',
                               cursor: 'pointer',
@@ -550,7 +551,7 @@ const VisaProfileFormPage: React.FC = () => {
                             <div className={`text-xs font-semibold ${formData.previous_visa_refusal ? 'text-red-300' : 'text-slate-500'}`}>Our AI will build a strong mitigation strategy</div>
                             {formData.previous_visa_refusal && (
                               <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-red-600 flex items-center justify-center shadow-md">
-                                <Check className="w-4 h-4 text-white" />
+                                <Check className="w-4 h-4" style={{ color: "#1e3a7a" }} />
                               </div>
                             )}
                           </button>
@@ -560,7 +561,7 @@ const VisaProfileFormPage: React.FC = () => {
                             style={{
                               padding: '24px',
                               borderRadius: '20px',
-                              backgroundColor: !formData.previous_visa_refusal ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
+                              backgroundColor: !formData.previous_visa_refusal ? 'rgba(16, 185, 129, 0.15)' : 'rgba(0,0,0,0.03)',
                               border: `2px solid ${!formData.previous_visa_refusal ? '#10b981' : theme.border}`,
                               textAlign: 'left',
                               cursor: 'pointer',
@@ -574,7 +575,7 @@ const VisaProfileFormPage: React.FC = () => {
                             <div className={`text-xs font-semibold ${!formData.previous_visa_refusal ? 'text-emerald-300' : 'text-slate-500'}`}>Clean global immigration record</div>
                             {!formData.previous_visa_refusal && (
                               <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center shadow-md">
-                                <Check className="w-4 h-4 text-white" />
+                                <Check className="w-4 h-4" style={{ color: "#1e3a7a" }} />
                               </div>
                             )}
                           </button>
@@ -591,7 +592,7 @@ const VisaProfileFormPage: React.FC = () => {
                           style={{
                             width: '100%',
                             borderRadius: '20px',
-                            backgroundColor: 'rgba(0,0,0,0.3)',
+                            backgroundColor: '#f8fafc',
                             border: `1px solid ${theme.border}`,
                             padding: '20px',
                             color: '#fff',
@@ -600,15 +601,15 @@ const VisaProfileFormPage: React.FC = () => {
                             resize: 'none',
                             transition: 'border-color 0.2s'
                           }}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                          onFocus={(e) => e.currentTarget.style.borderColor = '#f4c44e'}
                           onBlur={(e) => e.currentTarget.style.borderColor = theme.border}
                         />
                       </div>
 
                       <div className="p-6 rounded-3xl border border-indigo-500/30" style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)' }}>
                         <div className="flex items-center gap-3 mb-4">
-                          <Sparkles className="w-5 h-5 text-indigo-400" />
-                          <span className="text-xs font-black uppercase tracking-widest text-indigo-400">AI Pre-Flight Scan Summary</span>
+                          <Sparkles className="w-5 h-5 text-amber-500" />
+                          <span className="text-xs font-black uppercase tracking-widest text-amber-500">AI Pre-Flight Scan Summary</span>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                           <div className="text-slate-400">🎯 Target: <div className="text-white font-black text-base mt-1">{countryDisplay}</div></div>
@@ -631,7 +632,7 @@ const VisaProfileFormPage: React.FC = () => {
                       gap: '10px',
                       padding: '16px 32px',
                       borderRadius: '18px',
-                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      backgroundColor: 'rgba(0,0,0,0.04)',
                       border: `1px solid ${theme.border}`,
                       color: theme.text,
                       fontWeight: '800',
@@ -639,8 +640,8 @@ const VisaProfileFormPage: React.FC = () => {
                       cursor: 'pointer',
                       transition: 'all 0.2s'
                     }}
-                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = '#fff'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = theme.border; }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#1e293b'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = theme.border; }}
                   >
                     <ChevronLeft size={18} /> {step === 1 ? 'Exit Form' : 'Previous Step'}
                   </button>
@@ -654,13 +655,13 @@ const VisaProfileFormPage: React.FC = () => {
                         gap: '10px',
                         padding: '16px 40px',
                         borderRadius: '18px',
-                        backgroundColor: '#6366f1',
+                        backgroundColor: '#f4c44e',
                         color: '#fff',
                         border: 'none',
                         fontWeight: '800',
                         fontSize: '15px',
                         cursor: 'pointer',
-                        boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4)',
+                        boxShadow: '0 8px 24px rgba(244,196,78,0.4)',
                         transition: 'all 0.2s'
                       }}
                       onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}

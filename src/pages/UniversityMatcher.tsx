@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import { 
   MapPin, 
   Search, 
@@ -41,7 +41,7 @@ function MapController({ center, zoom }: { center: [number, number], zoom: numbe
 
 // Custom Marker Creator (Enhanced for visibility with inline styles)
 const createMarkerIcon = (isSelected: boolean) => {
-  const color = isSelected ? '#f59e0b' : '#6366f1';
+  const color = isSelected ? '#f59e0b' : '#f4c44e';
   const size = isSelected ? 18 : 14;
   const pulseColor = isSelected ? 'rgba(245, 158, 11, 0.4)' : 'rgba(99, 102, 241, 0.4)';
   
@@ -127,12 +127,12 @@ function UniversityMarker({ uni, isSelected, onSelect, onNavigate }: {
                 style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px', background: '#f1f5f9', padding: '4px' }}
               />
             ) : (
-              <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #f4c44e, #8b5cf6)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Building2 size={20} color="white" />
               </div>
             )}
             <div>
-              <p style={{fontWeight:'800',fontSize:'15px', color: '#0f172a', lineHeight: 1.2, margin: 0}}>
+              <p style={{fontWeight:'800',fontSize:'15px', color: '#1e293b', lineHeight: 1.2, margin: 0}}>
                 {uni.name}
               </p>
               <p style={{color:'#64748b',fontSize:'11px', fontWeight: 600, margin: 0}}>
@@ -145,7 +145,7 @@ function UniversityMarker({ uni, isSelected, onSelect, onNavigate }: {
             {uni.qs_ranking && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                 <Trophy size={14} className="text-amber-500" />
-                <span style={{ color: '#0f172a', fontSize: '12px', fontWeight: 700 }}>QS Rank #{uni.qs_ranking}</span>
+                <span style={{ color: '#1e293b', fontSize: '12px', fontWeight: 700 }}>QS Rank #{uni.qs_ranking}</span>
               </div>
             )}
             
@@ -154,8 +154,8 @@ function UniversityMarker({ uni, isSelected, onSelect, onNavigate }: {
                 onClick={() => onNavigate(`search?university_id=${uni.id}`)}
                 style={{
                   flex: 1,
-                  background: '#6366f1',
-                  color: 'white',
+                  background: '#f4c44e',
+                  color: '#1e293b',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '8px',
@@ -290,8 +290,8 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
     <div style={{
       height: '100vh',
       overflow: 'hidden',
-      background: '#0f172a',
-      color: 'white',
+      background: '#f0f4ff',
+      color: '#1e293b',
       display: 'flex',
       flexDirection: 'column',
       fontFamily: "'Inter', sans-serif"
@@ -303,18 +303,18 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
         alignItems: 'center',
         padding: '16px 24px',
         background: 'rgba(255,255,255,0.03)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        borderBottom: '1px solid rgba(0,0,0,0.05)',
         zIndex: 1000
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <button 
             onClick={() => onNavigate('dashboard')}
             style={{ 
-              background: 'rgba(255,255,255,0.05)', 
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(0,0,0,0.03)', 
+              border: '1px solid rgba(0,0,0,0.08)',
               padding: '10px',
               borderRadius: '12px',
-              color: 'white',
+              color: '#1e293b',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -325,13 +325,13 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
           </button>
           <div>
             <p style={{
-              color: '#6366f1', fontSize: '11px',
+              color: '#f4c44e', fontSize: '11px',
               fontWeight: '600', letterSpacing: '2px',
               textTransform: 'uppercase'
             }}>
               INSTITUTION RADAR
             </p>
-            <p style={{ color: 'white', fontWeight: '700', fontSize: '18px' }}>
+            <p style={{ color: '#1e293b', fontWeight: '700', fontSize: '18px' }}>
               University Matcher
             </p>
           </div>
@@ -347,19 +347,19 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
             value={selectedCountry}
             onChange={(e) => setSelectedCountry(e.target.value)}
             style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(0,0,0,0.05)',
+              border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '10px',
               padding: '8px 16px',
-              color: 'white',
+              color: '#1e293b',
               fontSize: '13px',
               cursor: 'pointer',
               minWidth: '150px',
               outline: 'none'
             }}
           >
-            <option value="all" style={{ background: '#0f172a' }}>All Countries</option>
-            {countries.map(c => <option key={c} value={c} style={{ background: '#0f172a' }}>{c}</option>)}
+            <option value="all" style={{ background: '#f0f4ff' }}>All Countries</option>
+            {countries.map(c => <option key={c} value={c} style={{ background: '#f0f4ff' }}>{c}</option>)}
           </select>
 
           <select 
@@ -367,11 +367,11 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
             disabled={selectedCountry === "all"}
             onChange={(e) => setSelectedCity(e.target.value)}
             style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(0,0,0,0.05)',
+              border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '10px',
               padding: '8px 16px',
-              color: 'white',
+              color: '#1e293b',
               fontSize: '13px',
               cursor: 'pointer',
               minWidth: '150px',
@@ -379,8 +379,8 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
               opacity: selectedCountry === "all" ? 0.5 : 1
             }}
           >
-            <option value="all" style={{ background: '#0f172a' }}>All Cities</option>
-            {cities.map(c => <option key={c} value={c} style={{ background: '#0f172a' }}>{c}</option>)}
+            <option value="all" style={{ background: '#f0f4ff' }}>All Cities</option>
+            {cities.map(c => <option key={c} value={c} style={{ background: '#f0f4ff' }}>{c}</option>)}
           </select>
         </div>
       </nav>
@@ -395,7 +395,7 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
         {/* Left Panel: University List */}
         <div style={{
           background: 'rgba(255,255,255,0.02)',
-          borderRight: '1px solid rgba(255,255,255,0.08)',
+          borderRight: '1px solid rgba(0,0,0,0.05)',
           overflowY: 'auto',
           padding: '16px'
         }} className="custom-scrollbar">
@@ -406,13 +406,13 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
             alignItems: 'center',
             marginBottom: '12px'
           }}>
-            <h3 style={{ color: 'white', fontWeight: '700', fontSize: '15px' }}>
+            <h3 style={{ color: '#1e293b', fontWeight: '700', fontSize: '15px' }}>
               Universities
             </h3>
             <span style={{
-              background: 'rgba(99,102,241,0.2)',
+              background: 'rgba(244,196,78,0.2)',
               color: '#a5b4fc',
-              border: '1px solid rgba(99,102,241,0.3)',
+              border: '1px solid rgba(244,196,78,0.3)',
               borderRadius: '999px',
               padding: '2px 10px',
               fontSize: '12px'
@@ -447,8 +447,8 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
                   key={uni.id}
                   onClick={() => handleUniClick(uni)}
                   style={{
-                    background: selectedUniId === uni.id ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: selectedUniId === uni.id ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                    background: selectedUniId === uni.id ? 'rgba(244,196,78,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: selectedUniId === uni.id ? '1px solid rgba(244,196,78,0.4)' : '1px solid rgba(0,0,0,0.05)',
                     borderRadius: '12px',
                     padding: '12px',
                     marginBottom: '8px',
@@ -457,7 +457,7 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
                   }}
                 >
                   <p style={{
-                    color: 'white',
+                    color: '#1e293b',
                     fontWeight: '600',
                     fontSize: '13px',
                     marginBottom: '4px'
@@ -465,7 +465,7 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
                     {uni.name}
                   </p>
                   <div style={{
-                    color: '#94a3b8',
+                    color: '#64748b',
                     fontSize: '11px',
                     display: 'flex',
                     alignItems: 'center',
@@ -496,7 +496,7 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     style={{
-                      color: '#6366f1',
+                      color: '#f4c44e',
                       fontSize: '11px',
                       marginTop: '8px',
                       display: 'block',
@@ -560,11 +560,11 @@ export function UniversityMatcher({ onNavigate = () => {} }: { onNavigate?: (pag
           background: rgba(0,0,0,0.1);
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.05);
+          background: rgba(0,0,0,0.03);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255,255,255,0.1);
+          background: rgba(0,0,0,0.08);
         }
         
         .leaflet-container {

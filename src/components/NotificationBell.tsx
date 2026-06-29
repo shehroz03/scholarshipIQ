@@ -96,7 +96,7 @@ export function NotificationBell({ onNavigate }: { onNavigate: (page: string, pa
                         style={{ borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#f8fafc', backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(248,250,252,0.5)' }}
                     >
                         <div>
-                            <h3 className="font-black tracking-tight" style={{ color: isDark ? '#f1f5f9' : '#0f172a' }}>Notification Center</h3>
+                            <h3 className="font-black tracking-tight" style={{ color: isDark ? '#f1f5f9' : '#1e3a7a' }}>Notification Center</h3>
                             <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">ScholarIQ Intelligence</p>
                         </div>
                         <button
@@ -124,15 +124,15 @@ export function NotificationBell({ onNavigate }: { onNavigate: (page: string, pa
                                         className="p-6 cursor-pointer flex gap-4 items-start transition-all group border-b"
                                         style={{
                                             backgroundColor: !notif.is_read
-                                                ? isDark ? 'rgba(99,102,241,0.08)' : 'rgba(238,242,255,0.5)'
+                                                ? isDark ? 'rgba(244,196,78,0.08)' : 'rgba(238,242,255,0.5)'
                                                 : 'transparent',
                                             borderColor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc'
                                         }}
                                         onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.backgroundColor = isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc'; }}
-                                        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.backgroundColor = !notif.is_read ? (isDark ? 'rgba(99,102,241,0.08)' : 'rgba(238,242,255,0.5)') : 'transparent'; }}
+                                        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.backgroundColor = !notif.is_read ? (isDark ? 'rgba(244,196,78,0.08)' : 'rgba(238,242,255,0.5)') : 'transparent'; }}
                                         onClick={() => handleNotificationClick(notif)}
                                     >
-                                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform" style={{ backgroundColor: !notif.is_read ? '#4f46e5' : isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', boxShadow: !notif.is_read ? '0 4px 12px rgba(99,102,241,0.35)' : 'none' }}>
+                                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform" style={{ backgroundColor: !notif.is_read ? '#e8b43a' : isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', boxShadow: !notif.is_read ? '0 4px 12px rgba(244,196,78,0.35)' : 'none' }}>
                                             <Clock className="w-6 h-6" style={{ color: !notif.is_read ? '#fff' : isDark ? '#64748b' : '#94a3b8' }} />
                                         </div>
                                         <div className="flex-1">

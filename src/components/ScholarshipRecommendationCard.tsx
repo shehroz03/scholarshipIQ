@@ -69,7 +69,7 @@ export const ScholarshipRecommendationCard: React.FC<ScholarshipRecommendationCa
             </div>
           </div>
           
-          <Badge className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#e0e7ff', color: '#6366f1' }}>
+          <Badge className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#e0e7ff', color: '#f4c44e' }}>
             <Banknote size={12} />
             {scholarship.funding_type}
           </Badge>

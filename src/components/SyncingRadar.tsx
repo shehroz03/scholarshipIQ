@@ -37,7 +37,7 @@ export function SyncingRadar() {
       <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.04 }}>
         <defs>
           <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#818cf8" strokeWidth="0.5" />
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#f4c44e" strokeWidth="0.5" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -48,7 +48,7 @@ export function SyncingRadar() {
         position: "absolute",
         width: 500, height: 500,
         borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(244,196,78,0.12) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
 
@@ -56,14 +56,14 @@ export function SyncingRadar() {
       <div style={{ position: "relative", width: 280, height: 280, marginBottom: 40 }}>
         <svg width="280" height="280" viewBox="0 0 280 280">
           {/* Outer static rings */}
-          <circle cx="140" cy="140" r="120" fill="none" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
-          <circle cx="140" cy="140" r="95"  fill="none" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
-          <circle cx="140" cy="140" r="70"  fill="none" stroke="rgba(99,102,241,0.13)" strokeWidth="1" />
-          <circle cx="140" cy="140" r="45"  fill="none" stroke="rgba(99,102,241,0.18)" strokeWidth="1" />
+          <circle cx="140" cy="140" r="120" fill="none" stroke="rgba(244,196,78,0.08)" strokeWidth="1" />
+          <circle cx="140" cy="140" r="95"  fill="none" stroke="rgba(244,196,78,0.10)" strokeWidth="1" />
+          <circle cx="140" cy="140" r="70"  fill="none" stroke="rgba(244,196,78,0.13)" strokeWidth="1" />
+          <circle cx="140" cy="140" r="45"  fill="none" stroke="rgba(244,196,78,0.18)" strokeWidth="1" />
 
           {/* Cross hairs */}
-          <line x1="140" y1="20" x2="140" y2="260" stroke="rgba(99,102,241,0.06)" strokeWidth="0.5" />
-          <line x1="20"  y1="140" x2="260" y2="140" stroke="rgba(99,102,241,0.06)" strokeWidth="0.5" />
+          <line x1="140" y1="20" x2="140" y2="260" stroke="rgba(244,196,78,0.06)" strokeWidth="0.5" />
+          <line x1="20"  y1="140" x2="260" y2="140" stroke="rgba(244,196,78,0.06)" strokeWidth="0.5" />
 
           {/* Spinning arc - outer */}
           <circle
@@ -91,7 +91,7 @@ export function SyncingRadar() {
           <circle
             cx="140" cy="140" r="70"
             fill="none"
-            stroke="rgba(139,92,246,0.6)"
+            stroke="rgba(232,180,58,0.6)"
             strokeWidth="1.5"
             strokeDasharray="60 380"
             strokeLinecap="round"
@@ -101,12 +101,12 @@ export function SyncingRadar() {
           {/* Gradient defs */}
           <defs>
             <linearGradient id="arcGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity="0" />
+              <stop offset="0%" stopColor="#f4c44e" stopOpacity="0" />
               <stop offset="100%" stopColor="#8b5cf6" stopOpacity="1" />
             </linearGradient>
             <linearGradient id="arcGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#a78bfa" stopOpacity="0" />
-              <stop offset="100%" stopColor="#6366f1" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#f4c44e" stopOpacity="0.9" />
             </linearGradient>
           </defs>
         </svg>
@@ -116,9 +116,9 @@ export function SyncingRadar() {
           position: "absolute", top: "50%", left: "50%",
           transform: "translate(-50%, -50%)",
           width: 64, height: 64, borderRadius: 16,
-          background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+          background: "linear-gradient(135deg, #e8b43a, #d4a017)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 0 30px rgba(99,102,241,0.5), 0 0 60px rgba(99,102,241,0.2)",
+          boxShadow: "0 0 30px rgba(244,196,78,0.5), 0 0 60px rgba(244,196,78,0.2)",
         }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -140,15 +140,15 @@ export function SyncingRadar() {
       {/* Progress bar */}
       <div style={{ width: 200, marginBottom: 32 }}>
         <div style={{
-          height: 2, background: "rgba(99,102,241,0.15)",
+          height: 2, background: "rgba(244,196,78,0.15)",
           borderRadius: 100, overflow: "hidden",
         }}>
           <div style={{
             height: "100%",
-            background: "linear-gradient(90deg, #6366f1, #a78bfa)",
+            background: "linear-gradient(90deg, #f4c44e, #a78bfa)",
             width: `${Math.min(progress, 100)}%`,
             transition: "width 0.15s ease",
-            boxShadow: "0 0 8px rgba(99,102,241,0.8)",
+            boxShadow: "0 0 8px rgba(244,196,78,0.8)",
             borderRadius: 100,
           }} />
         </div>
@@ -167,8 +167,8 @@ export function SyncingRadar() {
         {[0, 1, 2].map(i => (
           <div key={i} style={{
             width: 5, height: 5, borderRadius: "50%",
-            background: dots > i ? "#6366f1" : "rgba(99,102,241,0.25)",
-            boxShadow: dots > i ? "0 0 8px #6366f1" : "none",
+            background: dots > i ? "#f4c44e" : "rgba(244,196,78,0.25)",
+            boxShadow: dots > i ? "0 0 8px #f4c44e" : "none",
             transition: "all 0.3s",
           }} />
         ))}

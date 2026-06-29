@@ -55,7 +55,9 @@ const apiBase = {
         errorMessage = errorData.message;
       }
       
-      throw new Error(errorMessage);
+      const err = new Error(errorMessage) as Error & { status: number };
+      err.status = response.status;
+      throw err;
     }
 
     return response.json();
@@ -93,6 +95,8 @@ const apiBase = {
       const data = await response.json();
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("userRole", data.role || "student");
+      if (data.user_id || data.id) localStorage.setItem("userId", String(data.user_id ?? data.id));
+      if (data.full_name || data.name) localStorage.setItem("userName", data.full_name ?? data.name);
       return data;
     },
 
@@ -706,20 +710,37 @@ export const api = {
       return apiBase.request("/teacher/students");
     },
     
+    // Payment Methods CRUD
+    async getPaymentMethods() {
+      return apiBase.request("/teacher/payment-methods");
+    },
+    async addPaymentMethod(data: { method_type: string; account_title: string; account_number: string; bank_name?: string; instructions?: string }) {
+      return apiBase.request("/teacher/payment-methods", { method: "POST", body: JSON.stringify(data) });
+    },
+    async updatePaymentMethod(id: number, data: { account_title?: string; account_number?: string; bank_name?: string; instructions?: string; is_active?: boolean }) {
+      return apiBase.request(`/teacher/payment-methods/${id}`, { method: "PUT", body: JSON.stringify(data) });
+    },
+    async deletePaymentMethod(id: number) {
+      return apiBase.request(`/teacher/payment-methods/${id}`, { method: "DELETE" });
+    },
+
+    // Course Payment Methods (which methods are enabled per course)
+    async getCoursePaymentMethods(courseId: number) {
+      return apiBase.request(`/teacher/courses/${courseId}/payment-methods`);
+    },
+    async setCoursePaymentMethods(courseId: number, methodIds: number[]) {
+      return apiBase.request(`/teacher/courses/${courseId}/payment-methods`, { method: "POST", body: JSON.stringify({ method_ids: methodIds }) });
+    },
+
     // Payment Management
     async getPendingPayments() {
       return apiBase.request("/teacher/payments/pending");
     },
     async approvePayment(enrollmentId: number) {
-      return apiBase.request(`/teacher/enrollments/${enrollmentId}/approve-payment`, {
-        method: "POST"
-      });
+      return apiBase.request(`/teacher/enrollments/${enrollmentId}/approve-payment`, { method: "POST" });
     },
     async rejectPayment(enrollmentId: number, reason: string) {
-      return apiBase.request(`/teacher/enrollments/${enrollmentId}/reject-payment`, {
-        method: "POST",
-        body: JSON.stringify({ reason })
-      });
+      return apiBase.request(`/teacher/enrollments/${enrollmentId}/reject-payment?reason=${encodeURIComponent(reason)}`, { method: "POST" });
     },
     async uploadProfilePicture(file: File) {
       const formData = new FormData();
@@ -754,10 +775,14 @@ export const api = {
         method: "POST"
       });
     },
-    async submitPayment(courseId: number, data: { payment_method: string; payment_reference: string; amount_paid?: number }) {
+    async getPaymentInfo(courseId: number) {
+      return apiBase.request(`/courses/${courseId}/payment-info`);
+    },
+    async submitPayment(courseId: number, formData: FormData) {
       return apiBase.request(`/courses/${courseId}/submit-payment`, {
         method: "POST",
-        body: JSON.stringify(data)
+        body: formData,
+        headers: {},
       });
     },
     async getMyEnrolledCourses() {
@@ -834,6 +859,16 @@ export const api = {
       return apiBase.request(`/teacher-reviews/admin/dismiss/${reviewId}${query}`, {
         method: "POST"
       });
+    },
+
+    // Student: Delete own review
+    async deleteMyReview(reviewId: number) {
+      return apiBase.request(`/teacher-reviews/my/${reviewId}`, { method: "DELETE" });
+    },
+
+    // Admin: Delete any review
+    async adminDeleteReview(reviewId: number) {
+      return apiBase.request(`/teacher-reviews/admin/remove/${reviewId}?reason=admin_delete`, { method: "POST" });
     },
 
     // Admin: Get all reviews

@@ -2,22 +2,23 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { toast } from "sonner";
-import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, X, HelpCircle, Settings, ArrowRight, User, Target, FileText, Tag } from "lucide-react";
+import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, X, HelpCircle, Settings, ArrowRight, User, Target, FileText, Tag, CreditCard, ZoomIn } from "lucide-react";
 import { TeacherReviewManagement } from "./TeacherReviewManagement";
+import { TeacherPaymentMethods, getLocalPaymentMethods } from "./TeacherPaymentMethods";
 
 const TEST_TYPES = ["IELTS", "TOEFL", "GRE", "GMAT", "PTE", "TestDaF", "Duolingo", "SAT"];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 const PLATFORMS = ["Google Meet", "Zoom", "Microsoft Teams"];
 
 const TEST_COLORS: Record<string, string> = {
-  IELTS: "#2563eb", TOEFL: "#7c3aed", GRE: "#059669",
+  IELTS: "#2563eb", TOEFL: "#d4a017", GRE: "#059669",
   GMAT: "#d97706", PTE: "#dc2626", TestDaF: "#000",
   Duolingo: "#65a30d", SAT: "#0891b2"
 };
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "courses" | "students" | "create" | "meetings" | "quizzes" | "fees">(() => {
+  const [tab, setTab] = useState<"overview" | "courses" | "students" | "create" | "meetings" | "quizzes" | "fees" | "paymethods">(() => {
     const savedTab = localStorage.getItem("teacherDashboardTab");
     return (savedTab as any) || "overview";
   });
@@ -33,6 +34,8 @@ export default function TeacherDashboard() {
   const [studentCourses, setStudentCourses] = useState<any[]>([]);
   const [registerForm, setRegisterForm] = useState({ bio: "", specializations: "IELTS", experience_years: 1, qualification: "" });
   const [courseForm, setCourseForm] = useState<{ title: string, subject: string, description: string, test_type: string, level: string, price: number | string }>({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: "" });
+  const [teacherPayMethods, setTeacherPayMethods] = useState<any[]>([]);
+  const [selectedPayMethodIds, setSelectedPayMethodIds] = useState<number[]>([]);
   const [meetingForm, setMeetingForm] = useState({ date: "", time: "", link: "", platform: "Google Meet", description: "" });
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(() => {
@@ -112,6 +115,7 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     localStorage.setItem("teacherDashboardTab", tab);
+    if (tab === "create") loadTeacherPayMethods();
   }, [tab]);
 
   // Persist selected course ID
@@ -130,10 +134,27 @@ export default function TeacherDashboard() {
 
   const handleCreateCourse = async () => {
     try {
-      await api.teacher.createCourse(courseForm);
-      toast.success("Course created!"); setCourseForm({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: "" });
+      const created = await api.teacher.createCourse(courseForm);
+      if (selectedPayMethodIds.length > 0 && created?.id) {
+        try { await api.teacher.setCoursePaymentMethods(created.id, selectedPayMethodIds); } catch {}
+      }
+      toast.success("Course created!");
+      setCourseForm({ title: "", subject: "", description: "", test_type: "IELTS", level: "Beginner", price: "" });
+      setSelectedPayMethodIds([]);
       fetchAll(); setTab("overview");
     } catch (e: any) { toast.error(e.message); }
+  };
+
+  const loadTeacherPayMethods = async () => {
+    try {
+      const data = await api.teacher.getPaymentMethods();
+      setTeacherPayMethods(Array.isArray(data) ? data : data.methods ?? []);
+    } catch {
+      // Backend not available — load from localStorage (demo mode)
+      const local = getLocalPaymentMethods();
+      setTeacherPayMethods(local);
+      if (local.length === 0) toast.info("No payment methods found. Add them in the Payment Methods tab first.");
+    }
   };
 
   const togglePublish = async (courseId: number, current: boolean) => {
@@ -398,7 +419,7 @@ Notes/Topic: ${aiNotes}`;
                 <div className="p-5 border-b bg-gradient-to-r from-indigo-50 to-white">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold" style={{ backgroundColor: TEST_COLORS[course.test_type] || "#6366f1" }}>
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold" style={{ backgroundColor: TEST_COLORS[course.test_type] || "#f4c44e" }}>
                         {course.test_type?.slice(0, 2)}
                       </div>
                       <div>
@@ -501,7 +522,7 @@ Notes/Topic: ${aiNotes}`;
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4"><BookOpen className="text-indigo-600" size={40} /></div>
           <h1 className="text-3xl font-black text-gray-900">Become a Teacher</h1>
-          <p className="text-gray-500 mt-2">Students ki IELTS, TOEFL, GRE tayari mein help karo</p>
+          <p className="text-gray-500 mt-2">Help students prepare for IELTS, TOEFL, and GRE exams</p>
         </div>
         <div className="space-y-4">
           <div><label className="text-sm font-semibold text-gray-700 block mb-1">Bio / Introduction</label>
@@ -523,20 +544,21 @@ Notes/Topic: ${aiNotes}`;
   );
 
   const navItems = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard, color: "#6366f1" },
+    { id: "overview", label: "Overview", icon: LayoutDashboard, color: "#f4c44e" },
     { id: "profile", label: "My Profile", icon: User, color: "#f43f5e" },
     { id: "courses", label: "My Courses", icon: BookOpen, color: "#2563eb" },
     { id: "meetings", label: "Classes & Links", icon: Video, color: "#0891b2" },
-    { id: "quizzes", label: "Quizzes", icon: Zap, color: "#7c3aed" },
+    { id: "quizzes", label: "Quizzes", icon: Zap, color: "#d4a017" },
     { id: "fees", label: "Fee Payments", icon: DollarSign, color: "#059669" },
+    { id: "paymethods", label: "Payment Methods", icon: CreditCard, color: "#7c3aed" },
     { id: "students", label: "Students", icon: Users, color: "#d97706" },
-    { id: "create", label: "Create Course", icon: Plus, color: "#6366f1" },
+    { id: "create", label: "Create Course", icon: Plus, color: "#f4c44e" },
   ];
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#ffffff" }}>
       {/* SIDEBAR */}
-      <aside style={{ width: "256px", minWidth: "256px", flexShrink: 0, display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", background: "linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%)", overflowY: "auto" }}>
+      <aside style={{ width: "256px", minWidth: "256px", flexShrink: 0, display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", background: "linear-gradient(180deg, #163065 0%, #312e81 50%, #3730a3 100%)", overflowY: "auto" }}>
         {/* Logo */}
         <div style={{ padding: "24px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -586,7 +608,7 @@ Notes/Topic: ${aiNotes}`;
                 htmlFor="profile-picture-input"
                 className="w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-base cursor-pointer overflow-hidden transition-all hover:ring-2 hover:ring-white/50"
                 style={{ 
-                  background: profile?.profile_picture_url ? "transparent" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                  background: profile?.profile_picture_url ? "transparent" : "linear-gradient(135deg, #f4c44e, #8b5cf6)",
                 }}
               >
                 {profile?.profile_picture_url ? (
@@ -684,7 +706,7 @@ Notes/Topic: ${aiNotes}`;
         {/* Top Header */}
         <div className="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
           <div className="flex items-center gap-3">
-            <div className="w-1 h-10 rounded-full" style={{ background: navItems.find(n => n.id === tab)?.color || "#6366f1" }} />
+            <div className="w-1 h-10 rounded-full" style={{ background: navItems.find(n => n.id === tab)?.color || "#f4c44e" }} />
             <div>
               <h1 className="text-xl font-black text-gray-900 leading-tight">
                 {navItems.find(n => n.id === tab)?.label || "Dashboard"}
@@ -696,6 +718,7 @@ Notes/Topic: ${aiNotes}`;
                 {tab === "meetings" && "All meeting links and live classes"}
                 {tab === "quizzes" && "Manage quizzes and questions"}
                 {tab === "fees" && "Approve student fee payments"}
+                {tab === "paymethods" && "Your JazzCash, Easypaisa and Bank details"}
                 {tab === "students" && "View enrolled students and progress"}
                 {tab === "create" && "Create a new test-prep course with fee"}
               </p>
@@ -703,13 +726,13 @@ Notes/Topic: ${aiNotes}`;
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2 border">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>{profile?.name?.charAt(0)?.toUpperCase() || "T"}</div>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black" style={{ background: "linear-gradient(135deg, #f4c44e, #8b5cf6)" }}>{profile?.name?.charAt(0)?.toUpperCase() || "T"}</div>
               <span className="text-sm font-semibold text-gray-700">{profile?.name?.split(" ")[0]}</span>
             </div>
             <button
               onClick={() => setTab("create")}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
-              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+              style={{ background: "linear-gradient(135deg, #f4c44e, #8b5cf6)" }}
             >
               <Plus size={15} /> New Course
             </button>
@@ -843,7 +866,7 @@ Notes/Topic: ${aiNotes}`;
                       }
                     }}
                     className="text-white font-bold py-3 px-8 rounded-xl text-sm transition-all shadow-sm flex items-center gap-2 hover:shadow-md hover:scale-[1.02]"
-                    style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#ffffff" }}
+                    style={{ background: "linear-gradient(135deg, #f4c44e, #8b5cf6)", color: "#ffffff" }}
                   >
                     Save Changes <CheckCircle size={16} />
                   </button>
@@ -859,10 +882,10 @@ Notes/Topic: ${aiNotes}`;
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Total Courses", value: analytics.total_courses, icon: BookOpen, grad: "linear-gradient(135deg,#6366f1,#818cf8)", light: "#eef2ff" },
+                { label: "Total Courses", value: analytics.total_courses, icon: BookOpen, grad: "linear-gradient(135deg,#f4c44e,#f4c44e)", light: "#eef2ff" },
                 { label: "Total Students", value: analytics.total_students, icon: Users, grad: "linear-gradient(135deg,#2563eb,#60a5fa)", light: "#eff6ff" },
                 { label: "Pending Fees", value: analytics.pending_payments ?? 0, icon: DollarSign, grad: "linear-gradient(135deg,#d97706,#fbbf24)", light: "#fffbeb" },
-                { label: "Quiz Attempts", value: analytics.total_quiz_attempts, icon: Zap, grad: "linear-gradient(135deg,#7c3aed,#a78bfa)", light: "#f5f3ff" },
+                { label: "Quiz Attempts", value: analytics.total_quiz_attempts, icon: Zap, grad: "linear-gradient(135deg,#d4a017,#a78bfa)", light: "#f5f3ff" },
               ].map(s => (
                 <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all">
                   <div className="flex items-center justify-between mb-4">
@@ -901,7 +924,7 @@ Notes/Topic: ${aiNotes}`;
                 <h3 className="font-black text-gray-900 mb-4">Quick Actions</h3>
                 <div className="space-y-2">
                   {[
-                    { label: "Create New Course", icon: Plus, bg: "#eef2ff", color: "#6366f1", tab: "create" },
+                    { label: "Create New Course", icon: Plus, bg: "#eef2ff", color: "#f4c44e", tab: "create" },
                     { label: "Manage Courses", icon: BookOpen, bg: "#eff6ff", color: "#2563eb", tab: "courses" },
                     { label: "View All Students", icon: Users, bg: "#f0fdf4", color: "#059669", tab: "students" },
                   ].map(a => (
@@ -927,17 +950,17 @@ Notes/Topic: ${aiNotes}`;
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
                 <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <BookOpen size={18} style={{ color: "#6366f1" }} />
+                    <BookOpen size={18} style={{ color: "#f4c44e" }} />
                     <h3 className="font-black text-gray-900">Recent Courses</h3>
                     <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">{courses.length}</span>
                   </div>
-                  <button onClick={() => setTab("courses")} className="text-sm font-bold flex items-center gap-1" style={{ color: "#6366f1" }}>View All <ArrowRight size={14} /></button>
+                  <button onClick={() => setTab("courses")} className="text-sm font-bold flex items-center gap-1" style={{ color: "#f4c44e" }}>View All <ArrowRight size={14} /></button>
                 </div>
                 <div className="divide-y divide-gray-50">
                   {courses.slice(0, 3).map(c => (
                     <div key={c.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-xs font-black shadow-sm" style={{ background: `linear-gradient(135deg, ${TEST_COLORS[c.test_type] || "#6366f1"}, ${TEST_COLORS[c.test_type] || "#8b5cf6"}99)` }}>{c.test_type}</div>
+                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-xs font-black shadow-sm" style={{ background: `linear-gradient(135deg, ${TEST_COLORS[c.test_type] || "#f4c44e"}, ${TEST_COLORS[c.test_type] || "#8b5cf6"}99)` }}>{c.test_type}</div>
                         <div>
                           <p className="font-bold text-gray-900 text-sm">{c.title}</p>
                           <p className="text-xs text-gray-400 mt-0.5">{c.level} · <strong className="text-gray-600">{c.enrolled_students}</strong> students · {c.total_lessons} lessons</p>
@@ -968,7 +991,7 @@ Notes/Topic: ${aiNotes}`;
                   <h1 style={{ color: "#ffffff", fontSize: "28px", fontWeight: 800, margin: 0 }}>My Courses</h1>
                   <p style={{ color: "#94a3b8", fontSize: "14px", marginTop: "4px" }}>Manage your courses, lessons, and student engagement</p>
                 </div>
-                <button onClick={() => setTab("create")} style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#ffffff", padding: "12px 24px", borderRadius: "12px", fontWeight: 700, fontSize: "14px", border: "none", cursor: "pointer", boxShadow: "0 4px 20px rgba(99, 102, 241, 0.3)", display: "flex", alignItems: "center", gap: "8px" }}>
+                <button onClick={() => setTab("create")} style={{ background: "linear-gradient(135deg, #f4c44e, #8b5cf6)", color: "#ffffff", padding: "12px 24px", borderRadius: "12px", fontWeight: 700, fontSize: "14px", border: "none", cursor: "pointer", boxShadow: "0 4px 20px rgba(99, 102, 241, 0.3)", display: "flex", alignItems: "center", gap: "8px" }}>
                   <Plus size={18} /> New Course
                 </button>
               </div>
@@ -976,7 +999,7 @@ Notes/Topic: ${aiNotes}`;
               <div style={{ position: "relative", display: "flex", gap: "24px", marginTop: "24px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(99, 102, 241, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <BookOpen size={20} color="#818cf8" />
+                    <BookOpen size={20} color="#f4c44e" />
                   </div>
                   <div>
                     <p style={{ color: "#ffffff", fontSize: "20px", fontWeight: 700, margin: 0 }}>{courses.length}</p>
@@ -1007,11 +1030,11 @@ Notes/Topic: ${aiNotes}`;
             {courses.length === 0 ? (
               <div style={{ textAlign: "center", padding: "80px 24px", background: "#ffffff", borderRadius: "24px", border: "2px dashed #e2e8f0" }}>
                 <div style={{ width: "80px", height: "80px", background: "linear-gradient(135deg, #eef2ff, #e0e7ff)", borderRadius: "24px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-                  <BookOpen size={40} color="#6366f1" />
+                  <BookOpen size={40} color="#f4c44e" />
                 </div>
                 <h3 style={{ color: "#1e293b", fontSize: "20px", fontWeight: 700, marginBottom: "8px" }}>No courses yet</h3>
                 <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "24px" }}>Create your first course to start teaching students</p>
-                <button onClick={() => setTab("create")} style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#ffffff", padding: "14px 28px", borderRadius: "14px", fontWeight: 700, fontSize: "15px", border: "none", cursor: "pointer", boxShadow: "0 4px 20px rgba(99, 102, 241, 0.3)" }}>+ Create First Course</button>
+                <button onClick={() => setTab("create")} style={{ background: "linear-gradient(135deg, #f4c44e, #8b5cf6)", color: "#ffffff", padding: "14px 28px", borderRadius: "14px", fontWeight: 700, fontSize: "15px", border: "none", cursor: "pointer", boxShadow: "0 4px 20px rgba(99, 102, 241, 0.3)" }}>+ Create First Course</button>
               </div>
             ) : courses.map(c => (
               <div key={c.id} style={{ background: "#ffffff", borderRadius: "20px", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.08)", border: "1px solid #f1f5f9" }}>
@@ -1019,7 +1042,7 @@ Notes/Topic: ${aiNotes}`;
                 <div style={{ padding: "24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", borderBottom: selectedCourse?.id === c.id ? "1px solid #f1f5f9" : "none" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1 }}>
                     {/* Course Icon */}
-                    <div style={{ width: "56px", height: "56px", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 800, color: "#ffffff", flexShrink: 0, background: `linear-gradient(135deg, ${TEST_COLORS[c.test_type] || "#6366f1"}, ${TEST_COLORS[c.test_type] || "#8b5cf6"}cc)`, boxShadow: "0 4px 12px rgba(99, 102, 241, 0.25)" }}>
+                    <div style={{ width: "56px", height: "56px", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 800, color: "#ffffff", flexShrink: 0, background: `linear-gradient(135deg, ${TEST_COLORS[c.test_type] || "#f4c44e"}, ${TEST_COLORS[c.test_type] || "#8b5cf6"}cc)`, boxShadow: "0 4px 12px rgba(99, 102, 241, 0.25)" }}>
                       {c.test_type}
                     </div>
                     {/* Course Info */}
@@ -1051,10 +1074,17 @@ Notes/Topic: ${aiNotes}`;
                   </div>
                   {/* Action Buttons */}
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                    <button onClick={() => togglePublish(c.id, c.is_published)} style={{ padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title={c.is_published ? "Unpublish" : "Publish"}>
-                      {c.is_published ? <EyeOff size={18} color="#94a3b8" /> : <Eye size={18} color="#6366f1" />}
+                    <button onClick={() => togglePublish(c.id, c.is_published)} style={{ padding: "8px 14px", borderRadius: "10px", border: `1px solid ${c.is_published ? "#e2e8f0" : "#fde68a"}`, background: c.is_published ? "#ffffff" : "#fffbeb", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", transition: "all 0.15s" }}
+                      title={c.is_published ? "Click to Unpublish" : "Click to Publish"}
+                      onMouseOver={e => { e.currentTarget.style.background = c.is_published ? "#fef2f2" : "#fef3c7"; e.currentTarget.style.borderColor = c.is_published ? "#fca5a5" : "#f4c44e"; }}
+                      onMouseOut={e => { e.currentTarget.style.background = c.is_published ? "#ffffff" : "#fffbeb"; e.currentTarget.style.borderColor = c.is_published ? "#e2e8f0" : "#fde68a"; }}
+                    >
+                      {c.is_published ? <EyeOff size={15} color="#94a3b8" /> : <Eye size={15} color="#d97706" />}
+                      <span style={{ fontSize: "12px", fontWeight: 800, color: c.is_published ? "#94a3b8" : "#d97706", whiteSpace: "nowrap" }}>
+                        {c.is_published ? "Unpublish" : "Publish"}
+                      </span>
                     </button>
-                    <button onClick={() => setSelectedCourse(selectedCourse?.id === c.id ? null : c)} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: selectedCourse?.id === c.id ? "#6366f1" : "#f1f5f9", color: selectedCourse?.id === c.id ? "#ffffff" : "#475569", fontSize: "13px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <button onClick={() => setSelectedCourse(selectedCourse?.id === c.id ? null : c)} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: selectedCourse?.id === c.id ? "#f4c44e" : "#f1f5f9", color: selectedCourse?.id === c.id ? "#ffffff" : "#475569", fontSize: "13px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
                       {selectedCourse?.id === c.id ? <><X size={16} /> Close</> : <><Settings size={16} /> Manage</>}
                     </button>
                     <button onClick={async () => {
@@ -1072,12 +1102,12 @@ Notes/Topic: ${aiNotes}`;
                     <div style={{ background: "#ffffff", borderRadius: "16px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #f4c44e, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <Play size={18} color="#ffffff" />
                           </div>
                           <h4 style={{ color: "#1e293b", fontSize: "15px", fontWeight: 700, margin: 0 }}>Lessons ({c.total_lessons || 0})</h4>
                         </div>
-                        <button onClick={() => setShowLessonForm(!showLessonForm)} style={{ padding: "8px 14px", borderRadius: "8px", border: "none", background: showLessonForm ? "#f1f5f9" : "#6366f1", color: showLessonForm ? "#475569" : "#ffffff", fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <button onClick={() => setShowLessonForm(!showLessonForm)} style={{ padding: "8px 14px", borderRadius: "8px", border: "none", background: showLessonForm ? "#f1f5f9" : "#f4c44e", color: showLessonForm ? "#475569" : "#ffffff", fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
                           <Plus size={14} /> {showLessonForm ? "Cancel" : "Add Lesson"}
                         </button>
                       </div>
@@ -1089,7 +1119,7 @@ Notes/Topic: ${aiNotes}`;
                             <div key={lesson.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #f1f5f9" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                                 <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "linear-gradient(135deg, #e0e7ff, #c7d2fe)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  <Play size={16} color="#6366f1" />
+                                  <Play size={16} color="#f4c44e" />
                                 </div>
                                 <div>
                                   <p style={{ color: "#1e293b", fontSize: "14px", fontWeight: 600, margin: 0 }}>{lesson.title}</p>
@@ -1118,7 +1148,7 @@ Notes/Topic: ${aiNotes}`;
                               <input type="checkbox" checked={lessonForm.is_free_preview} onChange={e => setLessonForm(p => ({ ...p, is_free_preview: e.target.checked }))} style={{ width: "16px", height: "16px" }} />
                               <span>Free preview</span>
                             </label>
-                            <button onClick={() => addLesson(c.id)} style={{ marginLeft: "auto", padding: "10px 20px", borderRadius: "8px", border: "none", background: "#6366f1", color: "#ffffff", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>Save Lesson</button>
+                            <button onClick={() => addLesson(c.id)} style={{ marginLeft: "auto", padding: "10px 20px", borderRadius: "8px", border: "none", background: "#f4c44e", color: "#ffffff", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>Save Lesson</button>
                           </div>
                         </div>
                       )}
@@ -1343,15 +1373,15 @@ Notes/Topic: ${aiNotes}`;
                                     onClick={() => loadQuizQuestions(q.id)}
                                     className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold border-2 transition-all"
                                     style={expandedQuizId === q.id
-                                      ? { background: "#6366f1", color: "#fff", borderColor: "#6366f1" }
-                                      : { background: "#fff", color: "#6366f1", borderColor: "#6366f1" }}
+                                      ? { background: "#f4c44e", color: "#fff", borderColor: "#f4c44e" }
+                                      : { background: "#fff", color: "#f4c44e", borderColor: "#f4c44e" }}
                                   >
                                     <Plus size={13} /> {expandedQuizId === q.id ? "Close Questions" : "Add MCQ Questions"}
                                   </button>
                                   <button
                                     onClick={() => { loadQuizQuestions(q.id); setShowAiGenerator(q.id); }}
                                     className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold border-2 transition-all"
-                                    style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", color: "#fff", borderColor: "transparent" }}
+                                    style={{ background: "linear-gradient(135deg,#d4a017,#e8b43a)", color: "#fff", borderColor: "transparent" }}
                                   >
                                     <span>✨</span> Generate with AI
                                   </button>
@@ -1409,7 +1439,7 @@ Notes/Topic: ${aiNotes}`;
                                             onClick={generateAiQuiz}
                                             disabled={aiLoading || !aiNotes.trim()}
                                             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                            style={{ background: aiLoading ? "#a78bfa" : "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
+                                            style={{ background: aiLoading ? "#a78bfa" : "linear-gradient(135deg, #d4a017, #e8b43a)" }}
                                           >
                                             {aiLoading ? (
                                               <><span className="animate-spin">⟳</span> AI Generating...</>
@@ -1568,7 +1598,7 @@ Notes/Topic: ${aiNotes}`;
                                     </div>
 
                                     {/* Save Button */}
-                                    <button onClick={() => addQuizQuestion(q.id)} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #7c3aed, #8b5cf6)", color: "#ffffff", fontSize: "15px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)" }}>
+                                    <button onClick={() => addQuizQuestion(q.id)} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #d4a017, #8b5cf6)", color: "#ffffff", fontSize: "15px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)" }}>
                                       💾 Save Question
                                     </button>
                                   </div>
@@ -1593,7 +1623,7 @@ Notes/Topic: ${aiNotes}`;
             {courses.map(c => (
               <div key={c.id} className="bg-white rounded-2xl border p-5 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl text-white font-bold flex items-center justify-center text-xs" style={{ backgroundColor: TEST_COLORS[c.test_type] || "#6366f1" }}>{c.test_type}</div>
+                  <div className="w-10 h-10 rounded-xl text-white font-bold flex items-center justify-center text-xs" style={{ backgroundColor: TEST_COLORS[c.test_type] || "#f4c44e" }}>{c.test_type}</div>
                   <div>
                     <h3 className="font-black text-gray-900">{c.title}</h3>
                     <p className="text-xs text-gray-500">PKR {c.price || "Free"} · {c.meeting_links?.length || 0} links · {c.live_classes?.length || 0} live classes</p>
@@ -1640,35 +1670,88 @@ Notes/Topic: ${aiNotes}`;
 
         {/* FEES */}
         {tab === "fees" && (
-          <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-            <div className="p-5 border-b">
-              <h3 className="font-black text-gray-900">Pending Fee Payments ({pendingPayments.length})</h3>
-              <p className="text-sm text-gray-500 mt-1">Students submit JazzCash / Easypaisa / Bank transfer — you approve to unlock classes</p>
+          <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 900, color: "#1e293b", margin: 0 }}>Pending Fee Payments ({pendingPayments.length})</h3>
+                <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>Review student payment screenshots — approve to unlock course access</p>
+              </div>
+              <button onClick={() => setTab("paymethods")} style={{ fontSize: 12, fontWeight: 700, color: "#7c3aed", background: "#f5f3ff", border: "none", padding: "8px 14px", borderRadius: 10, cursor: "pointer" }}>
+                + Manage My Payment Methods
+              </button>
             </div>
             {pendingPayments.length === 0 ? (
-              <div className="text-center py-16 text-gray-400">No pending payments</div>
+              <div style={{ textAlign: "center", padding: "56px 24px", color: "#94a3b8" }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#64748b" }}>No pending payments</div>
+                <div style={{ fontSize: 13, marginTop: 4 }}>All caught up! Students who pay will appear here.</div>
+              </div>
             ) : (
-              <div className="divide-y">
+              <div>
                 {pendingPayments.map((p: any) => (
-                  <div key={p.enrollment_id} className="p-5 flex flex-wrap items-center gap-4 justify-between">
-                    <div>
-                      <p className="font-bold text-gray-900">{p.student_name}</p>
-                      <p className="text-sm text-gray-500">{p.course_title} · {p.test_type}</p>
-                      <p className="text-xs text-gray-400 mt-1">Fee: PKR {p.course_price} · Status: <span className="font-bold text-amber-600">{p.payment_status}</span></p>
-                      {p.payment_reference && <p className="text-xs mt-1">Ref: {p.payment_method} — {p.payment_reference}</p>}
+                  <div key={p.enrollment_id} style={{ padding: "20px 24px", borderBottom: "1px solid #f8fafc", display: "flex", flexWrap: "wrap", gap: 20, alignItems: "flex-start" }}>
+                    {/* Student + Payment Info */}
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg,#f4c44e,#e8b43a)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#1e293b", fontSize: 14 }}>
+                          {p.student_name?.[0]?.toUpperCase() ?? "S"}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: "#1e293b" }}>{p.student_name}</div>
+                          <div style={{ fontSize: 12, color: "#64748b" }}>{p.course_title}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, background: "#f0fdf4", color: "#059669", padding: "3px 10px", borderRadius: 100 }}>PKR {p.course_price?.toLocaleString()}</span>
+                        {p.payment_method && <span style={{ fontSize: 11, fontWeight: 700, background: "#eff6ff", color: "#2563eb", padding: "3px 10px", borderRadius: 100 }}>{p.payment_method}</span>}
+                        <span style={{ fontSize: 11, fontWeight: 700, background: "#fffbeb", color: "#d97706", padding: "3px 10px", borderRadius: 100 }}>{p.payment_status}</span>
+                      </div>
+                      {p.payment_reference && <div style={{ fontSize: 12, color: "#475569", marginTop: 8, fontFamily: "monospace", background: "#f8fafc", padding: "6px 10px", borderRadius: 8 }}>Ref: {p.payment_reference}</div>}
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => approvePayment(p.enrollment_id)} className="flex items-center gap-1 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-green-700">
-                        <CheckCircle size={14} /> Approve
+
+                    {/* Screenshot */}
+                    {p.payment_screenshot_url ? (
+                      <div style={{ flexShrink: 0 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", margin: "0 0 6px" }}>PAYMENT SCREENSHOT</p>
+                        <a href={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `http://localhost:8000${p.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
+                          style={{ display: "block", position: "relative", borderRadius: 12, overflow: "hidden", border: "2px solid #e2e8f0", cursor: "pointer" }}>
+                          <img src={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `http://localhost:8000${p.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
+                          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
+                            onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
+                            <ZoomIn size={20} color="#fff" />
+                          </div>
+                        </a>
+                        <p style={{ fontSize: 10, color: "#94a3b8", margin: "4px 0 0", textAlign: "center" }}>Click to enlarge</p>
+                      </div>
+                    ) : (
+                      <div style={{ flexShrink: 0, width: 120, height: 90, background: "#f8fafc", borderRadius: 12, border: "2px dashed #e2e8f0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                        <DollarSign size={18} color="#94a3b8" />
+                        <span style={{ fontSize: 10, color: "#94a3b8" }}>No screenshot</span>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+                      <button onClick={() => approvePayment(p.enrollment_id)}
+                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#059669", color: "#fff", padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 800, border: "none", cursor: "pointer" }}>
+                        <CheckCircle size={15} /> Approve
                       </button>
-                      <button onClick={() => rejectPayment(p.enrollment_id)} className="flex items-center gap-1 bg-red-100 text-red-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-200">
-                        <XCircle size={14} /> Reject
+                      <button onClick={() => rejectPayment(p.enrollment_id)}
+                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#fef2f2", color: "#dc2626", padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 800, border: "1px solid #fecaca", cursor: "pointer" }}>
+                        <XCircle size={15} /> Reject
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* PAYMENT METHODS */}
+        {tab === "paymethods" && (
+          <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", padding: "28px" }}>
+            <TeacherPaymentMethods />
           </div>
         )}
 
@@ -1695,7 +1778,7 @@ Notes/Topic: ${aiNotes}`;
             {students.length === 0 ? (
               <div style={{ background: "#ffffff", borderRadius: "20px", padding: "60px 40px", textAlign: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
                 <div style={{ width: "80px", height: "80px", borderRadius: "24px", background: "linear-gradient(135deg, #e0e7ff, #c7d2fe)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-                  <Users size={40} color="#6366f1" />
+                  <Users size={40} color="#f4c44e" />
                 </div>
                 <h3 style={{ color: "#1e293b", fontSize: "20px", fontWeight: 700, margin: "0 0 8px" }}>No Students Enrolled Yet</h3>
                 <p style={{ color: "#64748b", fontSize: "14px", maxWidth: "400px", margin: "0 auto" }}>Students will appear here once they enroll in your courses and complete payment.</p>
@@ -1705,7 +1788,7 @@ Notes/Topic: ${aiNotes}`;
                 {students.map((s, i) => (
                   <div key={i} style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
                     {/* Student Avatar */}
-                    <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: "linear-gradient(135deg, #f4c44e, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <User size={28} color="#ffffff" />
                     </div>
 
@@ -1714,7 +1797,7 @@ Notes/Topic: ${aiNotes}`;
                       <h4 style={{ color: "#1e293b", fontSize: "16px", fontWeight: 700, margin: "0 0 4px" }}>{s.student_name}</h4>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                         <span style={{ color: "#64748b", fontSize: "13px" }}>{s.course_title}</span>
-                        <span style={{ padding: "2px 8px", borderRadius: "6px", background: TEST_COLORS[s.test_type] || "#6366f1", color: "#ffffff", fontSize: "11px", fontWeight: 700 }}>{s.test_type}</span>
+                        <span style={{ padding: "2px 8px", borderRadius: "6px", background: TEST_COLORS[s.test_type] || "#f4c44e", color: "#ffffff", fontSize: "11px", fontWeight: 700 }}>{s.test_type}</span>
                       </div>
                     </div>
 
@@ -1725,14 +1808,14 @@ Notes/Topic: ${aiNotes}`;
                         <span style={{ color: "#1e293b", fontSize: "13px", fontWeight: 700 }}>{s.progress || 0}%</span>
                       </div>
                       <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "3px", overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${s.progress || 0}%`, background: "linear-gradient(90deg, #6366f1, #8b5cf6)", borderRadius: "3px" }} />
+                        <div style={{ height: "100%", width: `${s.progress || 0}%`, background: "linear-gradient(90deg, #f4c44e, #8b5cf6)", borderRadius: "3px" }} />
                       </div>
                     </div>
 
                     {/* Average Score */}
                     <div style={{ minWidth: "80px", textAlign: "center" }}>
                       <div style={{ color: "#64748b", fontSize: "11px", marginBottom: "2px" }}>Avg Score</div>
-                      <div style={{ color: "#7c3aed", fontSize: "20px", fontWeight: 800 }}>{s.avg_score || 0}%</div>
+                      <div style={{ color: "#d4a017", fontSize: "20px", fontWeight: 800 }}>{s.avg_score || 0}%</div>
                     </div>
 
                     {/* Payment Status */}
@@ -1742,6 +1825,22 @@ Notes/Topic: ${aiNotes}`;
                         {s.payment_status || "Free"}
                       </div>
                     </div>
+
+                    {/* Screenshot */}
+                    {s.payment_screenshot_url && (
+                      <div style={{ flexShrink: 0 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", margin: "0 0 6px" }}>PAYMENT SCREENSHOT</p>
+                        <a href={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `http://localhost:8000${s.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
+                          style={{ display: "block", position: "relative", borderRadius: 12, overflow: "hidden", border: "2px solid #e2e8f0", cursor: "pointer" }}>
+                          <img src={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `http://localhost:8000${s.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
+                          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
+                            onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
+                            <ZoomIn size={20} color="#fff" />
+                          </div>
+                        </a>
+                        <p style={{ fontSize: 10, color: "#94a3b8", margin: "4px 0 0", textAlign: "center" }}>Click to enlarge</p>
+                      </div>
+                    )}
 
                     {/* Actions */}
                     {s.payment_status === "submitted" && (
@@ -1765,12 +1864,12 @@ Notes/Topic: ${aiNotes}`;
         {tab === "create" && (
           <div className="max-w-6xl mx-auto px-2 sm:px-0">
             {/* ── Hero Section ── */}
-            <div style={{ position: "relative", borderRadius: "24px", overflow: "hidden", marginBottom: "32px", background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4f46e5 60%, #6366f1 100%)", boxShadow: "0 25px 50px -12px rgba(30,27,75,0.4)" }}>
+            <div style={{ position: "relative", borderRadius: "24px", overflow: "hidden", marginBottom: "32px", background: "linear-gradient(135deg, #163065 0%, #312e81 30%, #e8b43a 60%, #f4c44e 100%)", boxShadow: "0 25px 50px -12px rgba(30,27,75,0.4)" }}>
               {/* Grid pattern overlay */}
               <div style={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")", pointerEvents: "none" }} />
               {/* Gradient orbs */}
-              <div style={{ position: "absolute", top: "-60px", right: "-40px", width: "280px", height: "280px", borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%)", pointerEvents: "none" }} />
-              <div style={{ position: "absolute", bottom: "-80px", left: "20%", width: "320px", height: "320px", borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", top: "-60px", right: "-40px", width: "280px", height: "280px", borderRadius: "50%", background: "radial-gradient(circle, rgba(232,180,58,0.4) 0%, transparent 70%)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", bottom: "-80px", left: "20%", width: "320px", height: "320px", borderRadius: "50%", background: "radial-gradient(circle, rgba(244,196,78,0.3) 0%, transparent 70%)", pointerEvents: "none" }} />
               <div style={{ position: "absolute", top: "20px", left: "60%", width: "150px", height: "150px", borderRadius: "50%", background: "radial-gradient(circle, rgba(167,139,250,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
 
               <div style={{ position: "relative", padding: "40px 40px 36px" }}>
@@ -1803,7 +1902,7 @@ Notes/Topic: ${aiNotes}`;
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                           <div style={item.active ? {
                             width: "44px", height: "44px", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: "15px", fontWeight: 800, background: "#ffffff", color: "#4f46e5", boxShadow: "0 4px 20px rgba(255,255,255,0.3)"
+                            fontSize: "15px", fontWeight: 800, background: "#ffffff", color: "#e8b43a", boxShadow: "0 4px 20px rgba(255,255,255,0.3)"
                           } : {
                             width: "44px", height: "44px", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center",
                             fontSize: "15px", fontWeight: 800, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.15)"
@@ -1952,6 +2051,66 @@ Notes/Topic: ${aiNotes}`;
                   </div>
                 </div>
 
+                {/* Payment Methods Selection */}
+                <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
+                  <div style={{ padding: "16px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <CreditCard size={20} color="#7c3aed" />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1e293b", margin: 0 }}>Payment Methods</h3>
+                        <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>Select which accounts students can pay to</p>
+                      </div>
+                    </div>
+                    <button onClick={loadTeacherPayMethods} style={{ fontSize: 12, color: "#7c3aed", background: "#f5f3ff", border: "none", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}>
+                      ↻ Refresh
+                    </button>
+                  </div>
+                  <div style={{ padding: 20 }}>
+                    {teacherPayMethods.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "20px 0" }}>
+                        <p style={{ fontSize: 13, color: "#94a3b8", margin: "0 0 10px" }}>Koi payment method nahi mili. Pehle "Payment Methods" tab mein add karo.</p>
+                        <button onClick={() => setTab("paymethods")} style={{ fontSize: 12, color: "#7c3aed", background: "none", border: "1px dashed #c4b5fd", padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}>
+                          + Payment Methods tab mein jao
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {teacherPayMethods.map((m: any) => {
+                          const checked = selectedPayMethodIds.includes(m.id);
+                          const colorMap: Record<string, string> = { JazzCash: "#dc2626", Easypaisa: "#059669", Bank: "#2563eb" };
+                          const bgMap: Record<string, string> = { JazzCash: "#fef2f2", Easypaisa: "#f0fdf4", Bank: "#eff6ff" };
+                          const color = colorMap[m.method_type] ?? "#64748b";
+                          const bg = bgMap[m.method_type] ?? "#f8fafc";
+                          return (
+                            <label key={m.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 14, border: `2px solid ${checked ? color : "#e2e8f0"}`, background: checked ? bg : "#fafafa", cursor: "pointer", transition: "all 0.15s", userSelect: "none" }}>
+                              <input type="checkbox" checked={checked}
+                                onChange={() => setSelectedPayMethodIds(prev => checked ? prev.filter(id => id !== m.id) : [...prev, m.id])}
+                                style={{ width: 18, height: 18, accentColor: color, cursor: "pointer", flexShrink: 0 }}
+                              />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 800, color: color }}>{m.method_type}</span>
+                                  {m.bank_name && <span style={{ fontSize: 11, color: "#64748b" }}>— {m.bank_name}</span>}
+                                </div>
+                                <div style={{ fontSize: 13, color: "#1e293b", fontFamily: "monospace", fontWeight: 700 }}>{m.account_number}</div>
+                                <div style={{ fontSize: 11, color: "#64748b" }}>{m.account_title}</div>
+                              </div>
+                              {checked && <CheckCircle size={18} color={color} style={{ flexShrink: 0 }} />}
+                            </label>
+                          );
+                        })}
+                        {selectedPayMethodIds.length === 0 && (
+                          <p style={{ fontSize: 12, color: "#f59e0b", margin: "4px 0 0", display: "flex", alignItems: "center", gap: 6 }}>
+                            ⚠️ No method selected — students won't know where to pay. Select at least one.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Action Button */}
                 <button
                   onClick={handleCreateCourse}
@@ -1959,7 +2118,7 @@ Notes/Topic: ${aiNotes}`;
                   className="w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed hover:shadow-xl active:scale-[0.98]"
                   style={
                     courseForm.title && courseForm.subject
-                      ? { background: "linear-gradient(135deg, #4f46e5, #7c3aed)", color: "#fff", boxShadow: "0 8px 30px rgba(99,102,241,0.4)" }
+                      ? { background: "linear-gradient(135deg, #e8b43a, #d4a017)", color: "#fff", boxShadow: "0 8px 30px rgba(244,196,78,0.4)" }
                       : { background: "#e5e7eb", color: "#9ca3af" }
                   }
                 >
@@ -1988,10 +2147,10 @@ Notes/Topic: ${aiNotes}`;
                   </div>
                   
                   <div className="relative">
-                    <div className="h-3 transition-all duration-300" style={{ backgroundColor: TEST_COLORS[courseForm.test_type] || "#6366f1" }} />
+                    <div className="h-3 transition-all duration-300" style={{ backgroundColor: TEST_COLORS[courseForm.test_type] || "#f4c44e" }} />
                     <div className="p-5">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold px-3 py-1.5 rounded-lg text-white shadow-sm" style={{ backgroundColor: TEST_COLORS[courseForm.test_type] || "#6366f1" }}>
+                        <span className="text-xs font-bold px-3 py-1.5 rounded-lg text-white shadow-sm" style={{ backgroundColor: TEST_COLORS[courseForm.test_type] || "#f4c44e" }}>
                           {courseForm.test_type || "Select Type"}
                         </span>
                         <span className={`text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm ${

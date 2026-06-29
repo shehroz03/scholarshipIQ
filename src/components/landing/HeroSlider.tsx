@@ -13,7 +13,7 @@ export function HeroSlider({ onSearch, onCta }: HeroSliderProps) {
 
   return (
     <section style={{
-      background: "#1a2250",
+      background: "#1e3a7a",
       position: "relative",
       overflow: "hidden",
       minHeight: "600px",
@@ -39,7 +39,7 @@ export function HeroSlider({ onSearch, onCta }: HeroSliderProps) {
         <div style={{
           position: "absolute",
           top: 0, left: 0, right: 0, bottom: 0,
-          background: "linear-gradient(to right, rgba(26, 34, 80, 0.9) 20%, rgba(26, 34, 80, 0.4) 50%, rgba(26, 34, 80, 0.2) 100%)"
+          background: "linear-gradient(to right, rgba(30, 58, 122, 0.9) 20%, rgba(30, 58, 122, 0.4) 50%, rgba(30, 58, 122, 0.2) 100%)"
         }} />
       </div>
 
@@ -148,7 +148,7 @@ export function HeroSlider({ onSearch, onCta }: HeroSliderProps) {
                   <img key={i} src={url} alt="student" style={{
                     width: 42, height: 42,
                     borderRadius: "50%",
-                    border: "2px solid #1a2250",
+                    border: "2px solid #1e3a7a",
                     marginLeft: i > 0 ? "-14px" : 0,
                     boxShadow: "0 4px 10px rgba(0,0,0,0.2)"
                   }} />

@@ -2,8 +2,8 @@
 
 :root {
   --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
+  --background: #f0f4ff;
+  --foreground: #1e293b;
   --card: #ffffff;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -14,8 +14,8 @@
   --secondary-foreground: #030213;
   --muted: #ececf0;
   --muted-foreground: #717182;
-  --accent: #10b981;
-  --accent-foreground: #ffffff;
+  --accent: #f4c44e;
+  --accent-foreground: #1e3a7a;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
   --border: rgba(0, 0, 0, 0.1);
@@ -41,7 +41,11 @@
   --sidebar-ring: oklch(0.708 0 0);
   
   /* ScholarIQ Brand Colors */
-  --brand-deep-blue: #1e3a8a;
+  --brand-deep-blue: #1e3a7a;
+  --brand-navy: #1e3a7a;
+  --brand-navy-light: #2d3561;
+  --brand-gold: #f4c44e;
+  --brand-gold-hover: #e8b43a;
   --brand-emerald: #10b981;
   --brand-soft-gray: #f3f4f6;
 }

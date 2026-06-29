@@ -77,7 +77,7 @@ export function PricingPage({ onNavigate }: { onNavigate?: (page: string) => voi
 
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
                 <h1 style={{ fontSize: '48px', fontWeight: '900', color: theme.text, marginBottom: '16px', letterSpacing: '-0.025em' }}>
-                    Unlock Your <span style={{ color: '#818cf8' }}>Potential</span>
+                    Unlock Your <span style={{ color: '#f4c44e' }}>Potential</span>
                 </h1>
                 <p style={{ color: theme.textSecondary, fontSize: '20px', fontWeight: '500', maxWidth: '600px', margin: '0 auto' }}>
                     Choose the plan that matches your ambition. Upgrade or downgrade anytime.
@@ -89,7 +89,7 @@ export function PricingPage({ onNavigate }: { onNavigate?: (page: string) => voi
                 <div onClick={() => setAnnual(!annual)}
                     style={{
                         width: '56px', height: '28px', borderRadius: '14px', cursor: 'pointer',
-                        backgroundColor: annual ? '#6366f1' : '#475569', position: 'relative', transition: 'all 0.3s ease'
+                        backgroundColor: annual ? '#f4c44e' : '#475569', position: 'relative', transition: 'all 0.3s ease'
                     }}>
                     <div style={{
                         position: 'absolute', top: '4px', width: '20px', height: '20px',
@@ -134,12 +134,12 @@ export function PricingPage({ onNavigate }: { onNavigate?: (page: string) => voi
 
                 {/* PREMIUM CARD */}
                 <div style={{
-                    backgroundColor: isDark ? '#1e1b4b' : '#f5f7ff', border: '2px solid #6366f1',
+                    backgroundColor: isDark ? '#1e1b4b' : '#f5f7ff', border: '2px solid #f4c44e',
                     borderRadius: '24px', padding: '40px', position: 'relative', display: 'flex', flexDirection: 'column',
                     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
                 }}>
-                    <div style={{ position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#6366f1', color: '#ffffff', fontSize: '12px', fontWeight: '900', padding: '6px 20px', borderRadius: '20px' }}>⭐ MOST POPULAR</div>
-                    <h2 style={{ color: '#818cf8', fontSize: '14px', fontWeight: '800', marginBottom: '12px', textTransform: 'uppercase' }}>👑 PREMIUM</h2>
+                    <div style={{ position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#f4c44e', color: '#ffffff', fontSize: '12px', fontWeight: '900', padding: '6px 20px', borderRadius: '20px' }}>⭐ MOST POPULAR</div>
+                    <h2 style={{ color: '#f4c44e', fontSize: '14px', fontWeight: '800', marginBottom: '12px', textTransform: 'uppercase' }}>👑 PREMIUM</h2>
                     <div style={{ color: theme.text, fontSize: '42px', fontWeight: '900', marginBottom: '8px' }}>PKR {annual ? '400' : '500'}<span style={{ fontSize: '18px', color: theme.textSecondary }}>/mo</span></div>
                     <p style={{ color: theme.textSecondary, fontSize: '14px', marginBottom: '32px' }}>Full access to premium tools</p>
                     <div style={{ flex: 1 }}>
@@ -149,7 +149,7 @@ export function PricingPage({ onNavigate }: { onNavigate?: (page: string) => voi
                             </div>
                         ))}
                     </div>
-                    <button onClick={() => handleUpgrade('premium')} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#ffffff', border: 'none', fontWeight: '800', cursor: 'pointer', marginTop: '32px' }}>🚀 Upgrade to Premium</button>
+                    <button onClick={() => handleUpgrade('premium')} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'linear-gradient(135deg, #f4c44e, #8b5cf6)', color: '#ffffff', border: 'none', fontWeight: '800', cursor: 'pointer', marginTop: '32px' }}>🚀 Upgrade to Premium</button>
                 </div>
 
                 {/* PRO CARD */}
@@ -177,12 +177,12 @@ export function PricingPage({ onNavigate }: { onNavigate?: (page: string) => voi
                         </div>
                         <div style={{ backgroundColor: theme.bg, padding: '16px', borderRadius: '12px', marginBottom: '24px', border: `1px solid ${theme.border}` }}>
                             <div style={{ fontSize: '14px', color: theme.textSecondary, marginBottom: '4px' }}>Selected Plan</div>
-                            <div style={{ fontSize: '18px', fontWeight: '700', color: '#818cf8', display: 'flex', justifyContent: 'space-between' }}>
+                            <div style={{ fontSize: '18px', fontWeight: '700', color: '#f4c44e', display: 'flex', justifyContent: 'space-between' }}>
                                 <span>{selectedPlan?.toUpperCase()} Plan</span>
                                 <span>PKR {selectedPlan === 'premium' ? (annual ? '400' : '500') : (annual ? '1,200' : '1,500')}</span>
                             </div>
                         </div>
-                        <button onClick={confirmPayment} disabled={isProcessing} style={{ width: '100%', padding: '16px', borderRadius: '12px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#ffffff', border: 'none', fontSize: '16px', fontWeight: '800', opacity: isProcessing ? 0.7 : 1 }}>
+                        <button onClick={confirmPayment} disabled={isProcessing} style={{ width: '100%', padding: '16px', borderRadius: '12px', background: 'linear-gradient(135deg, #f4c44e, #8b5cf6)', color: '#ffffff', border: 'none', fontSize: '16px', fontWeight: '800', opacity: isProcessing ? 0.7 : 1 }}>
                             {isProcessing ? 'Processing Securely...' : 'Complete Payment 🔒'}
                         </button>
                     </div>

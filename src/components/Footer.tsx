@@ -9,7 +9,7 @@ const footerLinks = {
 export function Footer({ onNavigate }: { onNavigate?: (page: string) => void }) {
   return (
     <footer style={{
-      background: "#1a2250",
+      background: "#1e3a7a",
       padding: "64px 40px 32px"
     }}>
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>

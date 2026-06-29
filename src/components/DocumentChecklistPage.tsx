@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     GraduationCap, Loader2, Circle, Sparkles,
@@ -118,7 +118,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
 
     if (loadingUser) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: 'white' }}>
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4ff', color: '#1e293b' }}>
                 <Loader2 size={32} className="animate-spin text-blue-500" />
             </div>
         );
@@ -198,8 +198,8 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
         <div style={{
             minHeight: '100vh',
             display: 'flex',
-            background: '#0f172a',
-            color: 'white',
+            background: '#f0f4ff',
+            color: '#1e293b',
             fontFamily: "'Inter', sans-serif"
         }}>
             {/* Sidebar */}
@@ -217,12 +217,12 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                     padding: '0 40px',
                     background: 'rgba(15, 23, 42, 0.8)',
                     backdropFilter: 'blur(12px)',
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    borderBottom: '1px solid rgba(0,0,0,0.03)',
                     zIndex: 40
                 }}>
                     <div>
-                        <h1 style={{ fontSize: '18px', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', margin: 0 }}>Smart Document Tracker & Vault</h1>
-                        <p style={{ fontSize: '10px', fontWeight: '700', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '1px', margin: '2px 0 0 0' }}>
+                        <h1 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', letterSpacing: '-0.02em', margin: 0 }}>Smart Document Tracker & Vault</h1>
+                        <p style={{ fontSize: '10px', fontWeight: '700', color: '#f4c44e', textTransform: 'uppercase', letterSpacing: '1px', margin: '2px 0 0 0' }}>
                             Encrypted Application Roadmap & Match Engine
                         </p>
                     </div>
@@ -247,8 +247,8 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                         <button 
                             onClick={() => onNavigate('search')} 
                             style={{
-                                background: '#4f46e5',
-                                color: 'white',
+                                background: '#e8b43a',
+                                color: '#1e293b',
                                 border: 'none',
                                 padding: '10px 20px',
                                 borderRadius: '12px',
@@ -258,7 +258,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px',
-                                boxShadow: '0 4px 15px rgba(79,70,229,0.3)'
+                                boxShadow: '0 4px 15px rgba(244,196,78,0.3)'
                             }}
                         >
                             <SearchIcon size={16} />
@@ -268,7 +268,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                             onClick={handleExport}
                             style={{
                                 background: '#2563eb',
-                                color: 'white',
+                                color: '#1e293b',
                                 border: 'none',
                                 padding: '10px 20px',
                                 borderRadius: '12px',
@@ -289,7 +289,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                         {/* Readiness Banner */}
                         <div style={{
                             background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.08)',
+                            border: '1px solid rgba(0,0,0,0.05)',
                             borderRadius: '24px',
                             padding: '32px',
                             display: 'flex',
@@ -299,7 +299,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                         }}>
                             <div style={{ relative: true, width: '120px', height: '120px', flexShrink: 0, position: 'relative' }}>
                                 <svg viewBox="0 0 36 36" style={{ width: '120px', height: '120px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}>
-                                    <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(0,0,0,0.03)" strokeWidth="3" />
                                     <circle cx="18" cy="18" r="16" fill="none" strokeWidth="3" 
                                         strokeDasharray={2 * Math.PI * 16} 
                                         strokeDashoffset={(2 * Math.PI * 16) * (1 - progressPercent / 100)} 
@@ -307,16 +307,16 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                         style={{ stroke: progressHex, transition: 'stroke-dashoffset 0.5s ease-in-out' }} />
                                 </svg>
                                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                    <div style={{ fontSize: '28px', fontWeight: '900', color: 'white', lineHeight: '1' }}>{progressPercent}%</div>
+                                    <div style={{ fontSize: '28px', fontWeight: '900', color: '#1e293b', lineHeight: '1' }}>{progressPercent}%</div>
                                     <div style={{ fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', color: progressColor, marginTop: '4px' }}>Ready</div>
                                 </div>
                             </div>
                             <div style={{ flex: 1 }}>
-                                <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'white', marginBottom: '8px', letterSpacing: '-0.02em' }}>Application Readiness</h2>
-                                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '20px', lineHeight: '1.6' }}>
+                                <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1e293b', marginBottom: '8px', letterSpacing: '-0.02em' }}>Application Readiness</h2>
+                                <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '20px', lineHeight: '1.6' }}>
                                     {completedDocuments} of {totalDocuments} documents ready. Check off items as you prepare them. Your progress is saved automatically.
                                 </p>
-                                <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '999px', overflow: 'hidden' }}>
+                                <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.03)', borderRadius: '999px', overflow: 'hidden' }}>
                                     <div style={{ height: '100%', background: progressBg, width: `${progressPercent}%`, transition: 'width 0.5s ease-out' }} />
                                 </div>
                             </div>
@@ -327,7 +327,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                 padding: '24px',
                                 borderRadius: '24px',
                                 background: 'linear-gradient(135deg, #059669, #10b981)',
-                                color: 'white',
+                                color: '#1e293b',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
@@ -335,7 +335,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                 textAlign: 'center',
                                 boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)'
                             }}>
-                                <div style={{ background: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '50%', marginBottom: '16px' }}>
+                                <div style={{ background: 'rgba(0,0,0,0.12)', padding: '12px', borderRadius: '50%', marginBottom: '16px' }}>
                                     <Sparkles size={32} color="white" />
                                 </div>
                                 <h2 style={{ fontSize: '22px', fontWeight: '900', marginBottom: '8px' }}>You're application-ready! 🎉</h2>
@@ -360,7 +360,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                     <div style={{
                                         width: '56px',
                                         height: '56px',
-                                        background: 'linear-gradient(135deg, #4f46e5, #3b82f6)',
+                                        background: 'linear-gradient(135deg, #e8b43a, #3b82f6)',
                                         borderRadius: '18px',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -372,14 +372,14 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                     </div>
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                                            <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'white', margin: 0, letterSpacing: '-0.02em' }}>
+                                            <h3 style={{ fontSize: '22px', fontWeight: '800', color: '#1e293b', margin: 0, letterSpacing: '-0.02em' }}>
                                                 AI Secure Vault & Deep Scanner
                                             </h3>
-                                            <span style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '999px', fontSize: '10px', fontWeight: '800', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                            <span style={{ padding: '4px 10px', background: 'rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '999px', fontSize: '10px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                                 Optional
                                             </span>
                                         </div>
-                                        <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
+                                        <p style={{ color: '#64748b', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
                                             Unleash our AI neural engine on your CV, personal statement, or transcripts to instantly identify your exact global match vectors and boost scholarship discovery.
                                         </p>
                                     </div>
@@ -406,7 +406,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                     <h4 style={{ fontSize: '15px', fontWeight: '800', color: '#10b981', margin: '0 0 4px 0' }}>
                                         Our Absolute Trust & Privacy Promise
                                     </h4>
-                                    <p style={{ color: '#cbd5e1', fontSize: '13px', margin: 0, lineHeight: '1.6' }}>
+                                    <p style={{ color: '#64748b', fontSize: '13px', margin: 0, lineHeight: '1.6' }}>
                                         Your documents are strictly your private property. We implement client-side zero-knowledge encryption containers. Your files are evaluated in a highly secure sandbox and are <b>never</b> shared with third parties or stored in readable format. <i>Your personal documents are as safe with us as they are on your own private device.</i>
                                     </p>
                                 </div>
@@ -446,9 +446,9 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                                 />
                                 <div style={{ width: '60px', height: '60px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-                                    <FileUp size={28} color="#818cf8" />
+                                    <FileUp size={28} color="#f4c44e" />
                                 </div>
-                                <h4 style={{ fontSize: '18px', fontWeight: '800', color: 'white', margin: '0 0 6px 0' }}>
+                                <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: '0 0 6px 0' }}>
                                     Click or Drag Documents Here to Vault & Scan
                                 </h4>
                                 <p style={{ color: '#64748b', fontSize: '13px', margin: 0, maxWidth: '400px' }}>
@@ -472,7 +472,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                         <p style={{ color: '#3b82f6', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px 0' }}>
                                             Neural Processing Active
                                         </p>
-                                        <p style={{ color: 'white', fontSize: '15px', fontWeight: '700', margin: 0 }}>
+                                        <p style={{ color: '#1e293b', fontSize: '15px', fontWeight: '700', margin: 0 }}>
                                             {scanStep}
                                         </p>
                                     </div>
@@ -483,7 +483,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                             {vaultDocs.length > 0 && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '8px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <h4 style={{ fontSize: '16px', fontWeight: '800', color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
                                             <Key size={18} color="#10b981" /> Secured Vault Inventory
                                         </h4>
                                         <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700' }}>
@@ -509,7 +509,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                             <CheckCircle2 size={22} />
                                                         </div>
                                                         <div style={{ minWidth: 0 }}>
-                                                            <h5 style={{ fontSize: '16px', fontWeight: '800', color: 'white', margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                            <h5 style={{ fontSize: '16px', fontWeight: '800', color: '#1e293b', margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                                 {doc.name}
                                                             </h5>
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#64748b', fontSize: '11px', fontWeight: '700' }}>
@@ -558,7 +558,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                         gap: '16px'
                                                     }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818cf8', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f4c44e', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                                                 <Zap size={14} /> AI Calibrated Telemetry
                                                             </span>
                                                             <span style={{ color: '#10b981', fontSize: '12px', fontWeight: '800', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 12px', borderRadius: '999px' }}>
@@ -575,7 +575,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                                 <p style={{ color: '#64748b', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 6px 0' }}>AI Feature Vectors</p>
                                                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                                                                     {doc.analysisResult.extractedVectors.map((v, i) => (
-                                                                        <span key={i} style={{ fontSize: '11px', fontWeight: '700', background: 'rgba(255,255,255,0.05)', color: '#cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
+                                                                        <span key={i} style={{ fontSize: '11px', fontWeight: '700', background: 'rgba(0,0,0,0.03)', color: '#64748b', padding: '2px 8px', borderRadius: '6px' }}>
                                                                             {v}
                                                                         </span>
                                                                     ))}
@@ -585,7 +585,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                                 <p style={{ color: '#64748b', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 6px 0' }}>Calibrated Regions</p>
                                                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                                                                     {doc.analysisResult.recommendedCountries.map((c, i) => (
-                                                                        <span key={i} style={{ fontSize: '11px', fontWeight: '700', background: 'rgba(59, 130, 246, 0.15)', color: '#93c5fd', padding: '2px 8px', borderRadius: '6px' }}>
+                                                                        <span key={i} style={{ fontSize: '11px', fontWeight: '700', background: 'rgba(59, 130, 246, 0.15)', color: '#1e3a7a', padding: '2px 8px', borderRadius: '6px' }}>
                                                                             {c}
                                                                         </span>
                                                                     ))}
@@ -597,8 +597,8 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                             <button 
                                                                 onClick={() => onNavigate('search')}
                                                                 style={{
-                                                                    background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
-                                                                    color: 'white',
+                                                                    background: 'linear-gradient(135deg, #e8b43a, #f4c44e)',
+                                                                    color: '#1e293b',
                                                                     border: 'none',
                                                                     padding: '8px 18px',
                                                                     borderRadius: '10px',
@@ -642,19 +642,19 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                             padding: '16px 24px',
                                             background: 'rgba(15, 23, 42, 0.9)',
                                             backdropFilter: 'blur(12px)',
-                                            border: '1px solid rgba(255,255,255,0.05)',
+                                            border: '1px solid rgba(0,0,0,0.03)',
                                             borderRadius: '20px'
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                                                 <div style={{ padding: '10px', borderRadius: '14px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
                                                     <category.icon size={22} />
                                                 </div>
-                                                <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'white', margin: 0 }}>{category.title}</h3>
+                                                <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: 0 }}>{category.title}</h3>
                                             </div>
                                             <div style={{
                                                 padding: '6px 14px',
-                                                background: isCatComplete ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                                                border: isCatComplete ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(255,255,255,0.1)',
+                                                background: isCatComplete ? 'rgba(16, 185, 129, 0.1)' : 'rgba(0,0,0,0.03)',
+                                                border: isCatComplete ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(0,0,0,0.08)',
                                                 borderRadius: '999px',
                                                 color: isCatComplete ? '#10b981' : '#94a3b8',
                                                 fontSize: '12px',
@@ -674,7 +674,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                         onClick={() => toggleItem(item.id)}
                                                         style={{
                                                             background: isChecked ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)',
-                                                            border: isChecked ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(255,255,255,0.05)',
+                                                            border: isChecked ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(0,0,0,0.03)',
                                                             borderLeft: isChecked ? '4px solid #10b981' : '4px solid transparent',
                                                             borderRadius: '20px',
                                                             padding: '20px 24px',
@@ -705,7 +705,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                                 <h4 style={{ fontSize: '16px', fontWeight: '800', color: isChecked ? '#10b981' : 'white', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                                     {item.name}
                                                                 </h4>
-                                                                <span style={{ flexShrink: 0, padding: '4px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px', color: '#94a3b8', fontSize: '11px', fontWeight: '700' }}>
+                                                                <span style={{ flexShrink: 0, padding: '4px 12px', background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '999px', color: '#64748b', fontSize: '11px', fontWeight: '700' }}>
                                                                     {item.prepTime}
                                                                 </span>
                                                             </div>

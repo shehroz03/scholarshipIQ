@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import ApplyButton from "./ApplyButton";
 import { Scholarship } from "../types/scholarship";
 import { Card, CardContent } from "./ui/card";
@@ -106,11 +106,11 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
   };
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.bg }}><Loader2 className="animate-spin w-8 h-8 text-[#1e3a8a]" /></div>;
+    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1e3a7a' }}><Loader2 className="animate-spin w-8 h-8" style={{ color: '#f4c44e' }} /></div>;
   }
 
   if (!scholarship) {
-    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.bg }}>Scholarship not found.</div>;
+    return <div className="min-h-screen flex items-center justify-center text-white" style={{ backgroundColor: '#1e3a7a' }}>Scholarship not found.</div>;
   }
 
   const daysLeft = scholarship?.deadline ? Math.ceil((new Date(scholarship.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
@@ -120,7 +120,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
       <header style={{ position: 'sticky', top: 0, zIndex: 9999, backdropFilter: 'blur(12px)', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.headerBg, padding: '16px 32px' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer group" onClick={() => onNavigate('dashboard')}>
-            <div className="p-2 bg-[#1e3a8a] rounded-xl text-white shadow-lg shadow-blue-900/10 group-hover:scale-105 transition-transform">
+            <div className="p-2 rounded-xl text-white shadow-lg group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg,#f4c44e,#e8b43a)' }}>
               <GraduationCap className="w-5 h-5" />
             </div>
             <span className="text-xl font-black tracking-tight" style={{ color: theme.text }}>ScholarIQ</span>
@@ -142,20 +142,20 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
 
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 relative" style={{ scrollMarginTop: '80px' }}>
         <div className="flex items-center gap-2 text-sm mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ color: theme.textSecondary }}>
-          <button onClick={() => onNavigate('dashboard')} className="hover:text-blue-600 transition-colors">Home</button>
+          <button onClick={() => onNavigate('dashboard')} className="hover:text-amber-400 transition-colors">Home</button>
           <ChevronRight className="w-4 h-4 shrink-0" />
-          <button onClick={() => onNavigate('search')} className="hover:text-blue-600 transition-colors">Scholarships</button>
+          <button onClick={() => onNavigate('search')} className="hover:text-amber-400 transition-colors">Scholarships</button>
           <ChevronRight className="w-4 h-4 shrink-0" />
           <span className="font-bold truncate" style={{ color: theme.text }}>{scholarship.title}</span>
         </div>
 
         {scholarship.is_suspicious && (
-          <div className="mb-8 border p-6 rounded-3xl flex items-start gap-4 shadow-sm" style={{ backgroundColor: isDark ? 'rgba(239,68,68,0.12)' : '#fef2f2', borderColor: 'rgba(239,68,68,0.3)' }}>
-            <div className="p-3 rounded-2xl" style={{ backgroundColor: isDark ? 'rgba(239,68,68,0.18)' : '#fee2e2' }}><AlertTriangle className="w-8 h-8 text-red-500 shrink-0" /></div>
+          <div className="mb-8 border p-6 rounded-3xl flex items-start gap-4 shadow-sm" style={{ backgroundColor: 'rgba(239,68,68,0.12)', borderColor: 'rgba(239,68,68,0.3)' }}>
+            <div className="p-3 rounded-2xl" style={{ backgroundColor: 'rgba(239,68,68,0.18)' }}><AlertTriangle className="w-8 h-8 text-red-500 shrink-0" /></div>
             <div>
-              <p className="font-black uppercase tracking-widest text-xs mb-1" style={{ color: isDark ? '#fca5a5' : '#991b1b' }}>Security Alert</p>
-              <p className="font-bold text-lg mb-1" style={{ color: isDark ? '#f87171' : '#b91c1c' }}>Potentially Fraudulent Opportunity</p>
-              <p className="text-sm leading-relaxed" style={{ color: isDark ? '#fca5a5' : '#dc2626' }}>This scholarship request unusual upfront payments. Our AI model has flagged this entry. <strong>Do not share banking details.</strong></p>
+              <p className="font-black uppercase tracking-widest text-xs mb-1" style={{ color: '#fca5a5' }}>Security Alert</p>
+              <p className="font-bold text-lg mb-1" style={{ color: '#f87171' }}>Potentially Fraudulent Opportunity</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#fca5a5' }}>This scholarship request unusual upfront payments. Our AI model has flagged this entry. <strong>Do not share banking details.</strong></p>
             </div>
           </div>
         )}
@@ -164,7 +164,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10">
             <div className="space-y-4 max-w-4xl">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold" style={{ backgroundColor: isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff', color: isDark ? '#93c5fd' : '#1e3a8a', border: `1px solid ${isDark ? 'rgba(59,130,246,0.3)' : '#bfdbfe'}` }}>✓ Verified Opportunity</span>
+                <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold" style={{ backgroundColor: 'rgba(244,196,78,0.15)', color: '#f4c44e', border: '1px solid rgba(244,196,78,0.3)' }}>✓ Verified Opportunity</span>
                 {scholarship.funding_type === 'Full' && (
                   <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold" style={{ backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : '#f0fdf4', color: isDark ? '#6ee7b7' : '#065f46', border: `1px solid ${isDark ? 'rgba(16,185,129,0.3)' : '#a7f3d0'}` }}>Fully Funded</span>
                 )}
@@ -193,7 +193,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
             {[
               { label: "Financial Aid", val: convertAndFormat(scholarship.funding_amount), icon: Banknote, color: "text-emerald-500", bg: "bg-emerald-500/10" },
               { label: "Deadline", val: new Date(scholarship.deadline).toLocaleDateString('en-GB'), icon: Calendar, color: "text-blue-500", bg: "bg-blue-500/10" },
-              { label: "Field", val: scholarship.field_of_study || "All", icon: GraduationCap, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+              { label: "Field", val: scholarship.field_of_study || "All", icon: GraduationCap, color: "text-amber-400", bg: "bg-amber-400/10" },
               { label: "Remaining", val: `${daysLeft} Days`, icon: Clock, color: daysLeft <= 15 ? "text-red-500" : "text-emerald-500", bg: daysLeft <= 15 ? "bg-red-500/10" : "bg-emerald-500/10" },
               { label: "Match Score", val: isFreePlan ? "Locked" : `${scholarship.match_score || '85'}%`, icon: Zap, color: "text-amber-500", bg: "bg-amber-500/10", isPill: true }
             ].map((stat, i) => (
@@ -214,23 +214,23 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
               <div className="p-8 md:p-10">
                 <div className="mb-10">
                   <div className="flex items-center gap-3 mb-5">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: isDark ? 'rgba(59,130,246,0.2)' : '#dbeafe' }}><BookOpen className="w-4 h-4" style={{ color: isDark ? '#93c5fd' : '#1e3a8a' }} /></div>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(59,130,246,0.2)' }}><BookOpen className="w-4 h-4" style={{ color: '#f4c44e' }} /></div>
                     <h3 className="text-xl font-black" style={{ color: theme.text }}>Program Overview</h3>
                   </div>
                   {scholarship.description && scholarship.description.includes('|') ? (
-                    <div className="rounded-r-2xl border-l-4 pl-5 py-4" style={{ borderColor: '#3b82f6', backgroundColor: isDark ? 'rgba(59,130,246,0.07)' : '#f8fafc' }}>
-                      <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: isDark ? '#93c5fd' : '#1e3a8a' }}>Application Steps</p>
+                    <div className="rounded-r-2xl border-l-4 pl-5 py-4" style={{ borderColor: '#f4c44e', backgroundColor: 'rgba(244,196,78,0.05)' }}>
+                      <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: '#f4c44e' }}>Application Steps</p>
                       <ol className="space-y-2">
                         {scholarship.description.split('|').filter(s => s.trim()).map((step, i) => (
                           <li key={i} className="flex items-start gap-3 text-sm font-medium" style={{ color: theme.textSecondary }}>
-                            <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black mt-0.5" style={{ backgroundColor: isDark ? 'rgba(59,130,246,0.2)' : '#dbeafe', color: isDark ? '#93c5fd' : '#1e3a8a' }}>{i + 1}</span>
+                            <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black mt-0.5" style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: '#f4c44e' }}>{i + 1}</span>
                             {step.replace(/^\d+\./, '').trim()}
                           </li>
                         ))}
                       </ol>
                     </div>
                   ) : (
-                    <p className="leading-relaxed text-base font-medium italic border-l-4 pl-5 py-4 rounded-r-2xl" style={{ color: theme.textSecondary, borderColor: '#3b82f6', backgroundColor: isDark ? 'rgba(59,130,246,0.07)' : '#f8fafc' }}>
+                    <p className="leading-relaxed text-base font-medium italic border-l-4 pl-5 py-4 rounded-r-2xl" style={{ color: theme.textSecondary, borderColor: '#f4c44e', backgroundColor: 'rgba(244,196,78,0.05)' }}>
                       "{scholarship.description || "No description provided."}"
                     </p>
                   )}
@@ -266,7 +266,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                         {scholarship.scholarship_url && (
                           <a href={scholarship.scholarship_url} target="_blank" rel="noopener noreferrer"
                             className="flex items-center gap-2 p-4 rounded-2xl border font-bold text-sm hover:opacity-80 transition-opacity"
-                            style={{ borderColor: '#3b82f6', color: '#3b82f6', backgroundColor: isDark ? 'rgba(59,130,246,0.05)' : '#eff6ff' }}>
+                            style={{ borderColor: '#f4c44e', color: '#f4c44e', backgroundColor: 'rgba(244,196,78,0.06)' }}>
                             <Link2 className="w-4 h-4" /> Official Scholarship Page <ExternalLink className="w-3.5 h-3.5 ml-auto" />
                           </a>
                         )}
@@ -278,7 +278,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                       <div className="space-y-5">
                         {/* Header */}
                         <div className="rounded-2xl border overflow-hidden" style={{ borderColor: theme.border }}>
-                          <div className="px-5 py-4 border-b" style={{ backgroundColor: isDark ? 'rgba(99,102,241,0.1)' : '#f5f3ff', borderColor: theme.border }}>
+                          <div className="px-5 py-4 border-b" style={{ backgroundColor: 'rgba(244,196,78,0.1)', borderColor: theme.border }}>
                             <p className="font-black text-sm" style={{ color: theme.text }}>Admission Requirements</p>
                             <p className="text-xs mt-0.5" style={{ color: theme.textSecondary }}>
                               University-specific criteria for {scholarship.university_name} ({scholarship.degree_level}, international)
@@ -293,16 +293,16 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                                 <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textSecondary }}>Academic Performance</span>
                               </div>
                               <div className="grid grid-cols-2 gap-3">
-                                <div className="p-4 rounded-xl border" style={{ backgroundColor: isDark ? 'rgba(16,185,129,0.07)' : '#f0fdf4', borderColor: isDark ? 'rgba(16,185,129,0.2)' : '#a7f3d0' }}>
-                                  <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: isDark ? '#6ee7b7' : '#059669' }}>Minimum CGPA</p>
-                                  <p className="text-2xl font-black" style={{ color: isDark ? '#fff' : '#0f172a' }}>
+                                <div className="p-4 rounded-xl border" style={{ backgroundColor: 'rgba(16,185,129,0.07)', borderColor: 'rgba(16,185,129,0.2)' }}>
+                                  <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: '#6ee7b7' }}>Minimum CGPA</p>
+                                  <p className="text-2xl font-black" style={{ color: '#fff' }}>
                                     {scholarship.university?.min_cgpa ? `${scholarship.university.min_cgpa}/4.0` : 'N/A'}
                                   </p>
                                   <p className="text-[10px] mt-1" style={{ color: theme.textSecondary }}>Or equivalent in your grading system</p>
                                 </div>
-                                <div className="p-4 rounded-xl border" style={{ backgroundColor: isDark ? 'rgba(59,130,246,0.07)' : '#eff6ff', borderColor: isDark ? 'rgba(59,130,246,0.2)' : '#bfdbfe' }}>
-                                  <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: isDark ? '#93c5fd' : '#1d4ed8' }}>Percentage Equivalent</p>
-                                  <p className="text-2xl font-black" style={{ color: isDark ? '#fff' : '#0f172a' }}>
+                                <div className="p-4 rounded-xl border" style={{ backgroundColor: 'rgba(59,130,246,0.08)', borderColor: 'rgba(59,130,246,0.2)' }}>
+                                  <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: '#93c5fd' }}>Percentage Equivalent</p>
+                                  <p className="text-2xl font-black" style={{ color: '#fff' }}>
                                     {scholarship.university?.min_cgpa ? `${Math.round(scholarship.university.min_cgpa / 4 * 100)}%+` : 'N/A'}
                                   </p>
                                   <p className="text-[10px] mt-1" style={{ color: theme.textSecondary }}>For international applicants</p>
@@ -322,7 +322,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                                   { label: 'TOEFL iBT', val: scholarship.university?.min_toefl, color: 'text-blue-500', note: 'Total score; check course for sub-scores' },
                                   { label: 'PTE Academic', val: scholarship.university?.min_pte, color: 'text-violet-500', note: 'Overall; check course for skill minimums' },
                                 ].map(({ label, val, color, note }) => (
-                                  <div key={label} className="p-4 rounded-xl border" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff', borderColor: theme.border }}>
+                                  <div key={label} className="p-4 rounded-xl border" style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderColor: theme.border }}>
                                     <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: theme.textSecondary }}>{label}</p>
                                     <p className={`text-3xl font-black ${color}`}>{val || '—'}</p>
                                     <p className="text-[10px] mt-1 leading-tight" style={{ color: theme.textSecondary }}>{note}</p>
@@ -333,7 +333,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
 
                             {/* Note */}
                             {(scholarship.university?.min_ielts || scholarship.university?.min_toefl) && (
-                              <div className="flex items-start gap-2 p-3 rounded-xl border border-amber-200" style={{ backgroundColor: isDark ? 'rgba(245,158,11,0.07)' : '#fffbeb' }}>
+                              <div className="flex items-start gap-2 p-3 rounded-xl border border-amber-200" style={{ backgroundColor: 'rgba(245,158,11,0.07)' }}>
                                 <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                                 <p className="text-xs font-medium" style={{ color: theme.textSecondary }}>Note: Test scores must be less than 2 years old at the time of application</p>
                               </div>
@@ -343,8 +343,8 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
 
                         {/* Required Documents */}
                         <div className="rounded-2xl border overflow-hidden" style={{ borderColor: theme.border }}>
-                          <div className="flex items-center gap-2 px-5 py-4 border-b" style={{ backgroundColor: isDark ? 'rgba(99,102,241,0.1)' : '#f5f3ff', borderColor: theme.border }}>
-                            <FileText className="w-4 h-4" style={{ color: isDark ? '#a5b4fc' : '#4f46e5' }} />
+                          <div className="flex items-center gap-2 px-5 py-4 border-b" style={{ backgroundColor: 'rgba(244,196,78,0.1)', borderColor: theme.border }}>
+                            <FileText className="w-4 h-4" style={{ color: '#f4c44e' }} />
                             <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textSecondary }}>Required Documents</span>
                           </div>
                           <div className="p-5" style={{ backgroundColor: theme.bgSecondary }}>
@@ -377,8 +377,8 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                       <div className="space-y-5">
                         {/* Header */}
                         <div className="rounded-2xl border overflow-hidden" style={{ borderColor: theme.border }}>
-                          <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ backgroundColor: isDark ? 'rgba(16,185,129,0.1)' : '#f0fdf4', borderColor: theme.border }}>
-                            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: isDark ? '#059669' : '#10b981' }}>
+                          <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ backgroundColor: 'rgba(16,185,129,0.1)', borderColor: theme.border }}>
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#10b981' }}>
                               <Award className="w-4 h-4 text-white" />
                             </div>
                             <div>
@@ -391,13 +391,13 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                               {[
                                 { icon: Banknote, label: 'Tuition Fees', desc: 'Full coverage of program tuition', light: 'bg-blue-100 text-blue-600', dark: 'rgba(59,130,246,0.15)', darkText: '#93c5fd' },
                                 { icon: Users, label: 'Living Allowance', desc: 'Monthly stipend for accommodation & food', light: 'bg-emerald-100 text-emerald-600', dark: 'rgba(16,185,129,0.15)', darkText: '#6ee7b7' },
-                                { icon: Globe, label: 'Travel Grant', desc: 'Return airfare to home country', light: 'bg-violet-100 text-violet-600', dark: 'rgba(139,92,246,0.15)', darkText: '#c4b5fd' },
+                                { icon: Globe, label: 'Travel Grant', desc: 'Return airfare to home country', light: 'bg-amber-100 text-amber-600', dark: 'rgba(244,196,78,0.15)', darkText: '#f4c44e' },
                                 { icon: ShieldCheck, label: 'Health Insurance', desc: 'Comprehensive medical coverage', light: 'bg-rose-100 text-rose-600', dark: 'rgba(239,68,68,0.15)', darkText: '#fca5a5' },
                                 { icon: TrendingUp, label: 'Research Funding', desc: 'Additional grants for research projects', light: 'bg-amber-100 text-amber-600', dark: 'rgba(245,158,11,0.15)', darkText: '#fcd34d' },
-                                { icon: Award, label: 'Conference Support', desc: 'Funding for academic conferences', light: 'bg-indigo-100 text-indigo-600', dark: 'rgba(99,102,241,0.15)', darkText: '#a5b4fc' },
+                                { icon: Award, label: 'Conference Support', desc: 'Funding for academic conferences', light: 'bg-indigo-100 text-indigo-600', dark: 'rgba(244,196,78,0.15)', darkText: '#a5b4fc' },
                               ].map(({ icon: Icon, label, desc, light, dark, darkText }) => (
-                                <div key={label} className="flex items-start gap-3 p-4 rounded-xl border" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff', borderColor: theme.border }}>
-                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: isDark ? dark : undefined }} >
+                                <div key={label} className="flex items-start gap-3 p-4 rounded-xl border" style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderColor: theme.border }}>
+                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: dark }} >
                                     {isDark
                                       ? <Icon className="w-4 h-4" style={{ color: darkText }} />
                                       : <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${light}`}><Icon className="w-4 h-4" /></div>
@@ -423,7 +423,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                         </div>
 
                         {scholarship.verification_notes && (
-                          <div className="p-4 rounded-2xl border border-emerald-200" style={{ backgroundColor: isDark ? 'rgba(16,185,129,0.06)' : '#f0fdf4' }}>
+                          <div className="p-4 rounded-2xl border border-emerald-200" style={{ backgroundColor: 'rgba(16,185,129,0.06)' }}>
                             <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-emerald-600">Verification Notes</p>
                             <p className="text-sm font-medium" style={{ color: theme.text }}>{scholarship.verification_notes}</p>
                           </div>
@@ -436,7 +436,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                       <div className="space-y-5">
                         {/* Header */}
                         <div className="rounded-2xl border overflow-hidden" style={{ borderColor: theme.border }}>
-                          <div className="px-5 py-4 border-b" style={{ backgroundColor: isDark ? 'rgba(99,102,241,0.1)' : '#f5f3ff', borderColor: theme.border }}>
+                          <div className="px-5 py-4 border-b" style={{ backgroundColor: 'rgba(244,196,78,0.1)', borderColor: theme.border }}>
                             <p className="font-black text-sm" style={{ color: theme.text }}>Application Process</p>
                             <p className="text-xs mt-0.5" style={{ color: theme.textSecondary }}>Step-by-step guide to apply</p>
                           </div>
@@ -458,8 +458,8 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                                 : null;
                               const steps = dbSteps || defaultSteps;
                               return steps.map((step, i) => (
-                                <div key={i} className="flex items-start gap-4 p-4 rounded-xl border" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff', borderColor: theme.border }}>
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-black text-sm" style={{ backgroundColor: isDark ? 'rgba(245,158,11,0.15)' : '#fef3c7', color: isDark ? '#fcd34d' : '#b45309', border: `2px solid ${isDark ? 'rgba(245,158,11,0.4)' : '#fcd34d'}` }}>{i + 1}</div>
+                                <div key={i} className="flex items-start gap-4 p-4 rounded-xl border" style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderColor: theme.border }}>
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-black text-sm" style={{ backgroundColor: 'rgba(245,158,11,0.15)', color: '#fcd34d', border: `2px solid ${isDark ? 'rgba(245,158,11,0.4)' : '#fcd34d'}` }}>{i + 1}</div>
                                   <div className="flex-1">
                                     <p className="font-black text-sm" style={{ color: theme.text }}>{step.title}</p>
                                     <p className="text-xs mt-0.5" style={{ color: theme.textSecondary }}>{step.desc}</p>
@@ -472,15 +472,15 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                         </div>
 
                         {/* Important Dates */}
-                        <div className="p-5 rounded-2xl border" style={{ backgroundColor: isDark ? 'rgba(245,158,11,0.07)' : '#fffbeb', borderColor: isDark ? 'rgba(245,158,11,0.25)' : '#fde68a' }}>
+                        <div className="p-5 rounded-2xl border" style={{ backgroundColor: 'rgba(245,158,11,0.07)', borderColor: 'rgba(245,158,11,0.25)' }}>
                           <div className="flex items-center gap-2 mb-4">
-                            <Calendar className="w-4 h-4" style={{ color: isDark ? '#fcd34d' : '#d97706' }} />
-                            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: isDark ? '#fcd34d' : '#b45309' }}>Important Dates</span>
+                            <Calendar className="w-4 h-4" style={{ color: '#fcd34d' }} />
+                            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#fcd34d' }}>Important Dates</span>
                           </div>
                           <div className="grid grid-cols-2 gap-6">
                             <div>
                               <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: theme.textSecondary }}>Application Opens</p>
-                              <p className="font-black text-sm" style={{ color: isDark ? '#f1f5f9' : '#0f172a' }}>
+                              <p className="font-black text-sm" style={{ color: '#f1f5f9' }}>
                                 {scholarship.deadline ? new Date(new Date(scholarship.deadline).setMonth(new Date(scholarship.deadline).getMonth() - 3)).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Check website'}
                               </p>
                             </div>
@@ -494,7 +494,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                         </div>
 
                         {scholarship.university?.admission_notes && (
-                          <div className="p-4 rounded-2xl border border-amber-200" style={{ backgroundColor: isDark ? 'rgba(245,158,11,0.06)' : '#fffbeb' }}>
+                          <div className="p-4 rounded-2xl border border-amber-200" style={{ backgroundColor: 'rgba(245,158,11,0.06)' }}>
                             <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-amber-600 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Important Notes</p>
                             <p className="text-sm font-medium" style={{ color: theme.text }}>{scholarship.university.admission_notes}</p>
                           </div>
@@ -502,8 +502,8 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
 
                         {scholarship.scholarship_url && (
                           <a href={scholarship.scholarship_url} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 w-full p-4 rounded-2xl font-black text-sm text-white transition-all hover:opacity-90"
-                            style={{ background: 'linear-gradient(135deg,#1e3a8a,#3b82f6)' }}>
+                            className="flex items-center justify-center gap-2 w-full p-4 rounded-2xl font-black text-sm transition-all hover:opacity-90"
+                            style={{ background: 'linear-gradient(135deg,#f4c44e,#e8b43a)', color: '#1e3a7a' }}>
                             Apply on Official Website <ExternalLink className="w-4 h-4" />
                           </a>
                         )}
@@ -523,7 +523,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                 <Button
                   onClick={handleToggleTracking}
                   className="w-full h-12 rounded-2xl font-black text-sm shadow-lg"
-                  style={{ backgroundColor: isTracking ? '#ef4444' : '#1e3a8a', color: 'white' }}
+                  style={{ backgroundColor: isTracking ? '#ef4444' : '#f4c44e', color: isTracking ? 'white' : '#1e3a7a' }}
                 >
                   {isTracking ? <Trash2 className="w-4 h-4 mr-2" /> : <Bookmark className="w-4 h-4 mr-2" />}
                   {isTracking ? "Remove from Tracker" : "Track Scholarship"}
@@ -568,7 +568,7 @@ export function DetailPage({ onNavigate, scholarshipId }: { onNavigate: (page: s
                   ))}
                   {scholarship.university.website_url && (
                     <a href={scholarship.university.website_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-blue-500 text-xs font-bold hover:underline mt-1">
+                      className="flex items-center gap-2 text-xs font-bold hover:underline mt-1" style={{ color: '#f4c44e' }}>
                       <Globe className="w-3.5 h-3.5" /> Visit University Website
                     </a>
                   )}

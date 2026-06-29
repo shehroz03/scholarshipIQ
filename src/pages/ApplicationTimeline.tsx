@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { 
     User, 
     Mail, 
@@ -24,7 +24,7 @@ import {
 import { Sidebar } from "../components/Sidebar";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { Button } from "../components/ui/button";
-import { darkTheme } from "../styles/theme";
+import { darkTheme, lightTheme } from "../styles/theme";
 
 interface TimelineStepEx {
     id: string;
@@ -52,9 +52,9 @@ const TIMELINE_STEPS: TimelineStepEx[] = [
         description: "Collect passport, CNIC, transcripts, and certificates. Run them through the AI Secure Vault for deep vector analysis.",
         order: 1,
         icon: User,
-        color: "#6366f1",
+        color: "#f4c44e",
         lightBg: "#eef2ff",
-        darkBg: "rgba(99,102,241,0.15)",
+        darkBg: "rgba(244,196,78,0.15)",
         actionLabel: "🔍 Open AI Document Vault",
         actionType: "navigate",
         target: "checklist",
@@ -88,7 +88,7 @@ const TIMELINE_STEPS: TimelineStepEx[] = [
         description: "Draft, review, and refine your main application essay using AI co-pilot tools for maximum global alignment.",
         order: 3,
         icon: FileText,
-        color: "#7c3aed",
+        color: "#d4a017",
         lightBg: "#f5f3ff",
         darkBg: "rgba(124,58,237,0.15)",
         actionLabel: "✍️ Launch AI SOP Co-Pilot",
@@ -175,8 +175,8 @@ const TIMELINE_STEPS: TimelineStepEx[] = [
 ];
 
 export function ApplicationTimeline({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
-    const isDark = true;
-    const theme = darkTheme;
+    const isDark = false;
+    const theme = lightTheme;
 
     const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>(() => {
         const saved = localStorage.getItem("scholariq_timeline_steps");
@@ -254,7 +254,7 @@ Sincerely,
                 <header className="px-8 py-5 flex items-center justify-between border-b" style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border, zIndex: 30 }}>
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 15px rgba(99, 102, 241, 0.4)" }}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f4c44e, #8b5cf6)", boxShadow: "0 4px 15px rgba(99, 102, 241, 0.4)" }}>
                                 <Calendar size={22} style={{ color: "#fff" }} />
                             </div>
                             <h1 className="text-2xl font-black" style={{ color: theme.text, letterSpacing: '-0.02em' }}>AI Dynamic Scholarship Chrono-Engine</h1>
@@ -266,7 +266,7 @@ Sincerely,
                         <Button
                             onClick={() => onNavigate('dashboard')}
                             className="rounded-xl font-bold text-white border-none shadow-lg hover:opacity-90 transition-opacity"
-                            style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                            style={{ background: "linear-gradient(135deg, #f4c44e, #e8b43a)", color: "#1e3a7a" }}
                         >
                             ← Back to Dashboard
                         </Button>
@@ -278,18 +278,18 @@ Sincerely,
 
                         {/* ================= DYNAMIC INTAKE SELECTOR & AI CHRONO-SYNC BANNER ================= */}
                         <div style={{
-                            background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.6), rgba(15, 23, 42, 0.8))',
-                            border: '1px solid rgba(99, 102, 241, 0.3)',
+                            background: '#ffffff',
+                            border: '1px solid rgba(0,0,0,0.08)',
                             borderRadius: '28px',
                             padding: '36px',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '30px',
-                            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)'
+                            boxShadow: '0 4px 24px rgba(0,0,0,0.07)'
                         }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818cf8', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f4c44e', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                         <Sparkles size={16} /> Dynamic Target Calibrator
                                     </span>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -299,10 +299,10 @@ Sincerely,
                                         </span>
                                     </div>
                                 </div>
-                                <h2 style={{ fontSize: '24px', fontWeight: '900', color: 'white', margin: 0, letterSpacing: '-0.02em' }}>
+                                <h2 style={{ fontSize: '24px', fontWeight: '900', color: '#1e293b', margin: 0, letterSpacing: '-0.02em' }}>
                                     Select Your Global Intake Target
                                 </h2>
-                                <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>
+                                <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
                                     Switching your intake dynamically re-aligns every milestone deadline in real-time. Activate AI sync to receive prompt notifications 48 hours before critical cutoffs.
                                 </p>
                             </div>
@@ -320,8 +320,8 @@ Sincerely,
                                             key={intake.id}
                                             onClick={() => setSelectedIntake(intake.id as any)}
                                             style={{
-                                                background: isSelected ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))' : 'rgba(255,255,255,0.02)',
-                                                border: isSelected ? '2px solid #818cf8' : '1px solid rgba(255,255,255,0.08)',
+                                                background: isSelected ? 'rgba(244,196,78,0.1)' : '#ffffff',
+                                                border: isSelected ? '2px solid #f4c44e' : '1px solid rgba(0,0,0,0.05)',
                                                 borderRadius: '20px',
                                                 padding: '20px',
                                                 cursor: 'pointer',
@@ -329,20 +329,20 @@ Sincerely,
                                                 flexDirection: 'column',
                                                 gap: '6px',
                                                 transition: 'all 0.2s',
-                                                boxShadow: isSelected ? '0 10px 25px -5px rgba(99, 102, 241, 0.3)' : 'none'
+                                                boxShadow: isSelected ? '0 4px 16px rgba(244,196,78,0.3)' : '0 2px 8px rgba(0,0,0,0.06)'
                                             }}
                                             onMouseEnter={(e) => {
-                                                if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                                                if (!isSelected) e.currentTarget.style.background = 'rgba(244,196,78,0.05)';
                                             }}
                                             onMouseLeave={(e) => {
-                                                if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                                                if (!isSelected) e.currentTarget.style.background = '#ffffff';
                                             }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                <h4 style={{ fontSize: '16px', fontWeight: '800', color: isSelected ? '#white' : '#cbd5e1', margin: 0 }}>
+                                                <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#1e293b', margin: 0 }}>
                                                     {intake.name}
                                                 </h4>
-                                                {isSelected && <CheckCircle2 size={18} color="#818cf8" />}
+                                                {isSelected && <CheckCircle2 size={18} color="#f4c44e" />}
                                             </div>
                                             <p style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>{intake.desc}</p>
                                         </div>
@@ -352,8 +352,8 @@ Sincerely,
 
                             {/* Sync Engine Box */}
                             <div style={{
-                                background: isSyncActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.02)',
-                                border: isSyncActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.08)',
+                                background: isSyncActive ? 'rgba(16, 185, 129, 0.08)' : 'rgba(0,0,0,0.03)',
+                                border: isSyncActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(0,0,0,0.05)',
                                 borderRadius: '22px',
                                 padding: '24px 30px',
                                 display: 'flex',
@@ -365,7 +365,7 @@ Sincerely,
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                     <div style={{
                                         padding: '14px',
-                                        background: isSyncActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)',
+                                        background: isSyncActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0,0,0,0.03)',
                                         borderRadius: '18px',
                                         color: isSyncActive ? '#10b981' : '#94a3b8'
                                     }}>
@@ -375,7 +375,7 @@ Sincerely,
                                         <h4 style={{ fontSize: '18px', fontWeight: '800', color: isSyncActive ? '#10b981' : 'white', margin: '0 0 6px 0' }}>
                                             {isSyncActive ? 'AI Smart Synchronization is Active' : 'Enable AI Chrono-Notification Sync'}
                                         </h4>
-                                        <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0, lineHeight: '1.5' }}>
+                                        <p style={{ color: '#64748b', fontSize: '13px', margin: 0, lineHeight: '1.5' }}>
                                             {isSyncActive 
                                                 ? 'Your timeline is securely hooked to our backend scheduler. Prompt alerts will automatically trigger 48 hours prior to each deadline.'
                                                 : 'Securely hook your scholarship timeline to our automated task engine for seamless email alerts 48 hours before key milestones.'}
@@ -386,7 +386,7 @@ Sincerely,
                                     onClick={() => setIsSyncActive(!isSyncActive)}
                                     style={{
                                         background: isSyncActive ? '#ef4444' : 'linear-gradient(135deg, #10b981, #059669)',
-                                        color: 'white',
+                                        color: '#1e293b',
                                         border: 'none',
                                         padding: '12px 24px',
                                         borderRadius: '14px',
@@ -410,8 +410,8 @@ Sincerely,
                                     <p className="text-sm font-semibold mb-0.5" style={{ color: theme.textSecondary }}>Timeline Progress</p>
                                     <p className="text-2xl font-black" style={{ color: theme.text }}>{completedCount} of {TIMELINE_STEPS.length} milestones complete</p>
                                 </div>
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-black text-lg" style={{ background: `conic-gradient(#6366f1 ${progressPercent * 3.6}deg, ${isDark ? "#374151" : "#e5e7eb"} 0deg)` }}>
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-sm" style={{ backgroundColor: theme.bgSecondary, color: "#6366f1" }}>
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-black text-lg" style={{ background: `conic-gradient(#f4c44e ${progressPercent * 3.6}deg, ${isDark ? "#374151" : "#e5e7eb"} 0deg)` }}>
+                                    <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-sm" style={{ backgroundColor: theme.bgSecondary, color: "#f4c44e" }}>
                                         {progressPercent}%
                                     </div>
                                 </div>
@@ -419,7 +419,7 @@ Sincerely,
                             <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? "#374151" : "#e5e7eb" }}>
                                 <div
                                     className="h-full rounded-full transition-all duration-700"
-                                    style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4)" }}
+                                    style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #f4c44e, #8b5cf6, #06b6d4)" }}
                                 />
                             </div>
                             {progressPercent === 100 && (
@@ -433,7 +433,7 @@ Sincerely,
                         {/* Steps */}
                         <div className="relative">
                             {/* Vertical line */}
-                            <div className="absolute left-[27px] top-10 bottom-10 w-0.5 rounded-full" style={{ background: "linear-gradient(180deg, #6366f1, #8b5cf6, #06b6d4)" }} />
+                            <div className="absolute left-[27px] top-10 bottom-10 w-0.5 rounded-full" style={{ background: "linear-gradient(180deg, #f4c44e, #8b5cf6, #06b6d4)" }} />
 
                             <div className="space-y-6">
                                 {TIMELINE_STEPS.map((step) => {
@@ -521,9 +521,9 @@ Sincerely,
                                                         <button 
                                                             onClick={(e) => handleActionClick(step, e)}
                                                             style={{
-                                                                background: isCurrent ? `linear-gradient(135deg, ${step.color}, #4f46e5)` : 'rgba(255,255,255,0.05)',
-                                                                color: isCurrent ? 'white' : '#cbd5e1',
-                                                                border: isCurrent ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                                                                background: isCurrent ? `linear-gradient(135deg, ${step.color}, #e8b43a)` : 'rgba(0,0,0,0.03)',
+                                                                color: isCurrent ? 'white' : '#64748b',
+                                                                border: isCurrent ? 'none' : '1px solid rgba(0,0,0,0.08)',
                                                                 padding: '10px 20px',
                                                                 borderRadius: '14px',
                                                                 fontWeight: '800',
@@ -537,14 +537,14 @@ Sincerely,
                                                             }}
                                                             onMouseEnter={(e) => {
                                                                 if (!isCurrent) {
-                                                                    e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                                                                    e.currentTarget.style.background = 'rgba(0,0,0,0.08)';
                                                                     e.currentTarget.style.color = 'white';
                                                                 }
                                                             }}
                                                             onMouseLeave={(e) => {
                                                                 if (!isCurrent) {
-                                                                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                                                                    e.currentTarget.style.color = '#cbd5e1';
+                                                                    e.currentTarget.style.background = 'rgba(0,0,0,0.03)';
+                                                                    e.currentTarget.style.color = '#64748b';
                                                                 }
                                                             }}
                                                         >
@@ -584,7 +584,7 @@ Sincerely,
                     padding: '20px'
                 }}>
                     <div style={{
-                        background: '#0f172a',
+                        background: '#f0f4ff',
                         border: '1px solid rgba(99, 102, 241, 0.3)',
                         borderRadius: '28px',
                         width: '100%',
@@ -593,22 +593,22 @@ Sincerely,
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden',
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
                     }}>
                         {/* Modal Header */}
                         <div style={{
                             padding: '24px 32px',
-                            borderBottom: '1px solid rgba(255,255,255,0.08)',
+                            borderBottom: '1px solid rgba(0,0,0,0.05)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            background: 'rgba(255,255,255,0.02)'
+                            background: '#f8fafc'
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '14px', color: '#818cf8' }}>
+                                <div style={{ padding: '10px', background: 'rgba(244,196,78,0.12)', borderRadius: '14px', color: '#f4c44e' }}>
                                     {activeModal === 'lor' ? <Mail size={24} /> : activeModal === 'interview' ? <MessageSquare size={24} /> : <BookOpen size={24} />}
                                 </div>
-                                <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'white', margin: 0 }}>
+                                <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b', margin: 0 }}>
                                     {activeModal === 'lor' && 'AI LOR Request Template'}
                                     {activeModal === 'interview' && 'Top 5 Scholarship Interview Questions'}
                                     {activeModal === 'departure' && 'AI Pre-Departure & Travel Success Blueprint'}
@@ -616,7 +616,7 @@ Sincerely,
                             </div>
                             <button 
                                 onClick={() => setActiveModal(null)}
-                                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', width: '36px', height: '36px', borderRadius: '12px', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                style={{ background: 'rgba(0,0,0,0.03)', border: 'none', width: '36px', height: '36px', borderRadius: '12px', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             >
                                 <X size={18} />
                             </button>
@@ -626,16 +626,16 @@ Sincerely,
                         <div style={{ padding: '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                             {activeModal === 'lor' && (
                                 <>
-                                    <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
+                                    <p style={{ color: '#64748b', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
                                         Copy this professionally formatted AI template to request a letter of recommendation from your academic professors or supervisors. Be sure to replace the bracketed information.
                                     </p>
                                     <div style={{ position: 'relative' }}>
                                         <pre style={{
-                                            background: 'rgba(15, 23, 42, 0.9)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            background: '#f1f5f9',
+                                            border: '1px solid rgba(0,0,0,0.08)',
                                             borderRadius: '20px',
                                             padding: '24px',
-                                            color: '#cbd5e1',
+                                            color: '#1e293b',
                                             fontSize: '13px',
                                             lineHeight: '1.7',
                                             overflowX: 'auto',
@@ -650,8 +650,8 @@ Sincerely,
                                                 position: 'absolute',
                                                 top: '16px',
                                                 right: '16px',
-                                                background: copied ? '#10b981' : '#4f46e5',
-                                                color: 'white',
+                                                background: copied ? '#10b981' : '#e8b43a',
+                                                color: '#1e293b',
                                                 border: 'none',
                                                 padding: '8px 16px',
                                                 borderRadius: '12px',
@@ -672,7 +672,7 @@ Sincerely,
 
                             {activeModal === 'interview' && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                    <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
+                                    <p style={{ color: '#64748b', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
                                         These are the top 5 high-frequency questions calibrated by our AI engine from over 10,000 global scholarship interviews, complete with expert answering strategies.
                                     </p>
                                     {[
@@ -682,9 +682,9 @@ Sincerely,
                                         { q: "4. Describe a challenge you overcame and what you learned.", a: "Use the STAR method (Situation, Task, Action, Result). Highlight resilience, leadership, and adaptability." },
                                         { q: "5. Why are you the most deserving candidate for this scholarship?", a: "Synthesize your academic excellence, unique leadership experiences, and clear future vision. Show them you are an investment, not an expense." }
                                     ].map((item, idx) => (
-                                        <div key={idx} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#818cf8', margin: 0 }}>{item.q}</h4>
-                                            <p style={{ color: '#cbd5e1', fontSize: '13px', margin: 0, lineHeight: '1.6' }}>💡 <b>AI Strategy:</b> {item.a}</p>
+                                        <div key={idx} style={{ background: '#f8fafc', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#f4c44e', margin: 0 }}>{item.q}</h4>
+                                            <p style={{ color: '#1e293b', fontSize: '13px', margin: 0, lineHeight: '1.6' }}>💡 <b>AI Strategy:</b> {item.a}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -692,7 +692,7 @@ Sincerely,
 
                             {activeModal === 'departure' && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                    <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
+                                    <p style={{ color: '#64748b', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
                                         Ensure a smooth, stress-free relocation to your university destination by strictly adhering to this pre-departure checklist.
                                     </p>
                                     {[
@@ -700,11 +700,11 @@ Sincerely,
                                         { title: "💳 Financial Preparation", items: ["Sufficient local currency (approx. $500-$1000 cash)", "International Multi-currency Debit/Credit Card", "Understand how to open a local student bank account upon arrival"] },
                                         { title: "🎒 Academic & Electronics", items: ["Laptop with universal charging adapters", "Copies of all original academic degrees and transcripts", "Essential prescription medicines with doctor's prescription note"] }
                                     ].map((block, idx) => (
-                                        <div key={idx} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                        <div key={idx} style={{ background: '#f8fafc', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                             <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#10b981', margin: 0 }}>{block.title}</h4>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                 {block.items.map((it, i) => (
-                                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#cbd5e1', fontSize: '13px' }}>
+                                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1e293b', fontSize: '13px' }}>
                                                         <CheckCircle2 size={16} color="#10b981" style={{ flexShrink: 0 }} /> {it}
                                                     </div>
                                                 ))}
@@ -716,10 +716,10 @@ Sincerely,
                         </div>
 
                         {/* Modal Footer */}
-                        <div style={{ padding: '20px 32px', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'flex-end' }}>
+                        <div style={{ padding: '20px 32px', background: '#f8fafc', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'flex-end' }}>
                             <button 
                                 onClick={() => setActiveModal(null)}
-                                style={{ background: '#4f46e5', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '12px', fontWeight: '800', fontSize: '13px', cursor: 'pointer' }}
+                                style={{ background: '#e8b43a', color: '#1e293b', border: 'none', padding: '10px 24px', borderRadius: '12px', fontWeight: '800', fontSize: '13px', cursor: 'pointer' }}
                             >
                                 Close Window
                             </button>

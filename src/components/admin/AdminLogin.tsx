@@ -42,13 +42,13 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
         display: "flex",
         alignItems: "center",
         gap: "10px",
-        background: "#0f172a",
-        border: `1.5px solid ${focused === id ? "#6366f1" : "#334155"}`,
+        background: "#1e3a7a",
+        border: `1.5px solid ${focused === id ? "#f4c44e" : "#334155"}`,
         borderRadius: "12px",
         padding: "0 14px",
         height: "52px",
         transition: "border-color 0.2s ease, box-shadow 0.2s ease",
-        boxShadow: focused === id ? "0 0 0 4px rgba(99,102,241,0.15)" : "none",
+        boxShadow: focused === id ? "0 0 0 4px rgba(244,196,78,0.15)" : "none",
     });
 
     const inputStyle: React.CSSProperties = {
@@ -71,7 +71,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
                 alignItems: "center",
                 justifyContent: "center",
                 padding: "24px",
-                background: "radial-gradient(1200px 600px at 50% -10%, #1e1b4b 0%, #0f172a 45%, #020617 100%)",
+                background: "radial-gradient(1200px 600px at 50% -10%, #163065 0%, #0f172a 45%, #020617 100%)",
             }}
         >
             <div style={{ width: "100%", maxWidth: "420px" }}>
@@ -83,11 +83,11 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
                             height: "72px",
                             margin: "0 auto 18px",
                             borderRadius: "20px",
-                            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                            background: "linear-gradient(135deg, #f4c44e 0%, #8b5cf6 100%)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            boxShadow: "0 12px 30px rgba(99,102,241,0.35)",
+                            boxShadow: "0 12px 30px rgba(244,196,78,0.35)",
                         }}
                     >
                         <Shield style={{ width: "34px", height: "34px", color: "#fff" }} />
@@ -219,7 +219,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
                                 height: "52px",
                                 border: "none",
                                 borderRadius: "12px",
-                                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                background: "linear-gradient(135deg, #f4c44e 0%, #8b5cf6 100%)",
                                 color: "#ffffff",
                                 fontWeight: 700,
                                 fontSize: "15px",
@@ -229,7 +229,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
                                 alignItems: "center",
                                 justifyContent: "center",
                                 gap: "8px",
-                                boxShadow: "0 12px 24px rgba(99,102,241,0.3)",
+                                boxShadow: "0 12px 24px rgba(244,196,78,0.3)",
                                 transition: "transform 0.15s ease, box-shadow 0.2s ease",
                             }}
                             onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.transform = "translateY(-2px)"; }}

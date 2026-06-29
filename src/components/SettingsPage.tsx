@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -14,12 +14,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../api";
-import { darkTheme } from "../styles/theme";
+import { darkTheme, lightTheme } from "../styles/theme";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) {
-  const isDark = true;
-  const theme = darkTheme;
+  const isDark = false;
+  const theme = lightTheme;
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState({
@@ -107,8 +107,8 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('dashboard')}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 flex-shrink-0" style={{
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              boxShadow: '0 0 20px rgba(99,102,241,0.4)'
+              background: 'linear-gradient(135deg, #f4c44e, #8b5cf6)',
+              boxShadow: '0 0 20px rgba(244,196,78,0.4)'
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="11" cy="11" r="7" stroke="white" strokeWidth="2" />
@@ -117,7 +117,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             </div>
             <div>
               <div style={{ color: theme.text, fontWeight: 900, fontSize: 16, letterSpacing: "0.02em" }}>Neural Engine</div>
-              <div style={{ color: "rgba(139,92,246,0.9)", fontSize: 10, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase" }}>Settings Protocol</div>
+              <div style={{ color: "rgba(232,180,58,0.9)", fontSize: 10, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase" }}>Settings Protocol</div>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -125,11 +125,11 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <button 
               onClick={() => onNavigate('dashboard')} 
               style={{ 
-                background: 'transparent', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, 
+                background: 'transparent', border: `1px solid ${isDark ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.1)'}`, 
                 color: theme.text, padding: '8px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: 700,
                 cursor: 'pointer', transition: 'all 0.2s'
               }}
-              onMouseOver={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'}
+              onMouseOver={e => e.currentTarget.style.background = isDark ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.02)'}
               onMouseOut={e => e.currentTarget.style.background = 'transparent'}
             >
               Dashboard
@@ -141,9 +141,9 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-10 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-4" style={{
-            background: isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.05)',
-            borderColor: isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.1)',
-            color: isDark ? '#a5b4fc' : '#4f46e5'
+            background: isDark ? 'rgba(244,196,78,0.1)' : 'rgba(244,196,78,0.05)',
+            borderColor: isDark ? 'rgba(244,196,78,0.2)' : 'rgba(244,196,78,0.1)',
+            color: isDark ? '#a5b4fc' : '#e8b43a'
           }}>
             <Settings className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Configuration</span>
@@ -159,7 +159,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
             backdropFilter: isDark ? 'blur(24px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
+            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
           }}>
             <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(59, 130, 246, 0.05)' : '#f8fafc', borderColor: theme.border }}>
               <div className="flex items-center gap-4">
@@ -175,7 +175,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Full Name</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Full Name</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -184,7 +184,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Email Address</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Email Address</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -193,7 +193,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Nationality</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Nationality</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -202,7 +202,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Phone Number</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Phone Number</Label>
                   <Input
                     className="h-12 rounded-xl"
                     placeholder="+92 300 1234567"
@@ -221,7 +221,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
             backdropFilter: isDark ? 'blur(24px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
+            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
           }}>
             <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(99, 102, 241, 0.05)' : '#f5f3ff', borderColor: theme.border }}>
               <div className="flex items-center gap-4">
@@ -237,7 +237,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="md:col-span-2 lg:col-span-2 space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>University / College</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>University / College</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -246,7 +246,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Degree Level</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Degree Level</Label>
                   <Select value={profile.current_degree} onValueChange={(v) => setProfile({ ...profile, current_degree: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -260,7 +260,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="md:col-span-2 space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Major / Field of Study</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Major / Field of Study</Label>
                   <Input
                     className="h-12 rounded-xl"
                     style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
@@ -269,7 +269,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>CGPA</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>CGPA</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -280,7 +280,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>CGPA Scale</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>CGPA Scale</Label>
                   <Select value={profile.cgpa_scale} onValueChange={(v) => setProfile({ ...profile, cgpa_scale: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -294,7 +294,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Graduation Year</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Graduation Year</Label>
                   <Input
                     type="number"
                     className="h-12 rounded-xl"
@@ -313,7 +313,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
             backdropFilter: isDark ? 'blur(24px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
+            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
           }}>
             <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(16, 185, 129, 0.05)' : '#f0fdf4', borderColor: theme.border }}>
               <div className="flex items-center gap-4">
@@ -328,7 +328,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             </CardHeader>
             <CardContent className="p-8 space-y-8">
               <div className="max-w-md space-y-2">
-                <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Test Type</Label>
+                <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Test Type</Label>
                 <Select value={profile.english_test_type} onValueChange={(v) => setProfile({ ...profile, english_test_type: v })}>
                   <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                     <SelectValue />
@@ -352,19 +352,19 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Listening</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Listening</Label>
                     <Input type="number" step="0.5" className="h-10 rounded-lg" value={profile.ielts_listening} onChange={(e) => setProfile({ ...profile, ielts_listening: parseFloat(e.target.value) })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Reading</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Reading</Label>
                     <Input type="number" step="0.5" className="h-10 rounded-lg" value={profile.ielts_reading} onChange={(e) => setProfile({ ...profile, ielts_reading: parseFloat(e.target.value) })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Writing</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Writing</Label>
                     <Input type="number" step="0.5" className="h-10 rounded-lg" value={profile.ielts_writing} onChange={(e) => setProfile({ ...profile, ielts_writing: parseFloat(e.target.value) })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Speaking</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Speaking</Label>
                     <Input type="number" step="0.5" className="h-10 rounded-lg" value={profile.ielts_speaking} onChange={(e) => setProfile({ ...profile, ielts_speaking: parseFloat(e.target.value) })} />
                   </div>
                 </div>
@@ -379,19 +379,19 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Reading</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Reading</Label>
                     <Input type="number" max="30" className="h-10 rounded-lg" value={profile.toefl_reading} onChange={(e) => setProfile({ ...profile, toefl_reading: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Listening</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Listening</Label>
                     <Input type="number" max="30" className="h-10 rounded-lg" value={profile.toefl_listening} onChange={(e) => setProfile({ ...profile, toefl_listening: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Writing</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Writing</Label>
                     <Input type="number" max="30" className="h-10 rounded-lg" value={profile.toefl_writing} onChange={(e) => setProfile({ ...profile, toefl_writing: parseInt(e.target.value) || 0 })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Speaking</Label>
+                    <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Speaking</Label>
                     <Input type="number" max="30" className="h-10 rounded-lg" value={profile.toefl_speaking} onChange={(e) => setProfile({ ...profile, toefl_speaking: parseInt(e.target.value) || 0 })} />
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
 
               {(profile.english_test_type === "PTE" || profile.english_test_type === "Duolingo") && (
                 <div className="max-w-xs space-y-2">
-                  <Label className="text-xs font-bold" style={{ color: '#94a3b8' }}>Total Score</Label>
+                  <Label className="text-xs font-bold" style={{ color: '#64748b' }}>Total Score</Label>
                   <Input type="number" className="h-12 rounded-xl" value={profile.english_test_type === "PTE" ? profile.pte_score : profile.duolingo_score} onChange={(e) => setProfile({ ...profile, [profile.english_test_type === "PTE" ? "pte_score" : "duolingo_score"]: parseInt(e.target.value) })} />
                 </div>
               )}
@@ -412,7 +412,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
             backdropFilter: isDark ? 'blur(24px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
+            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
           }}>
             <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(245, 158, 11, 0.05)' : '#fffbeb', borderColor: theme.border }}>
               <div className="flex items-center gap-4">
@@ -428,7 +428,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Target Degree</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Target Degree</Label>
                   <Select value={profile.target_degree} onValueChange={(v) => setProfile({ ...profile, target_degree: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -442,7 +442,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="md:col-span-2 space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Preferred Field of Study</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Preferred Field of Study</Label>
                   <Input
                     className="h-12 rounded-xl"
                     placeholder="e.g. Artificial Intelligence, Public Health"
@@ -452,7 +452,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Target Country</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Target Country</Label>
                   <Select value={profile.target_country} onValueChange={(v) => setProfile({ ...profile, target_country: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -468,7 +468,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Target Intake Year</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Target Intake Year</Label>
                   <Input
                     type="number"
                     className="h-12 rounded-xl"
@@ -478,7 +478,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Study Mode</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Study Mode</Label>
                   <Select value={profile.study_mode} onValueChange={(v) => setProfile({ ...profile, study_mode: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -500,7 +500,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
             backdropFilter: isDark ? 'blur(24px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
+            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
           }}>
             <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(139, 92, 246, 0.05)' : '#f5f3ff', borderColor: theme.border }}>
               <div className="flex items-center gap-4">
@@ -516,7 +516,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Monthly Family Income</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Monthly Family Income</Label>
                   <Select value={profile.monthly_family_income} onValueChange={(v) => setProfile({ ...profile, monthly_family_income: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -530,7 +530,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Personal Budget (Total Savings/Support)</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Personal Budget (Total Savings/Support)</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40" />
                     <Input
@@ -551,7 +551,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   <Switch checked={profile.can_afford_partial} onCheckedChange={(v) => setProfile({ ...profile, can_afford_partial: v })} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Scholarship Preference</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Scholarship Preference</Label>
                   <Select value={profile.scholarship_type_pref} onValueChange={(v) => setProfile({ ...profile, scholarship_type_pref: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -573,7 +573,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
             backdropFilter: isDark ? 'blur(24px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
+            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
           }}>
             <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(236, 72, 153, 0.05)' : '#fdf2f8', borderColor: theme.border }}>
               <div className="flex items-center gap-4">
@@ -589,7 +589,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             <CardContent className="p-8 space-y-8">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Work Experience (Years)</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Work Experience (Years)</Label>
                   <Select value={profile.work_experience_years} onValueChange={(v) => setProfile({ ...profile, work_experience_years: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -603,7 +603,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Industry Type</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Industry Type</Label>
                   <Select value={profile.work_experience_type} onValueChange={(v) => setProfile({ ...profile, work_experience_type: v })}>
                     <SelectTrigger className="h-12 rounded-xl" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
                       <SelectValue />
@@ -630,7 +630,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#94a3b8' }}>Leadership & Extracurriculars</Label>
+                <Label className="text-xs font-black uppercase tracking-wider" style={{ color: '#64748b' }}>Leadership & Extracurriculars</Label>
                 <Textarea
                   className="rounded-2xl min-h-[100px]"
                   placeholder="Tell us about your leadership roles, volunteer work, or clubs..."
@@ -648,7 +648,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
             backdropFilter: isDark ? 'blur(24px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
+            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
           }}>
             <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(34, 197, 94, 0.05)' : '#f0fdf4', borderColor: theme.border }}>
               <div className="flex items-center gap-4">
@@ -702,7 +702,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
             backdropFilter: isDark ? 'blur(24px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
+            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
           }}>
             <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(75, 85, 99, 0.05)' : '#f9fafb', borderColor: theme.border }}>
               <div className="flex items-center gap-4">
@@ -738,17 +738,17 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
               className="group relative w-full overflow-hidden rounded-[32px] p-[2px] transition-all duration-300 cursor-pointer"
               style={{
                 background: isSaving ? 'rgba(100,116,139,0.2)' : 'linear-gradient(135deg, rgba(165,180,252,0.6), rgba(216,180,254,0.6))',
-                boxShadow: isSaving ? 'none' : '0 20px 40px -10px rgba(99,102,241,0.5)',
+                boxShadow: isSaving ? 'none' : '0 20px 40px -10px rgba(244,196,78,0.5)',
                 transform: 'translateY(0)',
               }}
-              onMouseOver={e => { if(!isSaving) { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 30px 60px -15px rgba(99,102,241,0.8)'; } }}
-              onMouseOut={e => { if(!isSaving) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(99,102,241,0.5)'; } }}
+              onMouseOver={e => { if(!isSaving) { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 30px 60px -15px rgba(244,196,78,0.8)'; } }}
+              onMouseOut={e => { if(!isSaving) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(244,196,78,0.5)'; } }}
             >
               {/* Inner wrapper for gradient border effect */}
               <div 
                 className="relative flex items-center justify-center gap-4 w-full h-[76px] rounded-[30px] transition-all duration-300 overflow-hidden"
                 style={{
-                  background: isSaving ? (isDark ? 'rgba(30,41,59,0.8)' : '#f1f5f9') : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                  background: isSaving ? (isDark ? 'rgba(30,41,59,0.8)' : '#f1f5f9') : 'linear-gradient(135deg, #e8b43a, #d4a017)',
                   backdropFilter: 'blur(12px)',
                 }}
               >

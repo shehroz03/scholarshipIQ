@@ -48,7 +48,7 @@ function PageLoader() {
     }}>
       <div style={{
         width: 38, height: 38, borderRadius: "50%",
-        border: "3px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1",
+        border: "3px solid rgba(244,196,78,0.2)", borderTopColor: "#f4c44e",
         animation: "spin 0.8s linear infinite",
       }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

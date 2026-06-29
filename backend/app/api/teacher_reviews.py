@@ -61,6 +61,53 @@ def submit_review(
     return {"message": "Review submitted successfully", "review_id": review.id}
 
 
+@router.get("/student/my-reviews")
+def get_my_reviews(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_student)
+):
+    """Get all reviews submitted by current student"""
+    
+    reviews = db.query(models.TeacherReview).filter(
+        models.TeacherReview.student_id == current_user.id
+    ).order_by(models.TeacherReview.created_at.desc()).all()
+    
+    return {
+        "reviews": [
+            {
+                "id": r.id,
+                "teacher_id": r.teacher_id,
+                "teacher_name": r.teacher.user.full_name if r.teacher and r.teacher.user else "Unknown",
+                "rating": r.rating,
+                "review_text": r.review_text,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "is_visible": r.is_visible,
+                "is_reported": r.is_reported
+            }
+            for r in reviews
+        ]
+    }
+
+
+@router.delete("/my/{review_id}")
+def delete_my_review(
+    review_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_student)
+):
+    """Student deletes their own review"""
+    review = db.query(models.TeacherReview).filter(
+        models.TeacherReview.id == review_id,
+        models.TeacherReview.student_id == current_user.id
+    ).first()
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found or not authorized to delete")
+    
+    db.delete(review)
+    db.commit()
+    return {"message": "Review deleted successfully"}
+
+
 @router.get("/{teacher_id}")
 def get_teacher_reviews(
     teacher_id: int,
@@ -115,37 +162,9 @@ def get_teacher_reviews(
                 "rating": r.rating,
                 "review_text": r.review_text,
                 "student_name": r.student.full_name if r.student else "Anonymous",
-                "student_profile_picture": r.student.profile_picture_url if r.student else None,
+                "student_profile_picture": None,
                 "created_at": r.created_at.isoformat() if r.created_at else None,
                 "updated_at": r.updated_at.isoformat() if r.updated_at else None
-            }
-            for r in reviews
-        ]
-    }
-
-
-@router.get("/student/my-reviews")
-def get_my_reviews(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_student)
-):
-    """Get all reviews submitted by current student"""
-    
-    reviews = db.query(models.TeacherReview).filter(
-        models.TeacherReview.student_id == current_user.id
-    ).order_by(models.TeacherReview.created_at.desc()).all()
-    
-    return {
-        "reviews": [
-            {
-                "id": r.id,
-                "teacher_id": r.teacher_id,
-                "teacher_name": r.teacher.user.full_name if r.teacher and r.teacher.user else "Unknown",
-                "rating": r.rating,
-                "review_text": r.review_text,
-                "created_at": r.created_at.isoformat() if r.created_at else None,
-                "is_visible": r.is_visible,
-                "is_reported": r.is_reported
             }
             for r in reviews
         ]

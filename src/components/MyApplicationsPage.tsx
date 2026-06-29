@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   GraduationCap, 
@@ -36,7 +36,7 @@ import { ThemeToggle } from "./ThemeToggle";
 
 const STATUS_CONFIG = {
   All: { label: "All Hubs", icon: LayoutGrid, color: "#64748b" },
-  Saved: { label: "Saved", icon: Bookmark, color: "#6366f1" },
+  Saved: { label: "Saved", icon: Bookmark, color: "#f4c44e" },
   Applied: { label: "Applied", icon: Pencil, color: "#f59e0b" },
   Interview: { label: "Interview", icon: Mic, color: "#a855f7" },
   Accepted: { label: "Accepted", icon: CheckCircle2, color: "#10b981" },
@@ -100,7 +100,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
     : applications.filter(app => app.status === filter);
 
   const kpis = [
-    { label: "Active Applications", value: applications.filter(a => a.status === 'Applied').length, icon: Pencil, color: "#6366f1", glow: "rgba(99, 102, 241, 0.2)" },
+    { label: "Active Applications", value: applications.filter(a => a.status === 'Applied').length, icon: Pencil, color: "#f4c44e", glow: "rgba(99, 102, 241, 0.2)" },
     { label: "Interviews", value: applications.filter(a => a.status === 'Interview').length, icon: Mic, color: "#a855f7", glow: "rgba(168, 85, 247, 0.2)" },
     { label: "Accepted", value: applications.filter(a => a.status === 'Accepted').length, icon: CheckCircle2, color: "#10b981", glow: "rgba(16, 185, 129, 0.2)" },
     { label: "Upcoming Deadlines", value: applications.filter(a => new Date(a.scholarship?.deadline) > new Date()).length, icon: Clock, color: "#f59e0b", glow: "rgba(245, 158, 11, 0.2)" },
@@ -110,8 +110,8 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
     <div style={{
       minHeight: '100vh',
       display: 'flex',
-      background: '#0f172a',
-      color: 'white',
+      background: '#f0f4ff',
+      color: '#1e293b',
       fontFamily: "'Inter', sans-serif"
     }}>
       {/* Sidebar */}
@@ -129,12 +129,12 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
           padding: '0 40px',
           background: 'rgba(15, 23, 42, 0.8)',
           backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          borderBottom: '1px solid rgba(0,0,0,0.03)',
           zIndex: 40
         }}>
           <div>
             <h1 style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '-0.02em' }}>Application Pipeline</h1>
-            <p style={{ fontSize: '10px', fontWeight: '700', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <p style={{ fontSize: '10px', fontWeight: '700', color: '#f4c44e', textTransform: 'uppercase', letterSpacing: '1px' }}>
               Mission Control
             </p>
           </div>
@@ -147,7 +147,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
               onClick={() => onNavigate('dashboard')}
               style={{
                 background: '#2563eb',
-                color: 'white',
+                color: '#1e293b',
                 border: 'none',
                 padding: '10px 20px',
                 borderRadius: '12px',
@@ -177,7 +177,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
               {kpis.map((kpi, i) => (
                 <div key={i} style={{
                   background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(0,0,0,0.05)',
                   borderRadius: '20px',
                   padding: '24px',
                   position: 'relative',
@@ -196,7 +196,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                   }}>
                     <kpi.icon size={22} color={kpi.color} />
                   </div>
-                  <p style={{ color: 'white', fontSize: '32px', fontWeight: '800', lineHeight: '1' }}>{kpi.value}</p>
+                  <p style={{ color: '#1e293b', fontSize: '32px', fontWeight: '800', lineHeight: '1' }}>{kpi.value}</p>
                   <p style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '6px' }}>
                     {kpi.label}
                   </p>
@@ -208,7 +208,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
             {/* Status Tabs (Segmented Control) */}
             <div style={{
               background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.05)',
+              border: '1px solid rgba(0,0,0,0.03)',
               borderRadius: '16px',
               padding: '6px',
               display: 'flex',
@@ -260,11 +260,11 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                   padding: '100px 40px',
                   textAlign: 'center',
                   background: 'rgba(255,255,255,0.01)',
-                  border: '1px dashed rgba(255,255,255,0.1)',
+                  border: '1px dashed rgba(0,0,0,0.08)',
                   borderRadius: '32px'
                 }}>
-                  <div style={{ width: '64px', height: '64px', background: 'rgba(99,102,241,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-                    <Target size={32} color="#6366f1" opacity={0.4} />
+                  <div style={{ width: '64px', height: '64px', background: 'rgba(244,196,78,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                    <Target size={32} color="#f4c44e" opacity={0.4} />
                   </div>
                   <h3 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px' }}>Pipeline Empty</h3>
                   <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '400px', margin: '0 auto 32px' }}>
@@ -272,7 +272,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                   </p>
                   <button 
                     onClick={() => onNavigate('search')}
-                    style={{ background: '#2563eb', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '16px', fontWeight: '700', cursor: 'pointer' }}
+                    style={{ background: '#2563eb', color: '#1e293b', border: 'none', padding: '14px 32px', borderRadius: '16px', fontWeight: '700', cursor: 'pointer' }}
                   >
                     Find Scholarships
                   </button>
@@ -292,7 +292,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                         exit={{ opacity: 0, scale: 0.95 }}
                         style={{
                           background: 'rgba(255,255,255,0.03)',
-                          border: '1px solid rgba(255,255,255,0.08)',
+                          border: '1px solid rgba(0,0,0,0.05)',
                           borderRadius: '24px',
                           padding: '24px',
                           display: 'flex',
@@ -304,14 +304,14 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                         {/* Header Part */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <div style={{ flex: 1 }}>
-                            <h4 style={{ fontSize: '18px', fontWeight: '800', color: 'white', marginBottom: '4px', lineHeight: '1.3' }}>
+                            <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', marginBottom: '4px', lineHeight: '1.3' }}>
                               {app.scholarship?.title}
                             </h4>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                               <p style={{ color: '#94a3b8', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                 <GraduationCap size={14} color="#6366f1" /> {app.scholarship?.university_name}
+                               <p style={{ color: '#64748b', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                 <GraduationCap size={14} color="#f4c44e" /> {app.scholarship?.university_name}
                                </p>
-                               <p style={{ color: '#94a3b8', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                               <p style={{ color: '#64748b', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                  <MapPin size={14} color="#ef4444" /> {app.scholarship?.country}
                                </p>
                             </div>
@@ -355,7 +355,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                         </div>
 
                         {/* Status Timeline Visualization */}
-                        <div style={{ display: 'flex', gap: '4px', height: '6px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '999px', overflow: 'hidden' }}>
+                        <div style={{ display: 'flex', gap: '4px', height: '6px', width: '100%', background: 'rgba(0,0,0,0.03)', borderRadius: '999px', overflow: 'hidden' }}>
                            {['Saved', 'Applied', 'Interview', 'Accepted'].map((step, idx) => {
                              const stepsOrder = ['Saved', 'Applied', 'Interview', 'Accepted', 'Rejected'];
                              const currentIdx = stepsOrder.indexOf(app.status);
@@ -364,7 +364,7 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                              return (
                                <div key={step} style={{
                                  flex: 1,
-                                 background: isPast ? '#6366f1' : 'transparent',
+                                 background: isPast ? '#f4c44e' : 'transparent',
                                  opacity: isPast ? 1 : 0.2
                                }} />
                              );
@@ -380,10 +380,10 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                               style={{
                                 width: '100%',
                                 height: '42px',
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: 'rgba(0,0,0,0.03)',
+                                border: '1px solid rgba(0,0,0,0.08)',
                                 borderRadius: '10px',
-                                color: 'white',
+                                color: '#1e293b',
                                 padding: '0 12px',
                                 fontSize: '12px',
                                 fontWeight: '700',
@@ -391,17 +391,17 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                                 appearance: 'none'
                               }}
                             >
-                              <option value="Saved" style={{ background: '#1e293b', color: 'white' }}>Saved</option>
-                              <option value="Applied" style={{ background: '#1e293b', color: 'white' }}>Applied</option>
-                              <option value="Interview" style={{ background: '#1e293b', color: 'white' }}>Interview</option>
-                              <option value="Accepted" style={{ background: '#1e293b', color: 'white' }}>Accepted</option>
-                              <option value="Rejected" style={{ background: '#1e293b', color: 'white' }}>Rejected</option>
+                              <option value="Saved" style={{ background: '#1e293b', color: '#1e293b' }}>Saved</option>
+                              <option value="Applied" style={{ background: '#1e293b', color: '#1e293b' }}>Applied</option>
+                              <option value="Interview" style={{ background: '#1e293b', color: '#1e293b' }}>Interview</option>
+                              <option value="Accepted" style={{ background: '#1e293b', color: '#1e293b' }}>Accepted</option>
+                              <option value="Rejected" style={{ background: '#1e293b', color: '#1e293b' }}>Rejected</option>
                             </select>
                             <ChevronRight size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none', opacity: 0.5 }} />
                           </div>
                           <button 
                             onClick={() => onNavigate('detail', { id: app.scholarship_id })}
-                            style={{ padding: '0 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
+                            style={{ padding: '0 20px', background: '#f4c44e', color: '#1e293b', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
                           >
                             View Intel
                           </button>
@@ -423,21 +423,21 @@ export function MyApplicationsPage({ onNavigate }: { onNavigate: (page: string, 
                 <div style={{
                   marginTop: '40px',
                   padding: '40px',
-                  background: 'linear-gradient(135deg, #1e1b4b, #0f172a)',
+                  background: 'linear-gradient(135deg, #163065, #0f172a)',
                   borderRadius: '32px',
                   border: '1px solid rgba(99, 102, 241, 0.3)',
                   textAlign: 'center'
                 }}>
-                  <div style={{ width: '56px', height: '56px', background: 'rgba(99,102,241,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                    <Lock size={28} color="#6366f1" />
+                  <div style={{ width: '56px', height: '56px', background: 'rgba(244,196,78,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                    <Lock size={28} color="#f4c44e" />
                   </div>
                   <h4 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>Pipeline Capacity Limited</h4>
-                  <p style={{ color: '#94a3b8', fontSize: '14px', maxWidth: '500px', margin: '0 auto 24px' }}>
+                  <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '500px', margin: '0 auto 24px' }}>
                     Free accounts can track up to 3 applications simultaneously. Upgrade to Professional for unlimited lifecycle management.
                   </p>
                   <button 
                     onClick={() => onNavigate('pricing')}
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)', color: 'white', border: 'none', padding: '14px 36px', borderRadius: '16px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: '0 auto', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)' }}
+                    style={{ background: 'linear-gradient(135deg, #f4c44e, #3b82f6)', color: '#1e293b', border: 'none', padding: '14px 36px', borderRadius: '16px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: '0 auto', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)' }}
                   >
                     <Crown size={20} /> Upgrade to Professional
                   </button>

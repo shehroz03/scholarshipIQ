@@ -169,7 +169,7 @@ const VisaChecklistResultPage: React.FC = () => {
                       />
                       <defs>
                         <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#6366f1" />
+                          <stop offset="0%" stopColor="#f4c44e" />
                           <stop offset="100%" stopColor="#a855f7" />
                         </linearGradient>
                       </defs>

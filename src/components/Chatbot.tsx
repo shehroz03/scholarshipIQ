@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -20,12 +20,12 @@ interface Message {
 const getRoleWelcome = (role: "student" | "teacher" | "admin", userName: string) => {
   const nameStr = userName ? ` ${userName}` : "";
   if (role === "student") {
-    return `👋 Hi${nameStr}! I'm your **Student Assistant**, powered by GPT-4o.\n\nMain aapki help kar sakta hoon:\n- 🎓 Scholarship recommendations (CGPA, country, field ke mutabiq)\n- 📄 Document review (SOP, CV, transcripts)\n- 🌍 Visa guidance (UK, Germany, Australia, Canada)\n- 🚨 Fake scholarship detection\n\nApna sawal type karein ya document upload karein!`;
+    return `👋 Hi${nameStr}! I'm your **Student Assistant**, powered by GPT-4o.\n\nI can help you with:\n- 🎓 Scholarship recommendations (by CGPA, country, and field)\n- 📄 Document review (SOP, CV, transcripts)\n- 🌍 Visa guidance (UK, Germany, Australia, Canada)\n- 🚨 Fake scholarship detection\n\nType your question or upload a document!`;
   }
   if (role === "teacher") {
-    return `👋 Salam${nameStr}! Main aapka **Teacher Assistant** hoon, powered by GPT-4o.\n\nMain aapki in cheezon mein help kar sakta hoon:\n- 👩‍🎓 Student scholarship guidance plans\n- 📝 Recommendation letter structure\n- 📚 IELTS/TOEFL preparation plans\n- 🔍 Student profiles ke liye best scholarships\n\nKoi bhi sawaal poochein!`;
+    return `👋 Hello${nameStr}! I am your **Teacher Assistant**, powered by GPT-4o.\n\nI can help you with:\n- 👩‍🎓 Student scholarship guidance plans\n- 📝 Recommendation letter structure\n- 📚 IELTS/TOEFL preparation plans\n- 🔍 Best scholarships for student profiles\n\nFeel free to ask anything!`;
   }
-  return `👋 Salam${nameStr}! Main **Admin Intelligence** hoon, powered by GPT-4o.\n\nMain platform management mein help kar sakta hoon:\n- 🛡️ Fraud detection patterns ka analysis\n- 📊 Platform analytics aur user trends\n- ⚙️ Auto-verify pipeline insights\n- ✅ Scholarship approval decisions\n\nKoi bhi admin sawaal poochein!`;
+  return `👋 Hello${nameStr}! I am **Admin Intelligence**, powered by GPT-4o.\n\nI can assist with platform management:\n- 🛡️ Fraud detection pattern analysis\n- 📊 Platform analytics and user trends\n- ⚙️ Auto-verify pipeline insights\n- ✅ Scholarship approval decisions\n\nAsk me anything about admin operations!`;
 };
 
 
@@ -113,7 +113,7 @@ export function Chatbot() {
       name: "Student Assistant",
       subtitle: "Scholarships & Visas",
       Icon: Bot,
-      gradient: "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
+      gradient: "linear-gradient(135deg, #2563eb 0%, #e8b43a 100%)",
       headerGradient: "linear-gradient(135deg, #0B0F19 0%, #111827 100%)",
       glow: "rgba(37,99,235,0.45)",
       accentColor: "#3b82f6",
@@ -281,12 +281,12 @@ export function Chatbot() {
       } else {
         response = await api.chatbot.sendMessage(messageText || "Help me find scholarships", currentFile || undefined);
       }
-      const reply = response.reply || response.response || response.message || "Sorry, koi response nahi mila.";
+      const reply = response.reply || response.response || response.message || "Sorry, no response received.";
       setMessages((prev: Message[]) => [...prev, { role: "assistant", content: reply }]);
     } catch (err: any) {
       const errMsg = err?.message?.includes("Backend") || err?.message?.includes("fetch")
-        ? "⚠️ Backend se connection nahi ho raha. Kripya ensure karein ke backend chal raha hai (port 8000)."
-        : "⚠️ Kuch masla aa gaya. Thori dair baad dobara try karein.";
+        ? "⚠️ Unable to connect to the backend. Please ensure the backend server is running (port 8000)."
+        : "⚠️ Something went wrong. Please try again shortly.";
       setMessages((prev: Message[]) => [...prev, { role: "assistant", content: errMsg }]);
     } finally {
       setIsLoading(false);

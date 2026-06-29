@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentPage }) => 
     <aside style={{
       width: '260px',
       height: '100vh', // Changed from minHeight to height to force viewport constraint
-      background: 'linear-gradient(180deg, #1e3a8a 0%, #1e1b4b 50%, #0f172a 100%)',
+      background: 'linear-gradient(180deg, #1e3a7a 0%, #163065 50%, #112455 100%)',
       borderRight: '1px solid rgba(255,255,255,0.1)',
       display: 'flex',
       flexDirection: 'column',
@@ -74,12 +74,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentPage }) => 
         <div style={{
           width: '40px',
           height: '40px',
-          background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+          background: 'linear-gradient(135deg, #f4c44e, #e8b43a)',
           borderRadius: '12px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(99,102,241,0.4)'
+          boxShadow: '0 4px 12px rgba(244,196,78,0.4)'
         }}>
           <GraduationCap color="white" size={24} />
         </div>
@@ -146,32 +146,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentPage }) => 
                 color: isActive || isHovered ? 'white' : 'rgba(255,255,255,0.6)',
                 fontSize: '14px',
                 fontWeight: isActive ? '700' : '500',
-                background: isActive 
-                  ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.2))' 
-                  : isHovered 
-                    ? 'rgba(255,255,255,0.08)' 
+                background: isActive
+                  ? 'linear-gradient(135deg, rgba(244,196,78,0.25), rgba(232,180,58,0.12))'
+                  : isHovered
+                    ? 'rgba(255,255,255,0.08)'
                     : 'transparent',
-                border: isActive ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid transparent',
+                border: isActive ? '1px solid rgba(244,196,78,0.5)' : '1px solid transparent',
                 width: 'calc(100% - 24px)',
                 textAlign: 'left',
-                boxShadow: isActive ? '0 10px 15px -3px rgba(37, 99, 235, 0.2)' : 'none',
+                boxShadow: isActive ? '0 10px 15px -3px rgba(244,196,78,0.15)' : 'none',
                 position: 'relative'
               }}
             >
               <div style={{
                 width: '32px',
                 height: '32px',
-                background: isActive 
-                  ? 'linear-gradient(135deg, #3b82f6, #2563eb)' 
+                background: isActive
+                  ? 'linear-gradient(135deg, #f4c44e, #e8b43a)'
                   : 'rgba(255,255,255,0.08)',
                 borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: isActive ? '0 4px 10px rgba(37, 99, 235, 0.4)' : 'none',
+                boxShadow: isActive ? '0 4px 10px rgba(244,196,78,0.4)' : 'none',
                 flexShrink: 0
               }}>
-                <item.icon size={16} color={isActive ? 'white' : (isHovered ? 'white' : 'rgba(255,255,255,0.6)')} />
+                <item.icon size={16} color={isActive ? '#1e3a7a' : (isHovered ? 'white' : 'rgba(255,255,255,0.6)')} />
               </div>
               <span style={{ flex: 1 }}>{item.label}</span>
               
@@ -181,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentPage }) => 
                   height: '8px',
                   background: '#ef4444',
                   borderRadius: '50%',
-                  border: '2px solid #1e3a8a',
+                  border: '2px solid #1e3a7a',
                   position: 'absolute',
                   top: '12px',
                   right: '12px',
@@ -193,11 +193,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentPage }) => 
                 <div style={{
                   width: '6px',
                   height: '20px',
-                  background: '#3b82f6',
+                  background: '#f4c44e',
                   borderRadius: '10px',
                   position: 'absolute',
                   right: '-12px',
-                  boxShadow: '0 0 12px #3b82f6'
+                  boxShadow: '0 0 12px #f4c44e'
                 }} />
               )}
             </button>
@@ -225,16 +225,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentPage }) => 
           <div style={{
             width: '36px',
             height: '36px',
-            background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+            background: 'linear-gradient(135deg, #f4c44e, #e8b43a)',
             borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white',
+            color: '#1e3a7a',
             fontWeight: '700',
             fontSize: '14px',
             flexShrink: 0,
-            boxShadow: '0 4px 10px rgba(99,102,241,0.3)'
+            boxShadow: '0 4px 10px rgba(244,196,78,0.3)'
           }}>
             {userStatus?.full_name?.charAt(0) || "U"}
           </div>

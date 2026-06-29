@@ -662,6 +662,7 @@ def get_my_students(db: Session = Depends(get_db), current_user: models.User = D
             "payment_status": e.payment_status,
             "payment_method": e.payment_method,
             "payment_reference": e.payment_reference,
+            "payment_screenshot_url": e.payment_screenshot_url,
             "amount_paid": e.amount_paid,
         })
     return result
@@ -686,6 +687,7 @@ def get_pending_payments(db: Session = Depends(get_db), current_user: models.Use
             "payment_status": e.payment_status,
             "payment_method": e.payment_method,
             "payment_reference": e.payment_reference,
+            "payment_screenshot_url": e.payment_screenshot_url,
             "amount_paid": e.amount_paid,
             "enrolled_at": e.enrolled_at.isoformat(),
         }
@@ -752,6 +754,110 @@ def reject_payment(
     enrollment.payment_status = "rejected"
     db.commit()
     return {"message": reason, "payment_status": "rejected"}
+
+
+# ──────────────────────────────────────────────────────
+#   TEACHER PAYMENT METHODS
+# ──────────────────────────────────────────────────────
+
+class PaymentMethodIn(PydanticBaseModel):
+    method_type: str          # JazzCash | Easypaisa | Bank
+    account_title: str
+    account_number: str
+    bank_name: Optional[str] = None
+    instructions: Optional[str] = None
+
+class PaymentMethodUpdate(PydanticBaseModel):
+    account_title: Optional[str] = None
+    account_number: Optional[str] = None
+    bank_name: Optional[str] = None
+    instructions: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+@router.get("/payment-methods")
+def list_payment_methods(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    teacher = get_teacher(db, current_user.id)
+    methods = db.query(models.TeacherPaymentMethod).filter(
+        models.TeacherPaymentMethod.teacher_id == teacher.id
+    ).order_by(models.TeacherPaymentMethod.id).all()
+    return [
+        {
+            "id": m.id,
+            "method_type": m.method_type,
+            "account_title": m.account_title,
+            "account_number": m.account_number,
+            "bank_name": m.bank_name,
+            "instructions": m.instructions,
+            "is_active": m.is_active,
+        }
+        for m in methods
+    ]
+
+
+@router.post("/payment-methods")
+def add_payment_method(
+    data: PaymentMethodIn,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    teacher = get_teacher(db, current_user.id)
+    if data.method_type not in ("JazzCash", "Easypaisa", "Bank"):
+        raise HTTPException(400, "method_type must be JazzCash, Easypaisa, or Bank")
+    m = models.TeacherPaymentMethod(
+        teacher_id=teacher.id,
+        method_type=data.method_type,
+        account_title=data.account_title,
+        account_number=data.account_number,
+        bank_name=data.bank_name,
+        instructions=data.instructions,
+    )
+    db.add(m); db.commit(); db.refresh(m)
+    return {"id": m.id, "method_type": m.method_type, "account_title": m.account_title,
+            "account_number": m.account_number, "bank_name": m.bank_name,
+            "instructions": m.instructions, "is_active": m.is_active}
+
+
+@router.put("/payment-methods/{method_id}")
+def update_payment_method(
+    method_id: int,
+    data: PaymentMethodUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    teacher = get_teacher(db, current_user.id)
+    m = db.query(models.TeacherPaymentMethod).filter(
+        models.TeacherPaymentMethod.id == method_id,
+        models.TeacherPaymentMethod.teacher_id == teacher.id,
+    ).first()
+    if not m:
+        raise HTTPException(404, "Payment method not found")
+    for field, val in data.model_dump(exclude_none=True).items():
+        setattr(m, field, val)
+    db.commit(); db.refresh(m)
+    return {"id": m.id, "method_type": m.method_type, "account_title": m.account_title,
+            "account_number": m.account_number, "bank_name": m.bank_name,
+            "instructions": m.instructions, "is_active": m.is_active}
+
+
+@router.delete("/payment-methods/{method_id}")
+def delete_payment_method(
+    method_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    teacher = get_teacher(db, current_user.id)
+    m = db.query(models.TeacherPaymentMethod).filter(
+        models.TeacherPaymentMethod.id == method_id,
+        models.TeacherPaymentMethod.teacher_id == teacher.id,
+    ).first()
+    if not m:
+        raise HTTPException(404, "Payment method not found")
+    db.delete(m); db.commit()
+    return {"message": "Payment method deleted"}
 
 
 @router.get("/analytics")

@@ -106,12 +106,12 @@ Reply using EXACTLY this format. Keep each point short (under 25 words):
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 cursor-pointer"
         style={{
           background: isOpen
-            ? "linear-gradient(135deg,#4f46e5,#6366f1)"
+            ? "linear-gradient(135deg,#e8b43a,#f4c44e)"
             : isDark
-            ? "rgba(99,102,241,0.12)"
-            : "rgba(99,102,241,0.08)",
-          border: "1px solid rgba(99,102,241,0.3)",
-          color: isOpen ? "white" : "#818cf8",
+            ? "rgba(244,196,78,0.12)"
+            : "rgba(244,196,78,0.08)",
+          border: "1px solid rgba(244,196,78,0.3)",
+          color: isOpen ? "white" : "#f4c44e",
         }}
       >
         <Sparkles size={11} />
@@ -127,7 +127,7 @@ Reply using EXACTLY this format. Keep each point short (under 25 words):
             background: isDark
               ? "linear-gradient(135deg, rgba(30,27,75,0.9), rgba(15,23,42,0.97))"
               : "linear-gradient(135deg, #eef2ff, #e0e7ff)",
-            border: "1px solid rgba(99,102,241,0.25)",
+            border: "1px solid rgba(244,196,78,0.25)",
           }}
         >
           {/* Loading shimmer */}
@@ -144,7 +144,7 @@ Reply using EXACTLY this format. Keep each point short (under 25 words):
                   key={i}
                   className="h-2.5 rounded-full mb-2 animate-pulse"
                   style={{
-                    background: "rgba(99,102,241,0.18)",
+                    background: "rgba(244,196,78,0.18)",
                     width: `${w}%`,
                   }}
                 />

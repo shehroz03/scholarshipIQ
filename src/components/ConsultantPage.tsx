@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     GraduationCap, Send, Loader2, Trash2, Crown, Lock, Sparkles,
@@ -100,7 +100,7 @@ function ThinkingIndicator({ text, step, showProgress }: { text: string, step: n
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <Brain className="animate-pulse" size={20} color="#818cf8" />
+          <Brain className="animate-pulse" size={20} color="#f4c44e" />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ color: theme.text, fontSize: '14px', fontWeight: '600', letterSpacing: '0.01em' }}>
@@ -118,7 +118,7 @@ function ThinkingIndicator({ text, step, showProgress }: { text: string, step: n
       </div>
       
       {showProgress && (
-        <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+        <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden" style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.05)' }}>
           <div 
             className="bg-indigo-500 h-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
@@ -252,7 +252,7 @@ const AICard = ({ children, title, icon: Icon }: any) => {
           {Icon && <Icon size={16} className="text-indigo-400" />}
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{title}</span>
         </div>
-        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_#f4c44e]" />
       </div>
       <div className="p-6">
         {children}
@@ -306,7 +306,7 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
              <ReactMarkdown 
                remarkPlugins={[remarkGfm]}
                components={{
-                 h1: ({children}) => <h1 style={{ color: isDark ? '#fff' : '#0f172a' }} className="text-2xl font-black mb-6 tracking-tight border-b pb-4" >{children}</h1>,
+                 h1: ({children}) => <h1 style={{ color: isDark ? '#fff' : '#1e293b' }} className="text-2xl font-black mb-6 tracking-tight border-b pb-4" >{children}</h1>,
                  h2: ({children}) => <h2 style={{ color: isDark ? '#fff' : '#1e293b' }} className="text-lg font-black mt-8 mb-4 flex items-center gap-2">
                    <div className="w-1.5 h-6 bg-indigo-500 rounded-full shrink-0" /> {children}
                  </h2>,
@@ -332,9 +332,9 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
                       </div>
                     );
                  },
-                 strong: ({children}) => <strong className="font-black" style={{ color: isDark ? '#fff' : '#0f172a' }}>{children}</strong>,
+                 strong: ({children}) => <strong className="font-black" style={{ color: isDark ? '#fff' : '#1e293b' }}>{children}</strong>,
                  em: ({children}) => <em className="text-indigo-400 not-italic text-[13px]">{children}</em>,
-                 hr: () => <div className="h-px w-full my-6" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' }} />,
+                 hr: () => <div className="h-px w-full my-6" style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.06)' }} />,
                  code: ({children}) => <code className="px-2 py-0.5 rounded-md text-[13px] font-mono bg-indigo-500/10 text-indigo-400">{children}</code>,
                  blockquote: ({children}) => (
                    <div className="border-l-4 border-indigo-500/50 bg-indigo-500/5 px-5 py-4 rounded-xl my-5 text-sm" style={{ color: isDark ? '#94a3b8' : '#475569' }}>
@@ -342,19 +342,19 @@ const AssistantMessage = ({ content, type, data }: { content: string, type?: str
                    </div>
                  ),
                  table: ({children}) => (
-                   <div className="overflow-x-auto my-6 rounded-2xl border" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
+                   <div className="overflow-x-auto my-6 rounded-2xl border" style={{ borderColor: isDark ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.08)' }}>
                      <table className="w-full text-sm border-collapse">{children}</table>
                    </div>
                  ),
                  thead: ({children}) => (
-                   <thead style={{ backgroundColor: isDark ? 'rgba(99,102,241,0.15)' : 'rgba(99,102,241,0.08)' }}>{children}</thead>
+                   <thead style={{ backgroundColor: isDark ? 'rgba(244,196,78,0.15)' : 'rgba(244,196,78,0.08)' }}>{children}</thead>
                  ),
                  tbody: ({children}) => <tbody>{children}</tbody>,
                  tr: ({children}) => (
                    <tr className="border-b transition-colors" style={{ borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>{children}</tr>
                  ),
                  th: ({children}) => (
-                   <th className="px-4 py-3 text-left text-[12px] font-black uppercase tracking-wider" style={{ color: '#818cf8' }}>{children}</th>
+                   <th className="px-4 py-3 text-left text-[12px] font-black uppercase tracking-wider" style={{ color: '#f4c44e' }}>{children}</th>
                  ),
                  td: ({children}) => (
                    <td className="px-4 py-3 text-[13px] font-medium" style={{ color: isDark ? 'rgba(203,213,225,0.9)' : '#334155' }}>{children}</td>
@@ -400,8 +400,8 @@ const UserMessage = ({ content }: { content: string }) => {
       <div 
         className="max-w-[75%] p-4 lg:p-5 rounded-[2rem] rounded-tr-md shadow-2xl border"
         style={{
-          backgroundColor: '#6366f1',
-          borderColor: 'rgba(255,255,255,0.1)',
+          backgroundColor: '#f4c44e',
+          borderColor: 'rgba(0,0,0,0.08)',
           boxShadow: '0 15px 30px -10px rgba(99, 102, 241, 0.4)'
         }}
       >
@@ -440,7 +440,7 @@ const FinancialPlanResult = ({ content }: { content: string }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <span style={{ backgroundColor: 'rgba(99,102,241,0.2)', color: '#818cf8', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ backgroundColor: 'rgba(244,196,78,0.2)', color: '#f4c44e', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Financial Strategy
             </span>
             <span style={{ color: theme.textSecondary, fontSize: '12px' }}>• 12 Month Forecast</span>
@@ -452,8 +452,8 @@ const FinancialPlanResult = ({ content }: { content: string }) => {
             {d.country || 'Destination Analysis'} • 1 {cur} = {pkr} PKR
           </p>
         </div>
-        <div style={{ backgroundColor: isDark ? '#0f172a' : '#f1f5f9', padding: '12px 20px', borderRadius: '16px', border: `1px solid ${theme.border}`, textAlign: 'right' }}>
-          <div style={{ fontSize: '10px', color: '#6366f1', fontWeight: '800', letterSpacing: '1px', marginBottom: '2px' }}>EST. BUDGET</div>
+        <div style={{ backgroundColor: isDark ? '#f0f4ff' : '#f1f5f9', padding: '12px 20px', borderRadius: '16px', border: `1px solid ${theme.border}`, textAlign: 'right' }}>
+          <div style={{ fontSize: '10px', color: '#f4c44e', fontWeight: '800', letterSpacing: '1px', marginBottom: '2px' }}>EST. BUDGET</div>
           <div style={{ fontSize: '20px', fontWeight: '800', color: theme.text }}>{cur} {estBudget?.toLocaleString() || '0'}</div>
           <div style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: '500' }}>{formatPKR(estBudget)}</div>
         </div>
@@ -534,7 +534,7 @@ const WelcomeScreen = ({ studentName, activeTool, tools, onSendMessage }: {
                     <Brain size={36} className="text-white" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 rounded-full"
-                    style={{ borderColor: isDark ? '#0f172a' : '#f8fafc' }} />
+                    style={{ borderColor: isDark ? '#f0f4ff' : '#f8fafc' }} />
             </div>
 
             <h2 className="text-2xl font-black text-center mb-1" style={{ color: theme.text }}>
@@ -546,9 +546,9 @@ const WelcomeScreen = ({ studentName, activeTool, tools, onSendMessage }: {
 
             {currentTool && (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-full mb-8"
-                    style={{ backgroundColor: isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)' }}>
+                    style={{ backgroundColor: isDark ? 'rgba(244,196,78,0.12)' : 'rgba(244,196,78,0.08)', border: '1px solid rgba(244,196,78,0.25)' }}>
                     {currentTool.icon}
-                    <span className="text-sm font-bold" style={{ color: '#818cf8' }}>{currentTool.title}</span>
+                    <span className="text-sm font-bold" style={{ color: '#f4c44e' }}>{currentTool.title}</span>
                     <span className="text-xs" style={{ color: theme.textSecondary }}>— {currentTool.desc}</span>
                 </div>
             )}
@@ -568,7 +568,7 @@ const WelcomeScreen = ({ studentName, activeTool, tools, onSendMessage }: {
                         className="text-left p-4 rounded-2xl border transition-all duration-200 hover:border-indigo-500/40 hover:shadow-lg group"
                         style={{
                             backgroundColor: isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255,255,255,0.85)',
-                            borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
+                            borderColor: isDark ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.06)',
                             backdropFilter: 'blur(12px)'
                         }}
                     >
@@ -587,8 +587,8 @@ const WelcomeScreen = ({ studentName, activeTool, tools, onSendMessage }: {
 
 export function ConsultantPage() {
     const navigate = useNavigate();
-    const isDark = true;
-    const theme = darkTheme;
+    const isDark = false;
+    const theme = lightTheme;
 
     const { status: userStatus, loading: loadingStatus, refreshStatus: fetchStatus, isPremium, isPro } = useUser();
     const [input, setInput] = useState("");
@@ -607,8 +607,8 @@ export function ConsultantPage() {
     const [thinkingText, setThinkingText] = useState("Thinking...");
 
     const tools = [
-        { id: 'general', icon: <MessageSquare color="#818cf8" size={18} />, title: 'General Consultation', desc: 'Ask anything about study abroad' },
-        { id: 'sop_review', icon: <FileText color="#6366f1" size={18} />, title: 'Review My SOP', desc: 'Detailed scoring & feedback' },
+        { id: 'general', icon: <MessageSquare color="#f4c44e" size={18} />, title: 'General Consultation', desc: 'Ask anything about study abroad' },
+        { id: 'sop_review', icon: <FileText color="#f4c44e" size={18} />, title: 'Review My SOP', desc: 'Detailed scoring & feedback' },
         { id: 'email_draft', icon: <Mail color="#22c55e" size={18} />, title: 'Draft University Email', desc: 'Inquiry & contact templates' },
         { id: 'visa_guide', icon: <Compass color="#d946ef" size={18} />, title: 'Visa Guide', desc: 'Country-specific roadmaps' },
         { id: 'mock_interview', icon: <Mic color="#f59e0b" size={18} />, title: 'Mock Interview', desc: 'Practice with AI' },
@@ -679,7 +679,7 @@ export function ConsultantPage() {
                         Back
                     </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ backgroundColor: '#6366f1', padding: '8px', borderRadius: '12px' }}><GraduationCap style={{ width: '20px', height: '20px', color: '#ffffff' }} /></div>
+                        <div style={{ backgroundColor: '#f4c44e', padding: '8px', borderRadius: '12px' }}><GraduationCap style={{ width: '20px', height: '20px', color: '#1e293b' }} /></div>
                         <span style={{ fontSize: '20px', fontWeight: 'bold' }}>AI Consultant</span>
                     </div>
                 </div>
@@ -707,9 +707,9 @@ export function ConsultantPage() {
                                 padding: '6px 14px', borderRadius: '999px', border: '1px solid',
                                 cursor: 'pointer', fontSize: '12px', fontWeight: '700',
                                 transition: 'all 0.2s', whiteSpace: 'nowrap',
-                                backgroundColor: activeTool === tool.id ? 'rgba(99,102,241,0.15)' : 'transparent',
-                                borderColor: activeTool === tool.id ? 'rgba(99,102,241,0.45)' : theme.border,
-                                color: activeTool === tool.id ? '#818cf8' : theme.textSecondary
+                                backgroundColor: activeTool === tool.id ? 'rgba(244,196,78,0.15)' : 'transparent',
+                                borderColor: activeTool === tool.id ? 'rgba(244,196,78,0.45)' : theme.border,
+                                color: activeTool === tool.id ? '#f4c44e' : theme.textSecondary
                             }}
                         >
                             {tool.icon}
@@ -722,7 +722,7 @@ export function ConsultantPage() {
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {isInitializing ? (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', flexDirection: 'column' }}>
-                        <RotateCcw className="animate-spin" style={{ width: '32px', height: '32px', color: '#6366f1', marginBottom: '16px' }} />
+                        <RotateCcw className="animate-spin" style={{ width: '32px', height: '32px', color: '#f4c44e', marginBottom: '16px' }} />
                         <p style={{ color: theme.textSecondary, fontSize: '14px' }}>Restoring session...</p>
                     </div>
                 ) : messages.length === 0 ? (
@@ -768,8 +768,8 @@ export function ConsultantPage() {
                                 style={{
                                     whiteSpace: 'nowrap', padding: '5px 14px', borderRadius: '999px',
                                     fontSize: '12px', fontWeight: '600', cursor: chatLoading ? 'not-allowed' : 'pointer',
-                                    backgroundColor: isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.08)',
-                                    border: '1px solid rgba(99,102,241,0.25)', color: '#818cf8',
+                                    backgroundColor: isDark ? 'rgba(244,196,78,0.1)' : 'rgba(244,196,78,0.08)',
+                                    border: '1px solid rgba(244,196,78,0.25)', color: '#f4c44e',
                                     transition: 'all 0.15s', opacity: chatLoading ? 0.5 : 1
                                 }}
                             >
@@ -791,7 +791,7 @@ export function ConsultantPage() {
                     <button 
                         onClick={() => handleSend()} 
                         disabled={!input.trim() || chatLoading || isInitializing} 
-                        style={{ backgroundColor: '#6366f1', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: (!input.trim() || chatLoading || isInitializing) ? 'not-allowed' : 'pointer', opacity: (!input.trim() || chatLoading || isInitializing) ? 0.6 : 1 }}
+                        style={{ backgroundColor: '#f4c44e', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: (!input.trim() || chatLoading || isInitializing) ? 'not-allowed' : 'pointer', opacity: (!input.trim() || chatLoading || isInitializing) ? 0.6 : 1 }}
                     >
                         <SendIcon size={18} color="white" />
                     </button>

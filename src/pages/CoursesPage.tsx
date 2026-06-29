@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { toast } from "sonner";
@@ -12,9 +12,9 @@ import {
 const TEST_TYPES = ["All", "IELTS", "TOEFL", "GRE", "GMAT", "PTE", "TestDaF", "Duolingo", "SAT"];
 
 const TEST_CONFIG: Record<string, { color: string; bg: string; border: string; emoji: string; info: string }> = {
-  All:      { color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", emoji: "🌐", info: "All courses" },
+  All:      { color: "#f4c44e", bg: "#eef2ff", border: "#c7d2fe", emoji: "🌐", info: "All courses" },
   IELTS:    { color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", emoji: "🇬🇧", info: "UK · Australia · Canada" },
-  TOEFL:    { color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe", emoji: "🇺🇸", info: "USA universities" },
+  TOEFL:    { color: "#d4a017", bg: "#f5f3ff", border: "#ddd6fe", emoji: "🇺🇸", info: "USA universities" },
   GRE:      { color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", emoji: "📐", info: "Masters · Science" },
   GMAT:     { color: "#d97706", bg: "#fffbeb", border: "#fde68a", emoji: "💼", info: "MBA worldwide" },
   PTE:      { color: "#dc2626", bg: "#fef2f2", border: "#fecaca", emoji: "🇦🇺", info: "Australia · UK visa" },
@@ -35,8 +35,10 @@ export default function CoursesPage() {
   const [activeTab, setActiveTab] = useState<"courses" | "teachers">("courses");
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"JazzCash" | "Easypaisa" | "Bank">("JazzCash");
+  const [coursePaymentInfo, setCoursePaymentInfo] = useState<any>(null);
+  const [selectedPayMethodId, setSelectedPayMethodId] = useState<number | null>(null);
   const [paymentReference, setPaymentReference] = useState("");
+  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [enrollingCourseId, setEnrollingCourseId] = useState<number | null>(null);
   const [reviewsModal, setReviewsModal] = useState<{ teacher: any; reviews: any[]; stats: any; loading: boolean } | null>(null);
@@ -52,7 +54,26 @@ export default function CoursesPage() {
     try {
       const result = await api.courses.enrollInCourse(course.id);
       if (result.payment_status === "pending" || result.fee_required > 0) {
-        setSelectedCourse(course); setPaymentModalOpen(true);
+        setSelectedCourse(course);
+        setPaymentReference(""); setPaymentScreenshot(null); setSelectedPayMethodId(null);
+        // Load teacher's payment methods for this course
+        try {
+          const info = await api.courses.getPaymentInfo(course.id);
+          setCoursePaymentInfo(info);
+          const methods = info?.payment_methods ?? info?.methods ?? [];
+          if (methods.length === 1) setSelectedPayMethodId(methods[0].id);
+        } catch {
+          // Backend not ready — read from localStorage (demo mode)
+          const { getLocalPaymentMethods } = await import("../components/teacher/TeacherPaymentMethods");
+          const local = getLocalPaymentMethods();
+          if (local.length > 0) {
+            setCoursePaymentInfo({ payment_methods: local });
+            if (local.length === 1) setSelectedPayMethodId(local[0].id);
+          } else {
+            setCoursePaymentInfo(null);
+          }
+        }
+        setPaymentModalOpen(true);
         toast.info(`Submit payment of PKR ${course.price?.toLocaleString()} to unlock`);
       } else {
         toast.success(result.message || "Enrolled successfully!");
@@ -62,15 +83,28 @@ export default function CoursesPage() {
     finally { setEnrollingCourseId(null); }
   };
 
+  const closePaymentModal = () => {
+    setPaymentModalOpen(false); setSelectedCourse(null); setCoursePaymentInfo(null);
+    setPaymentReference(""); setPaymentScreenshot(null); setSelectedPayMethodId(null);
+  };
+
   const handleSubmitPayment = async () => {
-    if (!selectedCourse || !paymentReference.trim()) { toast.error("Enter payment reference"); return; }
+    if (!selectedCourse) return;
+    if (!selectedPayMethodId) { toast.error("Select a payment method"); return; }
+    if (!paymentReference.trim()) { toast.error("Enter the transaction reference / ID"); return; }
     setSubmittingPayment(true);
     try {
-      await api.courses.submitPayment(selectedCourse.id, {
-        payment_method: paymentMethod, payment_reference: paymentReference.trim(), amount_paid: selectedCourse.price
-      });
-      toast.success("Payment submitted! Teacher will verify and unlock access.");
-      setPaymentModalOpen(false); setPaymentReference(""); setPaymentMethod("JazzCash");
+      const methods: any[] = coursePaymentInfo?.payment_methods ?? coursePaymentInfo?.methods ?? [];
+      const chosenMethod = methods.find((m: any) => m.id === selectedPayMethodId);
+      const fd = new FormData();
+      fd.append("payment_method", chosenMethod?.method_type ?? String(selectedPayMethodId));
+      fd.append("payment_method_id", String(selectedPayMethodId));
+      fd.append("payment_reference", paymentReference.trim());
+      fd.append("amount_paid", String(selectedCourse.price ?? 0));
+      if (paymentScreenshot) fd.append("screenshot", paymentScreenshot);
+      await api.courses.submitPayment(selectedCourse.id, fd);
+      toast.success("Payment submitted! Teacher will verify and unlock your access.");
+      closePaymentModal();
       const updated = await api.request("/courses"); setCourses(updated);
     } catch (err: any) { toast.error(err.message || "Failed to submit payment"); }
     finally { setSubmittingPayment(false); }
@@ -117,7 +151,7 @@ export default function CoursesPage() {
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "linear-gradient(135deg,#0f0c29,#302b63,#24243e)" }}>
-      <div style={{ width: 52, height: 52, borderRadius: "50%", border: "3px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", animation: "spin 0.9s linear infinite" }} />
+      <div style={{ width: 52, height: 52, borderRadius: "50%", border: "3px solid rgba(244,196,78,0.3)", borderTopColor: "#f4c44e", animation: "spin 0.9s linear infinite" }} />
       <p style={{ color: "#a5b4fc", marginTop: 20, fontWeight: 700, letterSpacing: "0.1em", fontSize: 13 }}>LOADING PORTAL...</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
@@ -129,20 +163,20 @@ export default function CoursesPage() {
     <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "sans-serif" }}>
 
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <div style={{ background: "linear-gradient(135deg,#0f0c29 0%,#302b63 55%,#1e1b4b 100%)", position: "relative", overflow: "hidden", paddingBottom: 80 }}>
+      <div style={{ background: "linear-gradient(135deg,#0f0c29 0%,#302b63 55%,#163065 100%)", position: "relative", overflow: "hidden", paddingBottom: 80 }}>
         {/* Ambient orbs */}
-        <div style={{ position: "absolute", top: -120, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.18) 0%,transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", bottom: -60, left: -60, width: 380, height: 380, borderRadius: "50%", background: "radial-gradient(circle,rgba(139,92,246,0.15) 0%,transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "30%", left: "40%", width: 2, height: 2, borderRadius: "50%", boxShadow: "0 0 60px 30px rgba(99,102,241,0.08)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: -120, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle,rgba(244,196,78,0.18) 0%,transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -60, left: -60, width: 380, height: 380, borderRadius: "50%", background: "radial-gradient(circle,rgba(232,180,58,0.15) 0%,transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: "30%", left: "40%", width: 2, height: 2, borderRadius: "50%", boxShadow: "0 0 60px 30px rgba(244,196,78,0.08)", pointerEvents: "none" }} />
 
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
           {/* Nav bar */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "28px 0 60px" }}>
             <button
               onClick={() => navigate(localStorage.getItem("userRole") === "teacher" ? "/teacher" : "/dashboard")}
-              style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 14, padding: "10px 20px", color: "#c7d2fe", fontSize: 13, fontWeight: 700, cursor: "pointer", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
+              style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(0,0,0,0.05)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 14, padding: "10px 20px", color: "#c7d2fe", fontSize: 13, fontWeight: 700, cursor: "pointer", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.14)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
             >
               <ChevronLeft size={16} /> Back to Dashboard
             </button>
@@ -154,7 +188,7 @@ export default function CoursesPage() {
           {/* Hero content */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
             <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: 100, padding: "6px 16px", fontSize: 12, fontWeight: 700, color: "#a5b4fc", marginBottom: 24, letterSpacing: "0.08em" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(244,196,78,0.15)", border: "1px solid rgba(244,196,78,0.3)", borderRadius: 100, padding: "6px 16px", fontSize: 12, fontWeight: 700, color: "#a5b4fc", marginBottom: 24, letterSpacing: "0.08em" }}>
                 <Sparkles size={12} /> Certified by Global Experts
               </div>
               <h1 style={{ fontSize: 56, fontWeight: 900, color: "#fff", lineHeight: 1.08, margin: "0 0 20px", letterSpacing: "-0.02em" }}>
@@ -175,7 +209,7 @@ export default function CoursesPage() {
                 ].map((f, i) => (
                   <button key={i} onClick={f.action}
                     style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "10px 18px", color: "#e2e8f0", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.2)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(244,196,78,0.2)"; e.currentTarget.style.borderColor = "rgba(244,196,78,0.5)"; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
                   >
                     <span style={{ color: "#facc15" }}>{f.icon}</span> {f.label}
@@ -187,12 +221,12 @@ export default function CoursesPage() {
             {/* Right: floating stat cards */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {[
-                { icon: <BookOpen size={22} />, value: courses.length, label: "Active Courses", color: "#6366f1", bg: "rgba(99,102,241,0.12)" },
+                { icon: <BookOpen size={22} />, value: courses.length, label: "Active Courses", color: "#f4c44e", bg: "rgba(244,196,78,0.12)" },
                 { icon: <GraduationCap size={22} />, value: teachers.length, label: "Expert Teachers", color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
                 { icon: <Award size={22} />, value: 8, label: "Test Types", color: "#fbbf24", bg: "rgba(251,191,36,0.12)" },
                 { icon: <CheckCircle size={22} />, value: myProgress ? `${myProgress.overall_avg}%` : "100%", label: myProgress ? "Your Avg Score" : "Success Rate", color: "#34d399", bg: "rgba(52,211,153,0.12)" },
               ].map((s, i) => (
-                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "24px 20px", backdropFilter: "blur(12px)" }}>
+                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 20, padding: "24px 20px", backdropFilter: "blur(12px)" }}>
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", color: s.color, marginBottom: 14 }}>
                     {s.icon}
                   </div>
@@ -213,31 +247,31 @@ export default function CoursesPage() {
           <div ref={enrolledRef} style={{ background: "#fff", borderRadius: 24, border: "1px solid #e2e8f0", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", padding: 32, marginBottom: 40 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "center", color: "#6366f1" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "center", color: "#f4c44e" }}>
                   <BookOpen size={20} />
                 </div>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0 }}>My Enrolled Courses</h2>
-                <span style={{ background: "#6366f1", color: "#fff", fontSize: 12, fontWeight: 800, padding: "2px 10px", borderRadius: 100 }}>{enrolled.length}</span>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1e293b", margin: 0 }}>My Enrolled Courses</h2>
+                <span style={{ background: "#f4c44e", color: "#fff", fontSize: 12, fontWeight: 800, padding: "2px 10px", borderRadius: 100 }}>{enrolled.length}</span>
               </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", background: "#eef2ff", padding: "6px 14px", borderRadius: 100 }}>In Progress</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#f4c44e", background: "#eef2ff", padding: "6px 14px", borderRadius: 100 }}>In Progress</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 16 }}>
               {enrolled.map(c => (
                 <div key={c.id} onClick={() => navigate(`/courses/${c.id}`)}
                   style={{ display: "flex", gap: 16, padding: 20, borderRadius: 16, border: "1px solid #e2e8f0", cursor: "pointer", transition: "all 0.2s", background: "#f8fafc" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#6366f1"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(99,102,241,0.12)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#f4c44e"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(244,196,78,0.12)"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "none"; }}
                 >
                   <div style={{ width: 52, height: 52, borderRadius: 14, background: cfg(c.test_type).color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 13, flexShrink: 0 }}>
                     {c.test_type}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 15, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</div>
+                    <div style={{ fontWeight: 800, color: "#1e293b", fontSize: 15, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</div>
                     <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>{c.teacher_name}</div>
                     <div style={{ height: 6, background: "#e2e8f0", borderRadius: 100, overflow: "hidden" }}>
-                      <div style={{ height: "100%", background: "linear-gradient(90deg,#6366f1,#a78bfa)", borderRadius: 100, width: `${c.progress}%`, transition: "width 0.5s" }} />
+                      <div style={{ height: "100%", background: "linear-gradient(90deg,#f4c44e,#a78bfa)", borderRadius: 100, width: `${c.progress}%`, transition: "width 0.5s" }} />
                     </div>
-                    <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 700, marginTop: 6 }}>{c.progress}% Complete</div>
+                    <div style={{ fontSize: 11, color: "#f4c44e", fontWeight: 700, marginTop: 6 }}>{c.progress}% Complete</div>
                   </div>
                 </div>
               ))}
@@ -253,9 +287,9 @@ export default function CoursesPage() {
           ] as const).map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: "pointer", border: "none", transition: "all 0.2s",
-                background: activeTab === tab.key ? (tab.key === "courses" ? "#6366f1" : "#7c3aed") : "transparent",
+                background: activeTab === tab.key ? (tab.key === "courses" ? "#f4c44e" : "#d4a017") : "transparent",
                 color: activeTab === tab.key ? "#fff" : "#64748b",
-                boxShadow: activeTab === tab.key ? "0 4px 14px rgba(99,102,241,0.35)" : "none",
+                boxShadow: activeTab === tab.key ? "0 4px 14px rgba(244,196,78,0.35)" : "none",
               }}
             >
               {tab.icon} {tab.label}
@@ -272,8 +306,8 @@ export default function CoursesPage() {
               <input
                 value={search} onChange={e => setSearch(e.target.value)}
                 placeholder={activeTab === "courses" ? "Search courses or test types..." : "Search teachers..."}
-                style={{ width: "100%", paddingLeft: 48, paddingRight: search ? 44 : 16, paddingTop: 13, paddingBottom: 13, border: "1.5px solid #e2e8f0", borderRadius: 14, fontSize: 14, fontWeight: 500, color: "#0f172a", background: "#f8fafc", outline: "none", boxSizing: "border-box", transition: "border 0.2s" }}
-                onFocus={e => (e.target.style.borderColor = "#6366f1")}
+                style={{ width: "100%", paddingLeft: 48, paddingRight: search ? 44 : 16, paddingTop: 13, paddingBottom: 13, border: "1.5px solid #e2e8f0", borderRadius: 14, fontSize: 14, fontWeight: 500, color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box", transition: "border 0.2s" }}
+                onFocus={e => (e.target.style.borderColor = "#f4c44e")}
                 onBlur={e => (e.target.style.borderColor = "#e2e8f0")}
               />
               {search && (
@@ -316,9 +350,9 @@ export default function CoursesPage() {
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <p style={{ fontSize: 15, color: "#64748b", fontWeight: 600, margin: 0 }}>
-                <span style={{ fontSize: 22, fontWeight: 900, color: "#6366f1" }}>{filtered.length}</span>
+                <span style={{ fontSize: 22, fontWeight: 900, color: "#f4c44e" }}>{filtered.length}</span>
                 {" "}course{filtered.length !== 1 ? "s" : ""} found
-                {filter !== "All" && <> for <strong style={{ color: "#0f172a" }}>{filter}</strong></>}
+                {filter !== "All" && <> for <strong style={{ color: "#1e293b" }}>{filter}</strong></>}
                 {freeOnly && <span style={{ color: "#16a34a", fontWeight: 800 }}> · Free Only</span>}
               </p>
             </div>
@@ -327,14 +361,14 @@ export default function CoursesPage() {
             {filtered.length === 0 ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 24px", background: "#fff", borderRadius: 24, border: "1px solid #e2e8f0", textAlign: "center" }}>
                 <div style={{ width: 72, height: 72, background: "#eef2ff", borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <BookOpen size={34} color="#6366f1" />
+                  <BookOpen size={34} color="#f4c44e" />
                 </div>
-                <h3 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>No courses found</h3>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: "#1e293b", margin: "0 0 8px" }}>No courses found</h3>
                 <p style={{ color: "#64748b", fontSize: 14, maxWidth: 340, margin: "0 0 24px" }}>
                   {search ? `No results for "${search}". Try adjusting keywords.` : "No courses match your current filters."}
                 </p>
                 <button onClick={() => { setFilter("All"); setSearch(""); setFreeOnly(false); }}
-                  style={{ background: "#6366f1", color: "#fff", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
+                  style={{ background: "#f4c44e", color: "#fff", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
                   Reset Filters
                 </button>
               </div>
@@ -359,7 +393,7 @@ export default function CoursesPage() {
                             {c.is_free ? "✓ FREE" : `PKR ${c.price?.toLocaleString()}`}
                           </span>
                         </div>
-                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", margin: "0 0 10px", lineHeight: 1.3 }}>{c.title}</h3>
+                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1e293b", margin: "0 0 10px", lineHeight: 1.3 }}>{c.title}</h3>
                         <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, margin: "0 0 20px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                           {c.description || `${c.test_type} high-impact preparation by ${c.teacher_name}`}
                         </p>
@@ -374,7 +408,7 @@ export default function CoursesPage() {
                         ].map((s, i) => (
                           <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, borderRight: i < 2 ? "1px solid #e2e8f0" : "none" }}>
                             <span style={{ color: "#94a3b8" }}>{s.icon}</span>
-                            <span style={{ fontSize: 15, fontWeight: 900, color: "#0f172a" }}>{s.val}</span>
+                            <span style={{ fontSize: 15, fontWeight: 900, color: "#1e293b" }}>{s.val}</span>
                             <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>{s.label}</span>
                           </div>
                         ))}
@@ -399,12 +433,12 @@ export default function CoursesPage() {
                             <CheckCircle size={14} /> Enrolled
                           </span>
                         ) : enrollingCourseId === c.id ? (
-                          <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6366f1" }}>
+                          <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#f4c44e" }}>
                             <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Enrolling...
                           </span>
                         ) : (
                           <button onClick={e => { e.stopPropagation(); handleEnroll(c); }}
-                            style={{ display: "flex", alignItems: "center", gap: 6, background: c.is_free ? "#16a34a" : "#6366f1", color: "#fff", border: "none", borderRadius: 100, padding: "8px 18px", fontSize: 13, fontWeight: 800, cursor: "pointer", transition: "all 0.2s" }}
+                            style={{ display: "flex", alignItems: "center", gap: 6, background: c.is_free ? "#16a34a" : "#f4c44e", color: "#fff", border: "none", borderRadius: 100, padding: "8px 18px", fontSize: 13, fontWeight: 800, cursor: "pointer", transition: "all 0.2s" }}
                             onMouseEnter={e => (e.currentTarget.style.opacity = "0.88")}
                             onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
                           >
@@ -425,7 +459,7 @@ export default function CoursesPage() {
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div>
-                <h2 style={{ fontSize: 22, fontWeight: 900, color: "#0f172a", margin: "0 0 4px" }}>Expert Teachers</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 900, color: "#1e293b", margin: "0 0 4px" }}>Expert Teachers</h2>
                 <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>Learn from certified, highly rated instructors</p>
               </div>
               {filter !== "All" && (
@@ -438,15 +472,15 @@ export default function CoursesPage() {
             {filteredTeachers.length === 0 ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 24px", background: "#fff", borderRadius: 24, border: "1px solid #e2e8f0", textAlign: "center" }}>
                 <div style={{ width: 72, height: 72, background: "#f5f3ff", borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <GraduationCap size={34} color="#7c3aed" />
+                  <GraduationCap size={34} color="#d4a017" />
                 </div>
-                <h3 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>No teachers found</h3>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: "#1e293b", margin: "0 0 8px" }}>No teachers found</h3>
                 <p style={{ color: "#64748b", fontSize: 14, maxWidth: 340, margin: "0 0 24px" }}>
                   {filter !== "All" ? `No approved ${filter} teachers yet. Try "All".` : "Teachers appear here once verified by admin."}
                 </p>
                 {filter !== "All" && (
                   <button onClick={() => setFilter("All")}
-                    style={{ background: "#7c3aed", color: "#fff", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
+                    style={{ background: "#d4a017", color: "#fff", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
                     Show All Teachers
                   </button>
                 )}
@@ -459,15 +493,15 @@ export default function CoursesPage() {
                   return (
                     <div key={teacher.teacher_id} onClick={() => navigate(`/teachers/${teacher.teacher_id}`)}
                       style={{ background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", overflow: "hidden", cursor: "pointer", display: "flex", alignItems: "stretch", transition: "all 0.2s", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = "translateX(4px)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.09)"; e.currentTarget.style.borderColor = "#7c3aed40"; }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = "translateX(4px)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.09)"; e.currentTarget.style.borderColor = "#d4a01740"; }}
                       onMouseLeave={e => { e.currentTarget.style.transform = "translateX(0)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = "#e2e8f0"; }}
                     >
                       {/* Left accent strip */}
-                      <div style={{ width: 5, background: `linear-gradient(180deg,#7c3aed,#6366f1)`, flexShrink: 0 }} />
+                      <div style={{ width: 5, background: `linear-gradient(180deg,#d4a017,#f4c44e)`, flexShrink: 0 }} />
 
                       {/* Avatar */}
                       <div style={{ padding: "20px 20px 20px 20px", display: "flex", alignItems: "center", flexShrink: 0 }}>
-                        <div style={{ width: 64, height: 64, borderRadius: 16, background: `linear-gradient(135deg,${specCfg.color || "#7c3aed"},#6366f1)`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 24, fontWeight: 900, boxShadow: "0 4px 16px rgba(99,102,241,0.25)" }}>
+                        <div style={{ width: 64, height: 64, borderRadius: 16, background: `linear-gradient(135deg,${specCfg.color || "#d4a017"},#f4c44e)`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 24, fontWeight: 900, boxShadow: "0 4px 16px rgba(244,196,78,0.25)" }}>
                           {teacher.profile_picture_url
                             ? <img src={`http://localhost:8000${teacher.profile_picture_url}`} alt={teacher.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : teacher.name?.charAt(0).toUpperCase() || "T"}
@@ -477,7 +511,7 @@ export default function CoursesPage() {
                       {/* Main info */}
                       <div style={{ flex: 1, padding: "18px 0", minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <h3 style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", margin: 0 }}>{teacher.name}</h3>
+                          <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1e293b", margin: 0 }}>{teacher.name}</h3>
                           {teacher.is_verified && (
                             <span style={{ display: "flex", alignItems: "center", gap: 4, background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 100, padding: "2px 8px", fontSize: 10, fontWeight: 800, color: "#16a34a", flexShrink: 0 }}>
                               <Shield size={9} /> Verified
@@ -505,7 +539,7 @@ export default function CoursesPage() {
                             { val: teacher.total_students || 0, label: "Students" },
                           ].map((s, i) => (
                             <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                              <span style={{ fontSize: 14, fontWeight: 900, color: "#0f172a" }}>{s.val}</span>
+                              <span style={{ fontSize: 14, fontWeight: 900, color: "#1e293b" }}>{s.val}</span>
                               <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{s.label}</span>
                             </div>
                           ))}
@@ -536,8 +570,8 @@ export default function CoursesPage() {
                       {/* Right CTA */}
                       <div style={{ display: "flex", alignItems: "center", padding: "0 20px 0 12px", flexShrink: 0 }}>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: "#f5f3ff", border: "1px solid #ede9fe", borderRadius: 14, padding: "12px 16px", transition: "all 0.2s" }}>
-                          <ArrowRight size={18} color="#7c3aed" />
-                          <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", whiteSpace: "nowrap" }}>View Profile</span>
+                          <ArrowRight size={18} color="#d4a017" />
+                          <span style={{ fontSize: 10, fontWeight: 800, color: "#d4a017", whiteSpace: "nowrap" }}>View Profile</span>
                         </div>
                       </div>
                     </div>
@@ -549,9 +583,9 @@ export default function CoursesPage() {
         )}
 
         {/* ── Student Success Banner ── */}
-        <div style={{ marginTop: 60, borderRadius: 28, background: "linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 100%)", padding: "52px 48px", position: "relative", overflow: "hidden" }}>
+        <div style={{ marginTop: 60, borderRadius: 28, background: "linear-gradient(135deg,#0f172a 0%,#163065 40%,#312e81 100%)", padding: "52px 48px", position: "relative", overflow: "hidden" }}>
           {/* decorative orbs */}
-          <div style={{ position: "absolute", top: -80, right: -80, width: 340, height: 340, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.18),transparent 70%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: -80, right: -80, width: 340, height: 340, borderRadius: "50%", background: "radial-gradient(circle,rgba(244,196,78,0.18),transparent 70%)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", bottom: -60, left: "20%", width: 260, height: 260, borderRadius: "50%", background: "radial-gradient(circle,rgba(167,139,250,0.12),transparent 70%)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", top: "40%", left: -40, width: 180, height: 180, borderRadius: "50%", background: "radial-gradient(circle,rgba(251,191,36,0.08),transparent 70%)", pointerEvents: "none" }} />
 
@@ -565,23 +599,23 @@ export default function CoursesPage() {
               </div>
               <h3 style={{ fontSize: 36, fontWeight: 900, color: "#fff", margin: "0 0 14px", lineHeight: 1.18, letterSpacing: "-0.02em" }}>
                 Ace Your Test.<br />
-                <span style={{ background: "linear-gradient(90deg,#a78bfa,#818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Win the Scholarship.</span>
+                <span style={{ background: "linear-gradient(90deg,#a78bfa,#f4c44e)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Win the Scholarship.</span>
               </h3>
               <p style={{ color: "#94a3b8", fontSize: 15, lineHeight: 1.7, margin: "0 0 30px", maxWidth: 440 }}>
                 Our expert-led courses are designed to boost your IELTS, TOEFL, GRE &amp; GMAT scores — and turn that score into a fully funded scholarship offer.
               </p>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <button onClick={() => navigate("/search")}
-                  style={{ background: "linear-gradient(135deg,#6366f1,#7c3aed)", color: "#fff", border: "none", borderRadius: 14, padding: "14px 28px", fontSize: 14, fontWeight: 900, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, boxShadow: "0 8px 28px rgba(99,102,241,0.4)", transition: "all 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 36px rgba(99,102,241,0.5)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(99,102,241,0.4)"; }}
+                  style={{ background: "linear-gradient(135deg,#f4c44e,#d4a017)", color: "#fff", border: "none", borderRadius: 14, padding: "14px 28px", fontSize: 14, fontWeight: 900, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, boxShadow: "0 8px 28px rgba(244,196,78,0.4)", transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 36px rgba(244,196,78,0.5)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(244,196,78,0.4)"; }}
                 >
                   <Sparkles size={15} /> Find Scholarships
                 </button>
                 <button onClick={() => { setActiveTab("courses"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  style={{ background: "rgba(255,255,255,0.08)", color: "#e2e8f0", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 14, padding: "14px 28px", fontSize: 14, fontWeight: 800, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, transition: "all 0.2s" }}
+                  style={{ background: "rgba(0,0,0,0.05)", color: "#e2e8f0", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 14, padding: "14px 28px", fontSize: 14, fontWeight: 800, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, transition: "all 0.2s" }}
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.14)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
                 >
                   <BookOpen size={15} /> Browse Courses
                 </button>
@@ -591,14 +625,14 @@ export default function CoursesPage() {
             {/* Right: floating achievement cards */}
             <div style={{ display: "flex", flexDirection: "column", gap: 14, flexShrink: 0, minWidth: 240 }}>
               {[
-                { emoji: "🎯", title: "Score Improvement", sub: "Avg. +1.5 band in IELTS", accent: "#6366f1" },
+                { emoji: "🎯", title: "Score Improvement", sub: "Avg. +1.5 band in IELTS", accent: "#f4c44e" },
                 { emoji: "🏅", title: "Scholarships Won", sub: "Students got funded abroad", accent: "#f59e0b" },
                 { emoji: "📚", title: "Practice Quizzes", sub: "Real exam-style questions", accent: "#10b981" },
                 { emoji: "🎓", title: "Live Classes", sub: "Daily sessions with experts", accent: "#8b5cf6" },
               ].map((card, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "14px 18px", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.05)", borderRadius: 16, padding: "14px 18px", backdropFilter: "blur(8px)", transition: "all 0.2s" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.09)"; e.currentTarget.style.borderColor = `${card.accent}40`; e.currentTarget.style.transform = "translateX(4px)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.transform = "translateX(0)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.03)"; e.currentTarget.style.borderColor = "rgba(0,0,0,0.05)"; e.currentTarget.style.transform = "translateX(0)"; }}
                 >
                   <div style={{ width: 42, height: 42, borderRadius: 12, background: `${card.accent}20`, border: `1px solid ${card.accent}35`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
                     {card.emoji}
@@ -615,82 +649,143 @@ export default function CoursesPage() {
       </div>
 
       {/* ── PAYMENT MODAL ─────────────────────────────────────── */}
-      {paymentModalOpen && selectedCourse && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.55)", padding: 16, backdropFilter: "blur(6px)" }}>
-          <div style={{ background: "#fff", borderRadius: 24, boxShadow: "0 24px 80px rgba(0,0,0,0.25)", maxWidth: 460, width: "100%", maxHeight: "92vh", overflowY: "auto", border: "1px solid rgba(255,255,255,0.1)" }}>
-            {/* Header */}
-            <div style={{ background: "linear-gradient(135deg,#4f46e5,#7c3aed)", padding: "28px 28px 24px", borderRadius: "24px 24px 0 0" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <h3 style={{ fontSize: 22, fontWeight: 900, color: "#fff", margin: 0 }}>Complete Payment</h3>
-                <button onClick={() => setPaymentModalOpen(false)}
-                  style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.15)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", cursor: "pointer" }}>
-                  <X size={18} />
-                </button>
-              </div>
-              <p style={{ color: "#c7d2fe", fontSize: 13, margin: "0 0 16px" }}>Unlocking: <strong style={{ color: "#fff" }}>{selectedCourse.title}</strong></p>
-              <div style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 14, padding: "14px 20px", display: "inline-block" }}>
-                <span style={{ fontSize: 28, fontWeight: 900, color: "#fff" }}>PKR {selectedCourse.price?.toLocaleString()}</span>
-              </div>
-            </div>
+      {paymentModalOpen && selectedCourse && (() => {
+        const payMethods: any[] = coursePaymentInfo?.payment_methods ?? coursePaymentInfo?.methods ?? [];
+        const colorMap: Record<string, string> = { JazzCash: "#dc2626", Easypaisa: "#059669", Bank: "#2563eb" };
+        const bgMap: Record<string, string> = { JazzCash: "#fef2f2", Easypaisa: "#f0fdf4", Bank: "#eff6ff" };
+        const iconMap: Record<string, any> = { JazzCash: <Smartphone size={22} />, Easypaisa: <CreditCard size={22} />, Bank: <Building2 size={22} /> };
+        const chosenMethod = payMethods.find((m: any) => m.id === selectedPayMethodId);
+        const canSubmit = !!selectedPayMethodId && paymentReference.trim().length > 0;
+        return (
+          <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.6)", padding: 16, backdropFilter: "blur(6px)" }}>
+            <div style={{ background: "#fff", borderRadius: 24, boxShadow: "0 24px 80px rgba(0,0,0,0.25)", maxWidth: 500, width: "100%", maxHeight: "94vh", overflowY: "auto", border: "1px solid rgba(0,0,0,0.06)" }}>
 
-            {/* Body */}
-            <div style={{ padding: 28, display: "flex", flexDirection: "column", gap: 24 }}>
-              {/* Payment method */}
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", margin: "0 0 12px" }}>Select Payment Method</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-                  {[
-                    { id: "JazzCash", icon: <Smartphone size={24} />, label: "JazzCash", color: "#dc2626" },
-                    { id: "Easypaisa", icon: <CreditCard size={24} />, label: "Easypaisa", color: "#059669" },
-                    { id: "Bank", icon: <Building2 size={24} />, label: "Bank", color: "#2563eb" },
-                  ].map(m => (
-                    <button key={m.id} onClick={() => setPaymentMethod(m.id as any)}
-                      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "16px 8px", borderRadius: 14, border: `2px solid ${paymentMethod === m.id ? "#6366f1" : "#e2e8f0"}`, background: paymentMethod === m.id ? "#eef2ff" : "#fafafa", cursor: "pointer", transition: "all 0.18s" }}>
-                      <span style={{ color: m.color }}>{m.icon}</span>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: "#0f172a" }}>{m.label}</span>
-                    </button>
-                  ))}
+              {/* Header */}
+              <div style={{ background: "linear-gradient(135deg,#1e3a7a,#162f6a)", padding: "26px 28px 22px", borderRadius: "24px 24px 0 0" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <h3 style={{ fontSize: 20, fontWeight: 900, color: "#fff", margin: 0 }}>Complete Payment</h3>
+                  <button onClick={closePaymentModal} style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,0.08)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", cursor: "pointer" }}>
+                    <X size={16} />
+                  </button>
+                </div>
+                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, margin: "0 0 14px" }}>Unlocking: <strong style={{ color: "#f4c44e" }}>{selectedCourse.title}</strong></p>
+                <div style={{ background: "rgba(244,196,78,0.15)", border: "1px solid rgba(244,196,78,0.3)", borderRadius: 12, padding: "12px 18px", display: "inline-block" }}>
+                  <span style={{ fontSize: 26, fontWeight: 900, color: "#f4c44e" }}>PKR {selectedCourse.price?.toLocaleString()}</span>
                 </div>
               </div>
 
-              {/* Instructions */}
-              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 14, padding: "16px 18px" }}>
-                <p style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", margin: "0 0 10px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <Zap size={16} color="#f59e0b" /> Instructions
-                </p>
-                <ol style={{ margin: 0, padding: "0 0 0 18px", fontSize: 13, color: "#475569", lineHeight: 1.8 }}>
-                  {paymentMethod === "JazzCash" && <><li>Open your JazzCash App</li><li>Transfer the exact fee to teacher's account</li><li>Copy the transaction reference below</li></>}
-                  {paymentMethod === "Easypaisa" && <><li>Open your Easypaisa App</li><li>Transfer the exact fee to teacher's account</li><li>Copy the transaction reference below</li></>}
-                  {paymentMethod === "Bank" && <><li>Do a direct bank transfer to the teacher</li><li>Screenshot your receipt</li><li>Enter the transaction reference below</li></>}
-                </ol>
+              <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 22 }}>
+
+                {/* Step 1: Choose Payment Method */}
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 800, color: "#64748b", letterSpacing: "0.08em", margin: "0 0 12px" }}>STEP 1 — CHOOSE PAYMENT METHOD</p>
+                  {payMethods.length === 0 ? (
+                    /* Fallback: teacher hasn't set up payment methods */
+                    <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 14, padding: "16px 18px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#92400e", margin: "0 0 10px" }}>⚠️ Teacher's payment details not configured yet</p>
+                      <p style={{ fontSize: 13, color: "#78350f", margin: 0 }}>Contact the teacher directly to get their JazzCash / Easypaisa / Bank details, then enter your reference below.</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {payMethods.map((m: any) => {
+                        const sel = selectedPayMethodId === m.id;
+                        const color = colorMap[m.method_type] ?? "#64748b";
+                        const bg = bgMap[m.method_type] ?? "#f8fafc";
+                        return (
+                          <button key={m.id} onClick={() => setSelectedPayMethodId(m.id)}
+                            style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 18px", borderRadius: 16, border: `2px solid ${sel ? color : "#e2e8f0"}`, background: sel ? bg : "#fafafa", cursor: "pointer", textAlign: "left", transition: "all 0.15s", width: "100%" }}>
+                            {/* Icon */}
+                            <div style={{ width: 44, height: 44, borderRadius: 12, background: sel ? color : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                              <span style={{ color: sel ? "#fff" : color }}>{iconMap[m.method_type] ?? <CreditCard size={22} />}</span>
+                            </div>
+                            {/* Account Details */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                <span style={{ fontSize: 14, fontWeight: 800, color: sel ? color : "#1e293b" }}>{m.method_type}</span>
+                                {m.bank_name && <span style={{ fontSize: 11, color: "#64748b" }}>— {m.bank_name}</span>}
+                              </div>
+                              <div style={{ fontSize: 15, fontWeight: 900, color: sel ? color : "#1e3a7a", fontFamily: "monospace", letterSpacing: "0.05em" }}>{m.account_number}</div>
+                              <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{m.account_title}</div>
+                              {m.instructions && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4, fontStyle: "italic" }}>{m.instructions}</div>}
+                            </div>
+                            {sel && <CheckCircle size={20} color={color} style={{ flexShrink: 0 }} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Step 2: How to pay */}
+                {chosenMethod && (
+                  <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 14, padding: "16px 18px" }}>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: "#1e293b", margin: "0 0 10px", display: "flex", alignItems: "center", gap: 8 }}>
+                      <Zap size={16} color="#f59e0b" /> How to Pay
+                    </p>
+                    <ol style={{ margin: 0, padding: "0 0 0 18px", fontSize: 13, color: "#475569", lineHeight: 2 }}>
+                      {chosenMethod.method_type === "Bank"
+                        ? <><li>Open your banking app or go to a branch</li><li>Transfer <strong>PKR {selectedCourse.price?.toLocaleString()}</strong> to <strong>{chosenMethod.account_number}</strong></li><li>Take a screenshot of the transfer receipt</li><li>Enter the transaction ID below and upload the screenshot</li></>
+                        : <><li>Open your {chosenMethod.method_type} app</li><li>Send <strong>PKR {selectedCourse.price?.toLocaleString()}</strong> to <strong>{chosenMethod.account_number}</strong> ({chosenMethod.account_title})</li><li>Take a screenshot of the confirmation screen</li><li>Enter the transaction reference below and upload the screenshot</li></>
+                      }
+                    </ol>
+                  </div>
+                )}
+
+                {/* Step 3: Reference */}
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 800, color: "#64748b", letterSpacing: "0.08em", margin: "0 0 10px" }}>STEP 2 — ENTER TRANSACTION REFERENCE</p>
+                  <input type="text" value={paymentReference} onChange={e => setPaymentReference(e.target.value)}
+                    placeholder="e.g. 1234567890 or JZC-ABC123"
+                    style={{ width: "100%", padding: "13px 16px", border: "1.5px solid #e2e8f0", borderRadius: 12, fontSize: 14, fontWeight: 700, color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box" }}
+                    onFocus={e => (e.target.style.borderColor = "#f4c44e")} onBlur={e => (e.target.style.borderColor = "#e2e8f0")}
+                  />
+                </div>
+
+                {/* Step 4: Screenshot */}
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 800, color: "#64748b", letterSpacing: "0.08em", margin: "0 0 10px" }}>STEP 3 — UPLOAD PAYMENT SCREENSHOT <span style={{ fontWeight: 500, color: "#94a3b8" }}>(recommended)</span></p>
+                  {paymentScreenshot ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", background: "#f0fdf4", border: "2px solid #86efac", borderRadius: 14 }}>
+                      <img src={URL.createObjectURL(paymentScreenshot)} alt="Screenshot preview" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", border: "2px solid #86efac" }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#166534" }}>Screenshot uploaded</div>
+                        <div style={{ fontSize: 12, color: "#15803d", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{paymentScreenshot.name}</div>
+                      </div>
+                      <button onClick={() => setPaymentScreenshot(null)} style={{ width: 28, height: 28, borderRadius: 8, background: "#fef2f2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <X size={14} color="#ef4444" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "24px 20px", background: "#f8fafc", border: "2px dashed #e2e8f0", borderRadius: 14, cursor: "pointer", transition: "all 0.15s" }}
+                      onMouseOver={e => { (e.currentTarget.style.borderColor = "#f4c44e"); (e.currentTarget.style.background = "#fffbeb"); }}
+                      onMouseOut={e => { (e.currentTarget.style.borderColor = "#e2e8f0"); (e.currentTarget.style.background = "#f8fafc"); }}>
+                      <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) setPaymentScreenshot(f); }} />
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <DollarSign size={22} color="#94a3b8" />
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>Click to upload screenshot</div>
+                        <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>JPG, PNG or WebP — max 10MB</div>
+                      </div>
+                    </label>
+                  )}
+                </div>
               </div>
 
-              {/* Reference input */}
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>Transaction Reference / ID</p>
-                <input type="text" value={paymentReference} onChange={e => setPaymentReference(e.target.value)}
-                  placeholder="e.g. 1234567890 or ABC123XYZ"
-                  style={{ width: "100%", padding: "13px 16px", border: "1.5px solid #e2e8f0", borderRadius: 12, fontSize: 14, fontWeight: 600, color: "#0f172a", background: "#f8fafc", outline: "none", boxSizing: "border-box", transition: "border 0.2s" }}
-                  onFocus={e => (e.target.style.borderColor = "#6366f1")}
-                  onBlur={e => (e.target.style.borderColor = "#e2e8f0")}
-                />
+              {/* Footer */}
+              <div style={{ display: "flex", gap: 12, padding: "0 28px 28px" }}>
+                <button onClick={closePaymentModal} style={{ flex: 1, padding: "13px", border: "1.5px solid #e2e8f0", borderRadius: 12, background: "#fff", fontWeight: 800, fontSize: 14, color: "#374151", cursor: "pointer" }}>
+                  Cancel
+                </button>
+                <button onClick={handleSubmitPayment} disabled={!canSubmit || submittingPayment}
+                  style={{ flex: 2, padding: "13px", border: "none", borderRadius: 12, background: canSubmit ? "linear-gradient(135deg,#f4c44e,#e8b43a)" : "#e2e8f0", color: canSubmit ? "#1e293b" : "#94a3b8", fontWeight: 800, fontSize: 14, cursor: canSubmit && !submittingPayment ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s" }}>
+                  {submittingPayment ? <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Submitting...</> : "Submit Payment Proof"}
+                </button>
               </div>
-            </div>
-
-            {/* Footer */}
-            <div style={{ display: "flex", gap: 12, padding: "0 28px 28px" }}>
-              <button onClick={() => setPaymentModalOpen(false)}
-                style={{ flex: 1, padding: "13px", border: "1.5px solid #e2e8f0", borderRadius: 12, background: "#fff", fontWeight: 800, fontSize: 14, color: "#374151", cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button onClick={handleSubmitPayment} disabled={!paymentReference.trim() || submittingPayment}
-                style={{ flex: 1, padding: "13px", border: "none", borderRadius: 12, background: "#6366f1", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: (!paymentReference.trim() || submittingPayment) ? 0.5 : 1, transition: "opacity 0.2s" }}>
-                {submittingPayment ? <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Submitting...</> : "Submit Payment"}
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── REVIEWS MODAL ─────────────────────────────────────── */}
       {reviewsModal && (
@@ -700,9 +795,9 @@ export default function CoursesPage() {
             style={{ background: "#fff", borderRadius: 24, boxShadow: "0 24px 80px rgba(0,0,0,0.25)", width: "100%", maxWidth: 520, maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
             {/* Header */}
-            <div style={{ background: "linear-gradient(135deg,#0f172a,#1e1b4b)", padding: "22px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+            <div style={{ background: "linear-gradient(135deg,#0f172a,#163065)", padding: "22px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#7c3aed,#6366f1)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 18 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#d4a017,#f4c44e)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 18 }}>
                   {reviewsModal.teacher.profile_picture_url
                     ? <img src={`http://localhost:8000${reviewsModal.teacher.profile_picture_url}`} alt={reviewsModal.teacher.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : reviewsModal.teacher.name?.charAt(0).toUpperCase() || "T"}
@@ -721,7 +816,7 @@ export default function CoursesPage() {
                 </div>
               </div>
               <button onClick={() => setReviewsModal(null)}
-                style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,0.1)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(0,0,0,0.08)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <X size={16} color="#fff" />
               </button>
             </div>
@@ -730,7 +825,7 @@ export default function CoursesPage() {
             {!reviewsModal.loading && reviewsModal.stats?.total_reviews > 0 && (
               <div style={{ padding: "16px 24px", background: "#fffbeb", borderBottom: "1px solid #fde68a", display: "flex", alignItems: "center", gap: 24, flexShrink: 0 }}>
                 <div style={{ textAlign: "center", flexShrink: 0 }}>
-                  <div style={{ fontSize: 38, fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{Number(reviewsModal.stats.average_rating).toFixed(1)}</div>
+                  <div style={{ fontSize: 38, fontWeight: 900, color: "#1e293b", lineHeight: 1 }}>{Number(reviewsModal.stats.average_rating).toFixed(1)}</div>
                   <div style={{ fontSize: 11, color: "#92400e", fontWeight: 700, marginTop: 4 }}>out of 5</div>
                 </div>
                 <div style={{ flex: 1 }}>
@@ -779,14 +874,14 @@ export default function CoursesPage() {
                   {reviewsModal.reviews.map((review: any) => (
                     <div key={review.id} style={{ background: "#f8fafc", borderRadius: 16, padding: "16px 18px", border: "1px solid #f1f5f9" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                        <div style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg,#7c3aed,#6366f1)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 16, flexShrink: 0 }}>
+                        <div style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg,#d4a017,#f4c44e)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 16, flexShrink: 0 }}>
                           {review.student_profile_picture
                             ? <img src={`http://localhost:8000${review.student_profile_picture}`} alt={review.student_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : review.student_name?.charAt(0).toUpperCase() || "S"}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, gap: 8 }}>
-                            <span style={{ fontSize: 14, fontWeight: 800, color: "#0f172a" }}>{review.student_name}</span>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: "#1e293b" }}>{review.student_name}</span>
                             <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, flexShrink: 0 }}>{new Date(review.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span>
                           </div>
                           <div style={{ display: "flex", gap: 2, marginBottom: review.review_text ? 8 : 0 }}>
@@ -808,7 +903,7 @@ export default function CoursesPage() {
             {/* Footer — go to full profile */}
             <div style={{ padding: "16px 24px", borderTop: "1px solid #f1f5f9", flexShrink: 0 }}>
               <button onClick={() => { setReviewsModal(null); navigate(`/teachers/${reviewsModal.teacher.teacher_id}`); }}
-                style={{ width: "100%", background: "linear-gradient(135deg,#7c3aed,#6366f1)", color: "#fff", border: "none", borderRadius: 14, padding: "13px 0", fontSize: 14, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                style={{ width: "100%", background: "linear-gradient(135deg,#d4a017,#f4c44e)", color: "#fff", border: "none", borderRadius: 14, padding: "13px 0", fontSize: 14, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 View Full Profile <ArrowRight size={15} />
               </button>
             </div>

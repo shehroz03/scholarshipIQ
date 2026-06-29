@@ -162,7 +162,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
 
         .nav-link {
-          color: #1a2250;
+          color: #1e3a7a;
           text-decoration: none;
           font-size: 14px;
           font-weight: 500;
@@ -328,9 +328,9 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
           style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         >
-          <GraduationCap size={28} color="#1a2250" />
-          <span style={{ color: "#1a2250", fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "18px", letterSpacing: "-0.5px" }}>
-            Scholar<span style={{ color: "#1a2250" }}>IQ</span>
+          <GraduationCap size={28} color="#1e3a7a" />
+          <span style={{ color: "#1e3a7a", fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "18px", letterSpacing: "-0.5px" }}>
+            Scholar<span style={{ color: "#1e3a7a" }}>IQ</span>
           </span>
         </div>
 
@@ -351,8 +351,8 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <Button 
                 onClick={() => onNavigate("dashboard")}
-                className="bg-[#1a2250] hover:bg-[#2d3561] text-white rounded-lg px-6 h-10 text-sm font-semibold flex items-center gap-2 shadow-md transition-all active:scale-95"
-                style={{ backgroundColor: '#1a2250', color: '#ffffff' }}
+                className="bg-[#1e3a7a] hover:bg-[#2d3561] text-white rounded-lg px-6 h-10 text-sm font-semibold flex items-center gap-2 shadow-md transition-all active:scale-95"
+                style={{ backgroundColor: '#1e3a7a', color: '#ffffff' }}
               >
                 <LayoutDashboard className="w-4 h-4" />
                 Dashboard
@@ -360,7 +360,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               <Button 
                 variant="ghost"
                 onClick={handleLogout}
-                className="text-[#1a2250] hover:bg-red-50 hover:text-red-600 h-10 px-4 transition-colors"
+                className="text-[#1e3a7a] hover:bg-red-50 hover:text-red-600 h-10 px-4 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -370,7 +370,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               <button 
                 onClick={() => onNavigate("login")}
                 style={{ 
-                  background: "none", border: "none", color: "#1a2250", 
+                  background: "none", border: "none", color: "#1e3a7a", 
                   fontWeight: 600, fontSize: "14px", cursor: "pointer" 
                 }}
               >
@@ -378,7 +378,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               </button>
               <Button 
                 onClick={() => onNavigate("signup")}
-                className="bg-[#1a2250] hover:bg-[#2d3561] text-white rounded-lg px-6 h-10 text-sm font-semibold"
+                className="bg-[#1e3a7a] hover:bg-[#2d3561] text-white rounded-lg px-6 h-10 text-sm font-semibold"
               >
                 Get Started
               </Button>
@@ -409,7 +409,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
 
       {/* ─── DISCOVER BY COUNTRY ─── */}
       <section id="countries-section" style={{ maxWidth: "1000px", margin: "64px auto 0", padding: "0 32px" }}>
-        <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "26px", fontWeight: 700, color: "#1a2250", marginBottom: "24px" }}>
+        <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "26px", fontWeight: 700, color: "#1e3a7a", marginBottom: "24px" }}>
           Discover Scholarships by Country
         </h2>
         <div className="flex flex-wrap md:flex-nowrap gap-4">
@@ -419,7 +419,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               <div style={{ padding: "14px 16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                   <span style={{ fontSize: "18px" }}>{c.flag}</span>
-                  <span style={{ fontSize: "14px", fontWeight: 700, color: "#1a2250" }}>{c.name}</span>
+                  <span style={{ fontSize: "14px", fontWeight: 700, color: "#1e3a7a" }}>{c.name}</span>
                 </div>
                 <div style={{ fontSize: "12px", color: "#8892b0", fontWeight: 500 }}>{c.count}</div>
               </div>
@@ -430,7 +430,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
 
       {/* ─── FEATURED SCHOLARSHIPS ─── */}
       <section style={{ maxWidth: "1000px", margin: "64px auto 0", padding: "0 32px" }}>
-        <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "26px", fontWeight: 700, color: "#1a2250", marginBottom: "28px" }}>
+        <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "26px", fontWeight: 700, color: "#1e3a7a", marginBottom: "28px" }}>
           Featured Scholarships
         </h2>
         <div className="flex flex-wrap md:flex-nowrap gap-6">
@@ -447,7 +447,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
               </div>
 
               <div style={{ padding: "0 24px 24px" }}>
-                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1a2250", marginBottom: "20px", height: "40px" }}>{s.title}</h3>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e3a7a", marginBottom: "20px", height: "40px" }}>{s.title}</h3>
                 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -473,7 +473,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
                   width: "100%",
                   padding: "12px",
                   borderRadius: "20px",
-                  background: "linear-gradient(90deg, #1a2250 0%, #2d3561 100%)",
+                  background: "linear-gradient(90deg, #1e3a7a 0%, #2d3561 100%)",
                   color: "#fff",
                   border: "none",
                   fontSize: "14px",
@@ -494,7 +494,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
       {/* ─── TRUSTED BY UNIVERSITIES ─── */}
       <section style={{ background: "#edf2f9", padding: "64px 40px", margin: "64px 0 0" }}>
         <div style={{ maxWidth: "1000px", margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "24px", fontWeight: 700, color: "#1a2250", marginBottom: "40px" }}>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "24px", fontWeight: 700, color: "#1e3a7a", marginBottom: "40px" }}>
             Trusted by Universities
           </h2>
           <div style={{ 
@@ -545,7 +545,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
       {/* ─── NEWSLETTER SECTION (Elite Glassmorphism) ─── */}
       <section style={{ maxWidth: "1100px", margin: "80px auto", padding: "0 32px" }}>
         <div style={{
-          background: "linear-gradient(145deg, rgba(26, 34, 80, 0.95), rgba(10, 15, 45, 0.98))",
+          background: "linear-gradient(145deg, rgba(30, 58, 122, 0.95), rgba(10, 15, 45, 0.98))",
           backdropFilter: "blur(24px)",
           borderRadius: "40px",
           padding: "80px 60px",
@@ -729,7 +729,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
       {/* ─── HOW IT WORKS STEPS ─── */}
       <section style={{ maxWidth: "1200px", margin: "80px auto 0", padding: "0 32px" }}>
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
-          <h2 style={{ fontSize: "32px", fontWeight: 800, color: "#1a2250", marginBottom: "16px" }}>
+          <h2 style={{ fontSize: "32px", fontWeight: 800, color: "#1e3a7a", marginBottom: "16px" }}>
             How ScholarIQ <span style={{ color: "#6366f1" }}>Works</span>
           </h2>
           <p style={{ color: "#64748b", maxWidth: "600px", margin: "0 auto" }}>
@@ -757,7 +757,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
                 display: "flex",
                 flexDirection: "column",
                 gap: "20px",
-                boxShadow: "0 4px 20px rgba(26, 34, 80, 0.06)",
+                boxShadow: "0 4px 20px rgba(30, 58, 122, 0.06)",
                 transition: "all 0.4s ease"
               }}
             >
@@ -779,7 +779,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
                 <div style={{
                   fontSize: "18px",
                   fontWeight: 800,
-                  color: "#1a2250",
+                  color: "#1e3a7a",
                   marginBottom: "10px"
                 }}>
                   {step.title}
@@ -826,7 +826,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string, params?
             Ready to Get Started?
           </span>
           <button style={{
-            background: "#1a2250",
+            background: "#1e3a7a",
             color: "#f4c44e",
             border: "none",
             borderRadius: "10px",

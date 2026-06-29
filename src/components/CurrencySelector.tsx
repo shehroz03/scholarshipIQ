@@ -27,12 +27,12 @@ export function CurrencySelector({ variant = 'light' }: { variant?: 'light' | 'd
                         boxShadow: "inset 0 1px 1px rgba(255,255,255,0.05)"
                     } : {}}
                     className={`flex items-center gap-2 rounded-full px-4 h-10 transition-all font-bold shadow-sm ${
-                        !isDark ? 'bg-white text-[#1a2250] hover:bg-gray-50 border border-gray-100 hover:border-gray-200' : 'hover:bg-white/10'
+                        !isDark ? 'bg-white text-[#1e3a7a] hover:bg-gray-50 border border-gray-100 hover:border-gray-200' : 'hover:bg-white/10'
                     }`}
                 >
-                    <Globe className={`w-4 h-4 ${isDark ? 'text-indigo-400' : 'text-[#1a2250]'} opacity-80`} />
+                    <Globe className={`w-4 h-4 ${isDark ? 'text-indigo-400' : 'text-[#1e3a7a]'} opacity-80`} />
                     <span className="text-[12px] font-black uppercase tracking-tight">{currency.code}</span>
-                    <ChevronDown className={`w-3 h-3 ${isDark ? 'text-white' : 'text-[#1a2250]'} opacity-50`} />
+                    <ChevronDown className={`w-3 h-3 ${isDark ? 'text-white' : 'text-[#1e3a7a]'} opacity-50`} />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContentInline
@@ -61,8 +61,8 @@ export function CurrencySelector({ variant = 'light' }: { variant?: 'light' | 'd
                                 key={c.code}
                                 onSelect={() => setCurrency(c.code)}
                                 style={isDark ? {
-                                    background: isActive ? "rgba(99,102,241,0.15)" : "transparent",
-                                    border: isActive ? "1px solid rgba(99,102,241,0.3)" : "1px solid transparent",
+                                    background: isActive ? "rgba(244,196,78,0.15)" : "transparent",
+                                    border: isActive ? "1px solid rgba(244,196,78,0.3)" : "1px solid transparent",
                                     color: isActive ? "#fff" : "rgba(255,255,255,0.7)",
                                 } : {}}
                                 className={`flex items-center justify-between px-3 py-1.5 rounded-2xl cursor-pointer transition-all duration-200 group ${
@@ -74,9 +74,9 @@ export function CurrencySelector({ variant = 'light' }: { variant?: 'light' | 'd
                                 <div className="flex items-center gap-3">
                                     <div 
                                         style={isDark ? {
-                                            background: isActive ? "linear-gradient(135deg, #4f46e5, #7c3aed)" : "rgba(255,255,255,0.05)",
+                                            background: isActive ? "linear-gradient(135deg, #e8b43a, #d4a017)" : "rgba(255,255,255,0.05)",
                                             color: "#fff",
-                                            boxShadow: isActive ? "0 4px 12px rgba(99,102,241,0.4)" : "none"
+                                            boxShadow: isActive ? "0 4px 12px rgba(244,196,78,0.4)" : "none"
                                         } : {}}
                                         className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${
                                         !isDark && (isActive ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "bg-gray-100 text-gray-500 group-hover:bg-white group-hover:shadow-sm")

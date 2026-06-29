@@ -21,7 +21,7 @@ const PLAN_COLORS = {
         icon: Crown,
         label: "Premium",
         emoji: "👑",
-        accent: "#6366f1"
+        accent: "#f4c44e"
     },
     pro: {
         badge: "bg-gradient-to-r from-amber-500 to-yellow-500",
