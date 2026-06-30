@@ -16,6 +16,8 @@ const TEST_COLORS: Record<string, string> = {
   Duolingo: "#65a30d", SAT: "#0891b2"
 };
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 export default function TeacherDashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"overview" | "courses" | "students" | "create" | "meetings" | "quizzes" | "fees" | "paymethods">(() => {
@@ -613,7 +615,7 @@ Notes/Topic: ${aiNotes}`;
               >
                 {profile?.profile_picture_url ? (
                   <img 
-                    src={`http://localhost:8000${profile.profile_picture_url}`} 
+                    src={`${API_BASE}${profile.profile_picture_url}`} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
                   />
@@ -1713,15 +1715,16 @@ Notes/Topic: ${aiNotes}`;
                     {p.payment_screenshot_url ? (
                       <div style={{ flexShrink: 0 }}>
                         <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", margin: "0 0 6px" }}>PAYMENT SCREENSHOT</p>
-                        <a href={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `http://localhost:8000${p.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
-                          style={{ display: "block", position: "relative", borderRadius: 12, overflow: "hidden", border: "2px solid #e2e8f0", cursor: "pointer" }}>
-                          <img src={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `http://localhost:8000${p.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
+                        <div className="flex items-center gap-3 bg-gray-50 border p-2 rounded w-max">
+                        <a href={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `${API_BASE}${p.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
+                           title="Click to view full image">
+                          <img src={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `${API_BASE}${p.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
+                        </a>
                           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
                             onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
                             <ZoomIn size={20} color="#fff" />
                           </div>
                         </a>
-                        <p style={{ fontSize: 10, color: "#94a3b8", margin: "4px 0 0", textAlign: "center" }}>Click to enlarge</p>
                       </div>
                     ) : (
                       <div style={{ flexShrink: 0, width: 120, height: 90, background: "#f8fafc", borderRadius: 12, border: "2px dashed #e2e8f0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
@@ -1760,7 +1763,7 @@ Notes/Topic: ${aiNotes}`;
           <div className="space-y-6">
             {/* Header Section */}
             <div style={{ position: "relative", borderRadius: "24px", overflow: "hidden", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)", padding: "32px" }}>
-              <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E\")" }} />
+              <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E\")" />
               <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <h1 style={{ color: "#ffffff", fontSize: "28px", fontWeight: 800, margin: 0 }}>My Students</h1>
@@ -1830,14 +1833,16 @@ Notes/Topic: ${aiNotes}`;
                     {s.payment_screenshot_url && (
                       <div style={{ flexShrink: 0 }}>
                         <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", margin: "0 0 6px" }}>PAYMENT SCREENSHOT</p>
-                        <a href={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `http://localhost:8000${s.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
-                          style={{ display: "block", position: "relative", borderRadius: 12, overflow: "hidden", border: "2px solid #e2e8f0", cursor: "pointer" }}>
-                          <img src={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `http://localhost:8000${s.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
+                        <div className="flex items-center gap-3 bg-gray-50 border p-2 rounded w-max">
+                        <a href={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `${API_BASE}${s.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
+                           title="Click to view full image">
+                          <img src={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `${API_BASE}${s.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
+                        </a>
                           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
                             onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
                             <ZoomIn size={20} color="#fff" />
                           </div>
-                        </a>
+                        </div>
                         <p style={{ fontSize: 10, color: "#94a3b8", margin: "4px 0 0", textAlign: "center" }}>Click to enlarge</p>
                       </div>
                     )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bot, CheckCircle, RefreshCw, AlertCircle, Play, Clock, TrendingUp, Zap, XCircle, ChevronDown, ChevronUp, X, ExternalLink } from "lucide-react";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 function getAdminToken() {
   return localStorage.getItem("token") || "";

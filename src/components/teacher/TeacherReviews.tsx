@@ -289,7 +289,7 @@ export function TeacherReviews({
                     {/* Avatar */}
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#f4c44e,#e8b43a)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#1e293b", fontSize: 18, flexShrink: 0 }}>
                       {review.student_profile_picture
-                        ? <img src={`http://localhost:8000${review.student_profile_picture}`} alt={review.student_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ? <img src={`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}${review.student_profile_picture}`} alt={review.student_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : review.student_name?.charAt(0).toUpperCase() || "S"}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>

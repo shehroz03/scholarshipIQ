@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { toast } from "sonner";
@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 
 const TEST_TYPES = ["All", "IELTS", "TOEFL", "GRE", "GMAT", "PTE", "TestDaF", "Duolingo", "SAT"];
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const TEST_CONFIG: Record<string, { color: string; bg: string; border: string; emoji: string; info: string }> = {
   All:      { color: "#f4c44e", bg: "#eef2ff", border: "#c7d2fe", emoji: "🌐", info: "All courses" },
@@ -501,10 +503,10 @@ export default function CoursesPage() {
 
                       {/* Avatar */}
                       <div style={{ padding: "20px 20px 20px 20px", display: "flex", alignItems: "center", flexShrink: 0 }}>
-                        <div style={{ width: 64, height: 64, borderRadius: 16, background: `linear-gradient(135deg,${specCfg.color || "#d4a017"},#f4c44e)`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 24, fontWeight: 900, boxShadow: "0 4px 16px rgba(244,196,78,0.25)" }}>
-                          {teacher.profile_picture_url
-                            ? <img src={`http://localhost:8000${teacher.profile_picture_url}`} alt={teacher.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            : teacher.name?.charAt(0).toUpperCase() || "T"}
+                        <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", border: "2px solid #f4c44e" }}>
+                            {teacher.profile_picture_url 
+                            ? <img src={`${API_BASE}${teacher.profile_picture_url}`} alt={teacher.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <Users size={32} color="#94a3b8" />}
                         </div>
                       </div>
 
@@ -797,10 +799,10 @@ export default function CoursesPage() {
             {/* Header */}
             <div style={{ background: "linear-gradient(135deg,#0f172a,#163065)", padding: "22px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#d4a017,#f4c44e)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 18 }}>
-                  {reviewsModal.teacher.profile_picture_url
-                    ? <img src={`http://localhost:8000${reviewsModal.teacher.profile_picture_url}`} alt={reviewsModal.teacher.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : reviewsModal.teacher.name?.charAt(0).toUpperCase() || "T"}
+                <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", border: "2px solid #f4c44e" }}>
+                    {reviewsModal.teacher.profile_picture_url 
+                    ? <img src={`${API_BASE}${reviewsModal.teacher.profile_picture_url}`} alt={reviewsModal.teacher.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <Users size={32} color="#94a3b8" />}
                 </div>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>{reviewsModal.teacher.name}</div>
@@ -874,10 +876,10 @@ export default function CoursesPage() {
                   {reviewsModal.reviews.map((review: any) => (
                     <div key={review.id} style={{ background: "#f8fafc", borderRadius: 16, padding: "16px 18px", border: "1px solid #f1f5f9" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                        <div style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg,#d4a017,#f4c44e)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: 16, flexShrink: 0 }}>
+                        <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", border: "1px solid #e2e8f0" }}>
                           {review.student_profile_picture
-                            ? <img src={`http://localhost:8000${review.student_profile_picture}`} alt={review.student_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            : review.student_name?.charAt(0).toUpperCase() || "S"}
+                          ? <img src={`${API_BASE}${review.student_profile_picture}`} alt={review.student_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <Users size={20} color="#94a3b8" style={{ margin: "12px auto" }} />}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, gap: 8 }}>

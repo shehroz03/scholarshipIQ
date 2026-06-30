@@ -4,6 +4,7 @@ import { api } from "../../api";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 interface Teacher {
     id: number;
     user_id: number;
@@ -198,7 +199,7 @@ export function TeacherApprovals() {
                                         <div className="flex items-center gap-4">
                                             {teacher.profile_picture_url ? (
                                                 <img 
-                                                    src={`http://localhost:8000${teacher.profile_picture_url}`} 
+                                                    src={`${API_BASE}${teacher.profile_picture_url}`} 
                                                     alt={teacher.name} 
                                                     className="w-12 h-12 rounded-full object-cover border-2 border-indigo-100"
                                                 />
@@ -263,7 +264,7 @@ export function TeacherApprovals() {
                                         )}
                                         {teacher.cv_file_url && (
                                             <a
-                                                href={`http://localhost:8000${teacher.cv_file_url}`}
+                                                href={`${API_BASE}${teacher.cv_file_url}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 download

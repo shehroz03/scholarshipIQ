@@ -212,7 +212,7 @@ export default function CourseDetailPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}20`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: accent, fontSize: 15 }}>
                     {course.teacher_profile_picture_url
-                      ? <img src={`http://localhost:8000${course.teacher_profile_picture_url}`} alt={course.teacher_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ? <img src={`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}${course.teacher_profile_picture_url}`} alt={course.teacher_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : course.teacher_name?.charAt(0).toUpperCase() || "T"}
                   </div>
                   <div>

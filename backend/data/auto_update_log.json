@@ -140,5 +140,90 @@
     ],
     "ai_notes": "The deadline for the Knight-Hennessy Scholars Program has been updated to October 8, 2025, as per the fresh web search results.",
     "updated_at": "2026-06-02T04:01:00.414163"
+  },
+  {
+    "scholarship_id": 68,
+    "title": "MIT Presidential Graduate Fellowship",
+    "university": "MIT",
+    "country": "USA",
+    "deadline": "2025-12-15",
+    "scholarship_url": "https://oge.mit.edu/fellowships/mit-fellowships/",
+    "changes": [
+      "Deadline 2026-08-16 \u2192 2025-12-15 (past \u2192 archived)"
+    ],
+    "skipped_low_confidence": [],
+    "ai_notes": "The deadline for the MIT Presidential Graduate Fellowship has been updated to December 15, 2025, based on multiple sources explicitly stating this date.",
+    "updated_at": "2026-06-30T04:00:10.539169"
+  },
+  {
+    "scholarship_id": 75,
+    "title": "Global Masters Scholarship",
+    "university": "University of Birmingham",
+    "country": "United Kingdom",
+    "deadline": "2026-07-31",
+    "scholarship_url": "https://www.birmingham.ac.uk/international/students/finance/scholarships/global-masters.aspx",
+    "changes": [
+      "FLAGGED for admin: possibly discontinued (conf=1.00)"
+    ],
+    "skipped_low_confidence": [],
+    "ai_notes": "The scholarship is explicitly stated as closed for applications as of 19 August 2024, indicating it is discontinued.",
+    "updated_at": "2026-06-30T04:00:17.853185"
+  },
+  {
+    "scholarship_id": 81,
+    "title": "Glasgow International Leadership Scholarship",
+    "university": "University of Glasgow",
+    "country": "United Kingdom",
+    "deadline": "2026-06-30",
+    "scholarship_url": "https://www.gla.ac.uk/scholarships/",
+    "changes": [
+      "Amount: \u00a36000.0 \u2192 \u00a310,000"
+    ],
+    "skipped_low_confidence": [],
+    "ai_notes": "The amount of the scholarship has been updated from \u00a36000 to \u00a310,000 based on explicit information from the fresh web search results.",
+    "updated_at": "2026-06-30T04:00:26.156449"
+  },
+  {
+    "scholarship_id": 86,
+    "title": "Vice-Chancellor's International Scholarship",
+    "university": "Cardiff University",
+    "country": "United Kingdom",
+    "deadline": "2025-12-17",
+    "scholarship_url": "https://www.cardiff.ac.uk/study/postgraduate/funding/view/vice-chancellors-international-scholarships",
+    "changes": [
+      "Deadline 2026-06-30 \u2192 2025-12-17 (past \u2192 archived)"
+    ],
+    "skipped_low_confidence": [],
+    "ai_notes": "The deadline for the scholarship has been updated to December 17, 2025, based on the evidence provided. No other changes are explicitly supported by the search results.",
+    "updated_at": "2026-06-30T04:00:41.135265"
+  },
+  {
+    "scholarship_id": 92,
+    "title": "Chancellor's International Scholarships",
+    "university": "University of Sussex",
+    "country": "United Kingdom",
+    "deadline": "2026-04-30",
+    "scholarship_url": "https://www.sussex.ac.uk/study/fees-and-funding/postgraduate/scholarships-and-bursaries/chancellors-international-scholarships",
+    "changes": [
+      "Deadline 2026-07-31 \u2192 2026-04-30 (past \u2192 archived)"
+    ],
+    "skipped_low_confidence": [],
+    "ai_notes": "The deadline for the Chancellor's International Scholarships has changed from July 31, 2026, to April 30, 2026, as explicitly stated in multiple sources.",
+    "updated_at": "2026-06-30T04:00:53.662446"
+  },
+  {
+    "scholarship_id": 93,
+    "title": "Future Leaders Scholarship",
+    "university": "Loughborough University",
+    "country": "United Kingdom",
+    "deadline": "2025-11-21",
+    "scholarship_url": "https://www.lboro.ac.uk/international/scholarships/future-leaders-scholarship/",
+    "changes": [
+      "Deadline 2026-07-31 \u2192 2025-11-21 (past \u2192 archived)",
+      "Amount: \u00a35000.0 \u2192 \u00a310,000 tuition fee discount"
+    ],
+    "skipped_low_confidence": [],
+    "ai_notes": "The deadline and amount for the Future Leaders Scholarship have been updated based on explicit evidence from multiple sources.",
+    "updated_at": "2026-06-30T04:00:58.271619"
   }
 ]

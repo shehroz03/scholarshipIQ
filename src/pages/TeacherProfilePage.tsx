@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { toast } from "sonner";
@@ -75,7 +75,7 @@ export default function TeacherProfilePage() {
             {/* Avatar */}
             <div style={{ width: 96, height: 96, borderRadius: 24, background: "linear-gradient(135deg,#d4a017,#f4c44e)", border: "3px solid rgba(255,255,255,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 36, fontWeight: 900, boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
               {teacher.profile_picture_url
-                ? <img src={`http://localhost:8000${teacher.profile_picture_url}`} alt={teacher.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ? <img src={`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}${teacher.profile_picture_url}`} alt={teacher.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : teacher.name?.charAt(0).toUpperCase() || "T"}
             </div>
 
