@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { Scholarship } from "../types/scholarship";
 import { getDemoScholarships } from "../data/demoScholarships";
@@ -441,7 +441,7 @@ export function SearchPage({
 
             {/* Hero text */}
             <div style={{ textAlign: "center", marginBottom: 16 }}>
-              <h1 style={{ fontSize: "clamp(36px, 6vw, 64px)", fontWeight: 800, lineHeight: 1.1, margin: 0, color: "#1e293b", fontWeight: 800 }}>
+              <h1 style={{ fontSize: "clamp(36px, 6vw, 64px)", fontWeight: 800, lineHeight: 1.1, margin: 0, color: "#1e293b" }}>
                 FIND YOUR<br />
                 <span style={{ background: "linear-gradient(90deg, #f4c44e, #a78bfa, #c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>PERFECT MATCH</span>
               </h1>
