@@ -1724,7 +1724,7 @@ Notes/Topic: ${aiNotes}`;
                             onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
                             <ZoomIn size={20} color="#fff" />
                           </div>
-                        </a>
+                        </div>
                       </div>
                     ) : (
                       <div style={{ flexShrink: 0, width: 120, height: 90, background: "#f8fafc", borderRadius: 12, border: "2px dashed #e2e8f0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
@@ -1763,7 +1763,7 @@ Notes/Topic: ${aiNotes}`;
           <div className="space-y-6">
             {/* Header Section */}
             <div style={{ position: "relative", borderRadius: "24px", overflow: "hidden", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)", padding: "32px" }}>
-              <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E\")" />
+              <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E\")" }} />
               <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <h1 style={{ color: "#ffffff", fontSize: "28px", fontWeight: 800, margin: 0 }}>My Students</h1>
