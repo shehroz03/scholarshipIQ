@@ -1728,14 +1728,14 @@ Notes/Topic: ${aiNotes}`;
                       <div style={{ flexShrink: 0 }}>
                         <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", margin: "0 0 6px" }}>PAYMENT SCREENSHOT</p>
                         <div className="flex items-center gap-3 bg-gray-50 border p-2 rounded w-max">
-                        <a href={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `${API_BASE}${p.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
-                           title="Click to view full image">
-                          <img src={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `${API_BASE}${p.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
-                        </a>
-                          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
-                            onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
-                            <ZoomIn size={20} color="#fff" />
-                          </div>
+                          <a href={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `${API_BASE}${p.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
+                             title="Click to view full image" style={{ position: "relative", display: "block" }}>
+                            <img src={p.payment_screenshot_url.startsWith('http') ? p.payment_screenshot_url : `${API_BASE}${p.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
+                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
+                              onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
+                              <ZoomIn size={20} color="#fff" />
+                            </div>
+                          </a>
                         </div>
                       </div>
                     ) : (
@@ -1851,14 +1851,14 @@ Notes/Topic: ${aiNotes}`;
                       <div style={{ flexShrink: 0 }}>
                         <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", margin: "0 0 6px" }}>PAYMENT SCREENSHOT</p>
                         <div className="flex items-center gap-3 bg-gray-50 border p-2 rounded w-max">
-                        <a href={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `${API_BASE}${s.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
-                           title="Click to view full image">
-                          <img src={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `${API_BASE}${s.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
-                        </a>
-                          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
-                            onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
-                            <ZoomIn size={20} color="#fff" />
-                          </div>
+                          <a href={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `${API_BASE}${s.payment_screenshot_url}`} target="_blank" rel="noopener noreferrer"
+                             title="Click to view full image" style={{ position: "relative", display: "block" }}>
+                            <img src={s.payment_screenshot_url.startsWith('http') ? s.payment_screenshot_url : `${API_BASE}${s.payment_screenshot_url}`} alt="Payment proof" style={{ width: 120, height: 90, objectFit: "cover", display: "block" }} />
+                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
+                              onMouseOver={e => (e.currentTarget.style.opacity = "1")} onMouseOut={e => (e.currentTarget.style.opacity = "0")}>
+                              <ZoomIn size={20} color="#fff" />
+                            </div>
+                          </a>
                         </div>
                         <p style={{ fontSize: 10, color: "#94a3b8", margin: "4px 0 0", textAlign: "center" }}>Click to enlarge</p>
                       </div>
