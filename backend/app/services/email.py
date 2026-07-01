@@ -75,7 +75,7 @@ async def send_teacher_approved_email(teacher_email: str, teacher_name: str):
             <li>Tracking enrolled students</li>
         </ul>
         <div style="text-align: center; margin: 30px 0;">
-            <a href="http://localhost:3000/teacher" style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+            <a href="https://scholariq.vercel.app/teacher" style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                 Go to Teacher Dashboard →
             </a>
         </div>
@@ -203,7 +203,7 @@ async def send_new_matches_email(user_email: str, user_name: str, matches: list)
         <p style="color:#374151;">Based on your target country, degree and field of study, we found these new opportunities for you:</p>
         <table style="width:100%;border-collapse:collapse;margin:16px 0;">{rows}</table>
         <div style="text-align:center;margin:24px 0;">
-            <a href="http://localhost:3001/dashboard" style="background:#4f46e5;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">Open My Dashboard</a>
+            <a href="https://scholariq.vercel.app/dashboard" style="background:#4f46e5;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">Open My Dashboard</a>
         </div>
         <p style="font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;">
             You receive these because email notifications are ON. You can turn them off anytime in Settings.<br>
