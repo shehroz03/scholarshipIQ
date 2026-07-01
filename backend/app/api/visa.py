@@ -95,13 +95,6 @@ def generate_visa_checklist(
     current_user: models.User = Depends(deps.get_current_user)
 ):
     """Triggers the VisaService to generate a new checklist based on the current profile."""
-    # Premium Gate Enforcement
-    if current_user.subscription_plan not in ["premium", "pro", "admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Visa Guidance AI is a premium feature. Please upgrade to access."
-        )
-
     profile = db.query(models.VisaProfile).options(joinedload(models.VisaProfile.user)).filter(models.VisaProfile.user_id == current_user.id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Please create a visa profile first")
