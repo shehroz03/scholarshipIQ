@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Check, Loader2, AlertCircle, LogOut, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Check, Loader2, AlertCircle, LogOut, Eye, EyeOff, GraduationCap, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -51,8 +51,11 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
     const [userLoggedIn, setUserLoggedIn] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
     const [otpValue, setOtpValue] = useState("");
+    const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
     const [pendingEmail, setPendingEmail] = useState("");
     const [otpLoading, setOtpLoading] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
         setIsMounted(true);
@@ -126,26 +129,66 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
     };
 
     const handleVerifyOtp = async () => {
-        if (otpValue.length !== 6) { toast.error("Enter 6-digit OTP"); return; }
+        const code = otpDigits.join("");
+        if (code.length !== 6) { toast.error("Enter all 6 digits"); return; }
         setOtpLoading(true);
         try {
-            const res = await api.auth.verifyOtp(pendingEmail, otpValue);
+            const res = await api.auth.verifyOtp(pendingEmail, code);
             localStorage.setItem("token", res.access_token);
             toast.success("Email verified! Welcome to ScholarIQ 🎉");
             onNavigate('dashboard', { autoSearch: true, filters: { level: formData.target_degree, country: formData.target_country, field: formData.major } });
         } catch (err: any) {
             toast.error(err.message || "Invalid OTP");
+            setOtpDigits(["", "", "", "", "", ""]);
+            otpRefs.current[0]?.focus();
         } finally {
             setOtpLoading(false);
         }
     };
 
     const handleResendOtp = async () => {
+        if (resendCooldown > 0) return;
         try {
             await api.auth.resendOtp(pendingEmail);
             toast.success("New OTP sent to your email!");
+            setResendCooldown(60);
+            const timer = setInterval(() => {
+                setResendCooldown(prev => { if (prev <= 1) { clearInterval(timer); return 0; } return prev - 1; });
+            }, 1000);
         } catch (err: any) {
             toast.error(err.message || "Failed to resend OTP");
+        }
+    };
+
+    const handleOtpDigit = (index: number, value: string) => {
+        if (!/^\d*$/.test(value)) return;
+        const digit = value.slice(-1);
+        const next = [...otpDigits];
+        next[index] = digit;
+        setOtpDigits(next);
+        setOtpValue(next.join(""));
+        if (digit && index < 5) otpRefs.current[index + 1]?.focus();
+    };
+
+    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Backspace") {
+            if (!otpDigits[index] && index > 0) {
+                const next = [...otpDigits]; next[index - 1] = "";
+                setOtpDigits(next); otpRefs.current[index - 1]?.focus();
+            } else {
+                const next = [...otpDigits]; next[index] = "";
+                setOtpDigits(next);
+            }
+        } else if (e.key === "Enter") { handleVerifyOtp(); }
+    };
+
+    const handleOtpPaste = (e: React.ClipboardEvent) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+        if (pasted.length === 6) {
+            setOtpDigits(pasted.split(""));
+            setOtpValue(pasted);
+            otpRefs.current[5]?.focus();
         }
     };
 
@@ -165,41 +208,115 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
 
     // OTP Verification Screen
     if (showOtp) {
+        const otpComplete = otpDigits.every(d => d !== "");
         return (
-            <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ background: "#1e293b", borderRadius: 20, padding: "40px 36px", width: 360, textAlign: "center", border: "1px solid #334155" }}>
-                    <div style={{ fontSize: 40, marginBottom: 12 }}>📧</div>
-                    <h2 style={{ color: "#f4c44e", fontSize: 22, fontWeight: 800, margin: "0 0 8px" }}>Verify Your Email</h2>
-                    <p style={{ color: "#94a3b8", fontSize: 13, margin: "0 0 6px" }}>We sent a 6-digit code to:</p>
-                    <p style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 700, margin: "0 0 24px" }}>{pendingEmail}</p>
+            <div style={{ minHeight: "100vh", backgroundColor: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+                <div style={{ width: "100%", maxWidth: 480 }}>
+                    {/* Logo */}
+                    <div style={{ textAlign: "center", marginBottom: 32 }}>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                            <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #1e3a8a, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <GraduationCap size={24} color="#fff" />
+                            </div>
+                            <span style={{ fontSize: 24, fontWeight: 800, color: isDark ? "#f1f5f9" : "#0f172a" }}>ScholarIQ</span>
+                        </div>
+                    </div>
 
-                    <input
-                        type="text"
-                        maxLength={6}
-                        value={otpValue}
-                        onChange={e => setOtpValue(e.target.value.replace(/\D/g, ""))}
-                        placeholder="Enter 6-digit OTP"
-                        style={{ width: "100%", padding: "14px", fontSize: 24, fontWeight: 800, letterSpacing: 10, textAlign: "center", background: "#0f172a", border: "2px solid #6366f1", borderRadius: 12, color: "#fff", outline: "none", marginBottom: 16 }}
-                    />
+                    {/* Card */}
+                    <div style={{ backgroundColor: theme.bgSecondary, borderRadius: 24, padding: "40px 36px", border: `1px solid ${theme.border}`, boxShadow: isDark ? "0 25px 50px rgba(0,0,0,0.4)" : "0 25px 50px rgba(0,0,0,0.08)" }}>
 
-                    <button
-                        onClick={handleVerifyOtp}
-                        disabled={otpLoading || otpValue.length !== 6}
-                        style={{ width: "100%", padding: "14px", background: otpValue.length === 6 ? "linear-gradient(135deg,#f4c44e,#d4a017)" : "#334155", color: otpValue.length === 6 ? "#0f172a" : "#64748b", border: "none", borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: otpValue.length === 6 ? "pointer" : "not-allowed", marginBottom: 14 }}
-                    >
-                        {otpLoading ? "Verifying..." : "✅ Verify & Enter ScholarIQ"}
-                    </button>
+                        {/* Icon */}
+                        <div style={{ textAlign: "center", marginBottom: 24 }}>
+                            <div style={{ width: 72, height: 72, borderRadius: "50%", background: isDark ? "rgba(59,130,246,0.15)" : "#eff6ff", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 16, border: `2px solid ${isDark ? "rgba(59,130,246,0.3)" : "#bfdbfe"}` }}>
+                                <Mail size={32} color="#3b82f6" />
+                            </div>
+                            <h2 style={{ fontSize: 24, fontWeight: 800, color: isDark ? "#f1f5f9" : "#0f172a", margin: "0 0 8px" }}>Check your inbox</h2>
+                            <p style={{ color: theme.textSecondary, fontSize: 14, margin: 0 }}>
+                                We sent a 6-digit verification code to
+                            </p>
+                            <p style={{ color: "#3b82f6", fontSize: 14, fontWeight: 700, margin: "4px 0 0" }}>{pendingEmail}</p>
+                        </div>
 
-                    <button
-                        onClick={handleResendOtp}
-                        style={{ background: "none", border: "none", color: "#6366f1", fontSize: 13, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
-                    >
-                        Resend OTP
-                    </button>
+                        {/* OTP Digit Boxes */}
+                        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 28 }} onPaste={handleOtpPaste}>
+                            {otpDigits.map((digit, i) => (
+                                <input
+                                    key={i}
+                                    ref={el => { otpRefs.current[i] = el; }}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChange={e => handleOtpDigit(i, e.target.value)}
+                                    onKeyDown={e => handleOtpKeyDown(i, e)}
+                                    autoFocus={i === 0}
+                                    style={{
+                                        width: 52, height: 60, textAlign: "center", fontSize: 26, fontWeight: 800,
+                                        borderRadius: 12, border: `2px solid ${digit ? "#3b82f6" : theme.border}`,
+                                        backgroundColor: digit ? (isDark ? "rgba(59,130,246,0.12)" : "#eff6ff") : theme.bg,
+                                        color: isDark ? "#f1f5f9" : "#0f172a",
+                                        outline: "none", transition: "all 0.15s",
+                                        boxShadow: digit ? "0 0 0 3px rgba(59,130,246,0.15)" : "none"
+                                    }}
+                                />
+                            ))}
+                        </div>
 
-                    <p style={{ color: "#475569", fontSize: 11, marginTop: 16 }}>
-                        Code expires in 15 minutes. Check spam folder if not received.
-                    </p>
+                        {/* Verify Button */}
+                        <button
+                            onClick={handleVerifyOtp}
+                            disabled={otpLoading || !otpComplete}
+                            style={{
+                                width: "100%", padding: "15px", borderRadius: 14, border: "none", fontWeight: 700, fontSize: 16,
+                                background: otpComplete ? "linear-gradient(135deg, #1e3a8a, #3b82f6)" : (isDark ? "#1e293b" : "#e2e8f0"),
+                                color: otpComplete ? "#fff" : (isDark ? "#475569" : "#94a3b8"),
+                                cursor: otpComplete ? "pointer" : "not-allowed",
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                                boxShadow: otpComplete ? "0 8px 20px rgba(59,130,246,0.3)" : "none",
+                                transition: "all 0.2s", marginBottom: 20
+                            }}
+                        >
+                            {otpLoading ? (
+                                <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Verifying...</>
+                            ) : (
+                                <><ShieldCheck size={18} /> Verify & Continue</>
+                            )}
+                        </button>
+
+                        {/* Divider */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                            <div style={{ flex: 1, height: 1, backgroundColor: theme.border }} />
+                            <span style={{ color: theme.textSecondary, fontSize: 12 }}>Didn't receive it?</span>
+                            <div style={{ flex: 1, height: 1, backgroundColor: theme.border }} />
+                        </div>
+
+                        {/* Resend */}
+                        <div style={{ textAlign: "center" }}>
+                            <button
+                                onClick={handleResendOtp}
+                                disabled={resendCooldown > 0}
+                                style={{
+                                    background: "none", border: `1px solid ${resendCooldown > 0 ? theme.border : "#3b82f6"}`,
+                                    borderRadius: 10, padding: "10px 20px", fontWeight: 600, fontSize: 14,
+                                    color: resendCooldown > 0 ? theme.textSecondary : "#3b82f6",
+                                    cursor: resendCooldown > 0 ? "not-allowed" : "pointer", transition: "all 0.2s"
+                                }}
+                            >
+                                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+                            </button>
+                        </div>
+
+                        <p style={{ color: theme.textSecondary, fontSize: 12, textAlign: "center", marginTop: 20, lineHeight: 1.6 }}>
+                            Code expires in <strong>15 minutes</strong>. If not in inbox, check your spam folder.
+                        </p>
+                    </div>
+
+                    {/* Back link */}
+                    <div style={{ textAlign: "center", marginTop: 20 }}>
+                        <button onClick={() => setShowOtp(false)} style={{ background: "none", border: "none", color: theme.textSecondary, fontSize: 13, cursor: "pointer" }}>
+                            ← Back to signup
+                        </button>
+                    </div>
                 </div>
             </div>
         );
