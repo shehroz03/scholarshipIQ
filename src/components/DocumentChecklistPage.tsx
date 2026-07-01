@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     GraduationCap, Loader2, Circle, Sparkles,
@@ -345,14 +345,14 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
 
                         {/* ================= AI SECURE VAULT & TRUST GUARANTEE (NEW SECTION) ================= */}
                         <div className="no-print" style={{
-                            background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.4), rgba(15, 23, 42, 0.6))',
-                            border: '1px solid rgba(99, 102, 241, 0.25)',
+                            background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                            border: '1px solid #e2e8f0',
                             borderRadius: '28px',
                             padding: '36px',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '28px',
-                            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.4)'
+                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)'
                         }}>
                             {/* Vault Header */}
                             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
@@ -391,13 +391,14 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
 
                             {/* Trust & Security Guarantee Box */}
                             <div style={{
-                                background: 'rgba(15, 23, 42, 0.6)',
+                                background: '#ffffff',
                                 border: '1px solid rgba(16, 185, 129, 0.2)',
                                 borderRadius: '20px',
                                 padding: '22px 28px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '20px'
+                                gap: '20px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                             }}>
                                 <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '12px', borderRadius: '16px', color: '#10b981', flexShrink: 0 }}>
                                     <EyeOff size={24} />
@@ -416,7 +417,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                             <div 
                                 onClick={() => fileInputRef.current?.click()}
                                 style={{
-                                    background: 'rgba(255,255,255,0.02)',
+                                    background: '#ffffff',
                                     border: '2px dashed rgba(99, 102, 241, 0.3)',
                                     borderRadius: '22px',
                                     padding: '36px 24px',
@@ -434,7 +435,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                     e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.6)';
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                                    e.currentTarget.style.background = '#ffffff';
                                     e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
                                 }}
                             >
@@ -460,12 +461,13 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                             {isScanning && (
                                 <div style={{
                                     padding: '24px',
-                                    background: 'rgba(15, 23, 42, 0.8)',
+                                    background: '#ffffff',
                                     border: '1px solid rgba(59, 130, 246, 0.3)',
                                     borderRadius: '20px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '20px'
+                                    gap: '20px',
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                                 }}>
                                     <RefreshCw size={24} className="animate-spin text-blue-500" style={{ flexShrink: 0 }} />
                                     <div style={{ flex: 1 }}>
@@ -494,13 +496,14 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                         {vaultDocs.map((doc) => (
                                             <div key={doc.id} style={{
-                                                background: 'rgba(255,255,255,0.02)',
-                                                border: '1px solid rgba(255,255,255,0.06)',
+                                                background: '#ffffff',
+                                                border: '1px solid #e2e8f0',
                                                 borderRadius: '22px',
                                                 padding: '24px',
                                                 display: 'flex',
                                                 flexDirection: 'column',
-                                                gap: '20px'
+                                                gap: '20px',
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                                             }}>
                                                 {/* Doc Header */}
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
@@ -549,7 +552,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                 {/* AI Insights Result Box */}
                                                 {doc.analysisResult && (
                                                     <div style={{
-                                                        background: 'rgba(255,255,255,0.015)',
+                                                        background: '#f8fafc',
                                                         border: '1px solid rgba(99, 102, 241, 0.2)',
                                                         borderRadius: '16px',
                                                         padding: '20px',
@@ -640,10 +643,11 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
                                             padding: '16px 24px',
-                                            background: 'rgba(15, 23, 42, 0.9)',
+                                            background: 'rgba(255, 255, 255, 0.9)',
                                             backdropFilter: 'blur(12px)',
-                                            border: '1px solid rgba(0,0,0,0.03)',
-                                            borderRadius: '20px'
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '20px',
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                                                 <div style={{ padding: '10px', borderRadius: '14px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
@@ -673,8 +677,8 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                         key={item.id}
                                                         onClick={() => toggleItem(item.id)}
                                                         style={{
-                                                            background: isChecked ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)',
-                                                            border: isChecked ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(0,0,0,0.03)',
+                                                            background: isChecked ? 'rgba(16, 185, 129, 0.05)' : '#ffffff',
+                                                            border: isChecked ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #e2e8f0',
                                                             borderLeft: isChecked ? '4px solid #10b981' : '4px solid transparent',
                                                             borderRadius: '20px',
                                                             padding: '20px 24px',
@@ -682,13 +686,20 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                             alignItems: 'center',
                                                             gap: '20px',
                                                             cursor: 'pointer',
-                                                            transition: 'all 0.2s'
+                                                            transition: 'all 0.2s',
+                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                                                         }}
                                                         onMouseEnter={(e) => {
-                                                            if (!isChecked) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                                                            if (!isChecked) {
+                                                                e.currentTarget.style.background = '#f8fafc';
+                                                                e.currentTarget.style.borderColor = '#cbd5e1';
+                                                            }
                                                         }}
                                                         onMouseLeave={(e) => {
-                                                            if (!isChecked) e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                                                            if (!isChecked) {
+                                                                e.currentTarget.style.background = '#ffffff';
+                                                                e.currentTarget.style.borderColor = '#e2e8f0';
+                                                            }
                                                         }}
                                                     >
                                                         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -702,7 +713,7 @@ export function DocumentChecklistPage({ onNavigate }: { onNavigate: (page: strin
                                                         </div>
                                                         <div style={{ flex: 1, minWidth: 0 }}>
                                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                                                                <h4 style={{ fontSize: '16px', fontWeight: '800', color: isChecked ? '#10b981' : 'white', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                <h4 style={{ fontSize: '16px', fontWeight: '800', color: isChecked ? '#10b981' : '#1e293b', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                                     {item.name}
                                                                 </h4>
                                                                 <span style={{ flexShrink: 0, padding: '4px 12px', background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '999px', color: '#64748b', fontSize: '11px', fontWeight: '700' }}>
