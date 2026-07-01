@@ -361,6 +361,12 @@ export const api = {
         body: JSON.stringify({ message }),
       });
     },
+    async generateQuizAi(prompt: string) {
+      return apiBase.request("/teacher/ai-quiz-generate", {
+        method: "POST",
+        body: JSON.stringify({ prompt }),
+      });
+    },
   },
 
   admin: {

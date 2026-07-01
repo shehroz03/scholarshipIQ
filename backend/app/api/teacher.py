@@ -3,7 +3,7 @@ Teacher Dashboard API
 Endpoints for teacher registration, course/lesson/quiz/live-class management.
 """
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Body, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -896,6 +896,23 @@ def get_teacher_analytics(db: Session = Depends(get_db), current_user: models.Us
 
 # ─── TEACHER AI CHAT ──────────────────────────────────────────────────────────
 
+CHAT_RETENTION_DAYS = 7
+
+def _cleanup_old_teacher_messages(db: Session, user_id: int):
+    """Delete teacher chat messages older than CHAT_RETENTION_DAYS."""
+    cutoff = datetime.utcnow() - timedelta(days=CHAT_RETENTION_DAYS)
+    old_sessions = db.query(models.ChatSession).filter(
+        models.ChatSession.user_id == user_id,
+        models.ChatSession.tool_type == "teacher_chat",
+    ).all()
+    for session in old_sessions:
+        db.query(models.ChatMessage).filter(
+            models.ChatMessage.session_id == session.id,
+            models.ChatMessage.created_at < cutoff,
+        ).delete(synchronize_session=False)
+    db.commit()
+
+
 class TeacherChatRequest(PydanticBaseModel):
     message: str
 
@@ -911,6 +928,9 @@ def teacher_ai_chat(
     from fastapi.responses import JSONResponse
 
     try:
+        # Auto-cleanup messages older than 7 days on each chat call
+        _cleanup_old_teacher_messages(db, current_user.id)
+
         teacher = db.query(models.TeacherProfile).filter(
             models.TeacherProfile.user_id == current_user.id
         ).first()
@@ -926,32 +946,32 @@ def teacher_ai_chat(
             }
 
         chat_session = db.query(models.ChatSession).filter(
-            models.ChatSession.user_id == current_user.id, 
-            models.ChatSession.tool_type == "teacher_chat", 
+            models.ChatSession.user_id == current_user.id,
+            models.ChatSession.tool_type == "teacher_chat",
             models.ChatSession.is_active == True
         ).order_by(models.ChatSession.created_at.desc()).first()
-        
+
         if not chat_session:
             chat_session = models.ChatSession(user_id=current_user.id, tool_type="teacher_chat", is_active=True)
             db.add(chat_session)
             db.commit()
             db.refresh(chat_session)
-            
+
         user_msg = models.ChatMessage(session_id=chat_session.id, user_id=current_user.id, role="user", content=body.message)
         db.add(user_msg)
         db.commit()
-        
+
         recent = db.query(models.ChatMessage).filter(
             models.ChatMessage.session_id == chat_session.id
         ).order_by(models.ChatMessage.created_at.desc()).limit(8).all()
         history = [(m.role, m.content) for m in reversed(recent) if m.role in ("user", "ai", "assistant")]
 
         reply = get_ai_response(body.message, mode="teacher", context=context if context else None, history=history)
-        
+
         ai_msg = models.ChatMessage(session_id=chat_session.id, user_id=current_user.id, role="assistant", content=reply)
         db.add(ai_msg)
         db.commit()
-        
+
         # Check if reply indicates an error
         if reply and ("offline" in reply.lower() or "trouble" in reply.lower() or "error" in reply.lower()):
             print(f"[teacher_ai_chat] AI service returned error message: {reply}")
@@ -959,10 +979,35 @@ def teacher_ai_chat(
                 status_code=503,
                 content={"error": "AI service temporarily unavailable", "reply": reply}
             )
-        
+
         return {"reply": reply}
     except Exception as e:
         print(f"[teacher_ai_chat] Error: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
+
+
+# ─── TEACHER AI QUIZ GENERATE (no chat history) ───────────────────────────────
+
+class TeacherQuizGenerateRequest(PydanticBaseModel):
+    prompt: str
+
+@router.post("/ai-quiz-generate")
+def teacher_ai_quiz_generate(
+    body: TeacherQuizGenerateRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Generate quiz questions via AI — does NOT save to teacher chat history."""
+    from app.services.chatbot import get_ai_response
+    from fastapi import HTTPException
+
+    try:
+        reply = get_ai_response(body.prompt, mode="teacher", context=None, history=[])
+        return {"reply": reply}
+    except Exception as e:
+        print(f"[teacher_ai_quiz_generate] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Quiz AI generation failed: {str(e)}")

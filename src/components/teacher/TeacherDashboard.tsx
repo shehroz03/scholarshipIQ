@@ -227,7 +227,7 @@ export default function TeacherDashboard() {
 [{"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct_answer":"A","explanation":"...","difficulty":"Medium"}]
 
 Notes/Topic: ${aiNotes}`;
-      const res = await api.chatbot.sendTeacherMessage(prompt);
+      const res = await api.chatbot.generateQuizAi(prompt);
       const text = res?.response || res?.message || res?.reply || res?.content || "";
       console.log("AI Response:", text);
       

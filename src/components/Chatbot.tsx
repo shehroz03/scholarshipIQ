@@ -175,13 +175,39 @@ export function Chatbot() {
           }));
 
           if (mappedHistory.length > 0) {
-            setMessages([
+            const msgs: Message[] = [
               {
                 role: "assistant",
                 content: "Welcome back! Here's your previous conversation history."
               },
               ...mappedHistory
-            ]);
+            ];
+
+            // Daily reminder for teacher: chats auto-delete after 7 days
+            if (role === "teacher") {
+              const lastReminderDate = localStorage.getItem("teacherChatReminderDate");
+              const today = new Date().toDateString();
+              if (lastReminderDate !== today) {
+                localStorage.setItem("teacherChatReminderDate", today);
+                msgs.push({
+                  role: "assistant",
+                  content: "⏳ **Reminder:** Your chat history is automatically deleted after **7 days** to protect privacy. Save any important guidance before it expires."
+                });
+              }
+            }
+
+            setMessages(msgs);
+          } else if (role === "teacher") {
+            // Even with no history, show daily reminder once
+            const lastReminderDate = localStorage.getItem("teacherChatReminderDate");
+            const today = new Date().toDateString();
+            if (lastReminderDate !== today) {
+              localStorage.setItem("teacherChatReminderDate", today);
+              setMessages([
+                { role: "assistant", content: getRoleWelcome(role, userName) },
+                { role: "assistant", content: "⏳ **Reminder:** Your chat history is automatically deleted after **7 days** to protect privacy." }
+              ]);
+            }
           }
         } catch (err) {
           console.error("Failed to fetch chat history:", err);
@@ -189,7 +215,7 @@ export function Chatbot() {
       }
     };
     fetchHistory();
-  }, [isOpen, role, isOnboarding]);
+  }, [isOpen, role, isOnboarding, userName]);
 
   // Close chatbot when clicking outside
   useEffect(() => {
