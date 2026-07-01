@@ -37,7 +37,7 @@ export function TeacherReviewManagement() {
       const profile = await api.teacher.getProfile();
       
       // Get all reviews for this teacher
-      const data = await api.teacherReviews.getTeacherReviews(profile.id, 1, 100);
+      const data = await api.teacherReviews.getTeacherReviews(profile.id, 1, 50);
       
       // Get reported reviews
       const reportedData = await api.teacherReviews.getMyReportedReviews();
