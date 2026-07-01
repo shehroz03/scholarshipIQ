@@ -165,6 +165,17 @@ export function TeacherLoginPage({ onNavigate }: { onNavigate: (page: string, pa
                 </div>
               </div>
 
+              <div style={{ textAlign: "right" }}>
+                <button
+                  type="button"
+                  className="text-sm hover:underline"
+                  style={{ color: '#065f46', background: "none", border: "none", cursor: "pointer" }}
+                  onClick={() => onNavigate("forgot-password")}
+                >
+                  Forgot password?
+                </button>
+              </div>
+
               <Button
                 type="submit"
                 disabled={isLoading}

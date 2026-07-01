@@ -11,6 +11,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AboutPage } from "./components/AboutPage";
 import { ContactPage } from "./components/ContactPage";
 import { PrivacyPage } from "./components/PrivacyPage";
+import { ForgotPasswordPage } from "./components/ForgotPasswordPage";
+import { ResetPasswordPage } from "./components/ResetPasswordPage";
 import { Toaster } from "./components/ui/sonner";
 import { Toaster as HotToaster } from "react-hot-toast";
 
@@ -124,6 +126,8 @@ export default function App() {
           <Route path="/about" element={<AboutPage onNavigate={handleNavigate} />} />
           <Route path="/contact" element={<ContactPage onNavigate={handleNavigate} />} />
           <Route path="/privacy" element={<PrivacyPage onNavigate={handleNavigate} />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage onNavigate={handleNavigate} />} />
+          <Route path="/reset-password" element={<ResetPasswordPage onNavigate={handleNavigate} />} />
           <Route path="/admin" element={<AdminDashboard onNavigate={handleNavigate} />} />
           <Route path="/pricing" element={<Navigate to={localStorage.getItem("userRole") === "teacher" ? "/teacher" : "/dashboard"} />} />
 

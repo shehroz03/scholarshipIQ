@@ -140,6 +140,42 @@ async def send_teacher_rejected_email(teacher_email: str, teacher_name: str, rea
         print(f"[EmailService] Failed to send rejection email to {teacher_email}: {e}")
 
 
+async def send_password_reset_email(email: str, reset_link: str, name: str = ""):
+    html = f"""
+    <div style="font-family:sans-serif;max-width:500px;margin:auto;padding:30px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
+        <div style="text-align:center;margin-bottom:20px;">
+            <h2 style="color:#1e3a8a;margin:0;">ScholarIQ</h2>
+            <p style="color:#64748b;font-size:13px;margin-top:4px;">Password Reset</p>
+        </div>
+        <p style="color:#374151;">Hello <strong>{name or email}</strong>,</p>
+        <p style="color:#374151;">We received a request to reset your ScholarIQ password. Click the button below to create a new password:</p>
+        <div style="text-align:center;margin:28px 0;">
+            <a href="{reset_link}" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;padding:14px 32px;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;display:inline-block;">
+                Reset My Password
+            </a>
+        </div>
+        <p style="color:#64748b;font-size:13px;">This link expires in <strong>30 minutes</strong>. If you did not request a password reset, you can safely ignore this email.</p>
+        <p style="color:#ef4444;font-size:12px;">⚠️ Never share this link with anyone.</p>
+        <p style="color:#6b7280;font-size:12px;border-top:1px solid #f1f5f9;padding-top:16px;margin-top:20px;">
+            The ScholarIQ Team
+        </p>
+    </div>
+    """
+    try:
+        message = MessageSchema(
+            subject="🔒 Reset Your ScholarIQ Password",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html
+        )
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        print(f"[EmailService] Password reset email sent to {email}")
+    except Exception as e:
+        print(f"[EmailService] Failed to send reset email to {email}: {e}")
+        raise
+
+
 async def send_deadline_email(user_email: str, scholarship_title: str, days_left: int):
     html = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">

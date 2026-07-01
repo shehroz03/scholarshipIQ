@@ -357,3 +357,62 @@ def login(
         "token_type": "bearer",
         "role": effective_role,
     }
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: Request,
+    body: dict = Body(...),
+    db: Session = Depends(get_db)
+):
+    email = sanitize_input(body.get("email", ""), 255).lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    user = db.query(models.User).filter(func.lower(models.User.email) == email).first()
+
+    # Always return success to prevent email enumeration attacks
+    if not user or not user.is_active:
+        return {"message": "If this email is registered, you will receive a password reset link shortly."}
+
+    reset_token = security.create_reset_token(user.id)
+    reset_link = f"https://scholarship.broadsolutiontech.com/reset-password?token={reset_token}"
+
+    from app.services.email import send_password_reset_email
+    try:
+        import asyncio
+        asyncio.create_task(send_password_reset_email(email, reset_link, user.full_name or ""))
+    except RuntimeError:
+        import threading
+        threading.Thread(
+            target=lambda: asyncio.run(send_password_reset_email(email, reset_link, user.full_name or "")),
+            daemon=True
+        ).start()
+
+    return {"message": "If this email is registered, you will receive a password reset link shortly."}
+
+
+@router.post("/reset-password")
+def reset_password(
+    body: dict = Body(...),
+    db: Session = Depends(get_db)
+):
+    token = body.get("token", "").strip()
+    new_password = body.get("new_password", "")
+
+    if not token:
+        raise HTTPException(status_code=400, detail="Reset token is required")
+
+    is_valid, error_msg = validate_password(new_password)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+
+    user_id = security.decode_reset_token(token)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+
+    user.hashed_password = security.get_password_hash(new_password)
+    db.commit()
+
+    return {"message": "Password reset successfully. You can now login with your new password."}

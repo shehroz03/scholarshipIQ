@@ -171,6 +171,7 @@ export function LoginPage({ onNavigate }: { onNavigate: (page: string, params?: 
                   type="button"
                   className="text-sm hover:underline"
                   style={{ color: isDark ? '#60a5fa' : '#1e3a8a' }}
+                  onClick={() => onNavigate("forgot-password")}
                 >
                   Forgot password?
                 </button>

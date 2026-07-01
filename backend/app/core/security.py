@@ -9,6 +9,20 @@ from fastapi import HTTPException
 # Using pbkdf2_sha256 for better compatibility on all systems
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
+def create_reset_token(user_id: int) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+    payload = {"sub": str(user_id), "type": "password_reset", "exp": expire}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+def decode_reset_token(token: str) -> int:
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "password_reset":
+            raise ValueError("Invalid token type")
+        return int(payload["sub"])
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link. Please request a new one.")
+
 def create_access_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
