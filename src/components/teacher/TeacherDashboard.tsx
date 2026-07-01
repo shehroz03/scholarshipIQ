@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { toast } from "sonner";
-import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, X, HelpCircle, Settings, ArrowRight, User, Target, FileText, Tag, CreditCard, ZoomIn } from "lucide-react";
+import { BookOpen, Users, Video, Plus, Play, Trash2, Eye, EyeOff, Calendar, Zap, LayoutDashboard, GraduationCap, Star, Clock, LogOut, TrendingUp, Award, DollarSign, CheckCircle, XCircle, X, HelpCircle, Settings, ArrowRight, User, Target, FileText, Tag, CreditCard, ZoomIn, Loader2 } from "lucide-react";
 import { TeacherReviewManagement } from "./TeacherReviewManagement";
 import { TeacherPaymentMethods, getLocalPaymentMethods } from "./TeacherPaymentMethods";
 
@@ -344,20 +344,32 @@ Notes/Topic: ${aiNotes}`;
     fetchAll();
   };
 
+  const [processingPayment, setProcessingPayment] = useState<number | null>(null);
+
   const approvePayment = async (enrollmentId: number) => {
+    setProcessingPayment(enrollmentId);
     try {
       await api.teacher.approvePayment(enrollmentId);
-      toast.success("Payment approved — student can access classes!");
-      fetchAll();
-    } catch (e: any) { toast.error(e.message); }
+      toast.success("✅ Payment Approved! Student now has full course access.", { duration: 5000 });
+      await fetchAll();
+    } catch (e: any) {
+      toast.error(`Approval failed: ${e.message}`, { duration: 6000 });
+    } finally {
+      setProcessingPayment(null);
+    }
   };
 
   const rejectPayment = async (enrollmentId: number, reason: string = "Payment not verified") => {
+    setProcessingPayment(enrollmentId);
     try {
       await api.teacher.rejectPayment(enrollmentId, reason);
       toast.warning("Payment rejected");
-      fetchAll();
-    } catch (e: any) { toast.error(e.message); }
+      await fetchAll();
+    } catch (e: any) {
+      toast.error(`Rejection failed: ${e.message}`, { duration: 6000 });
+    } finally {
+      setProcessingPayment(null);
+    }
   };
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-800 text-lg font-semibold">Loading...</div></div>;
@@ -1735,12 +1747,17 @@ Notes/Topic: ${aiNotes}`;
 
                     {/* Actions */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-                      <button onClick={() => approvePayment(p.enrollment_id)}
-                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#059669", color: "#fff", padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 800, border: "none", cursor: "pointer" }}>
-                        <CheckCircle size={15} /> Approve
+                      <button
+                        onClick={() => approvePayment(p.enrollment_id)}
+                        disabled={processingPayment === p.enrollment_id}
+                        style={{ display: "flex", alignItems: "center", gap: 6, background: processingPayment === p.enrollment_id ? "#6ee7b7" : "#059669", color: "#fff", padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 800, border: "none", cursor: processingPayment === p.enrollment_id ? "not-allowed" : "pointer", opacity: processingPayment === p.enrollment_id ? 0.8 : 1 }}>
+                        {processingPayment === p.enrollment_id ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+                        {processingPayment === p.enrollment_id ? "Approving..." : "Approve"}
                       </button>
-                      <button onClick={() => rejectPayment(p.enrollment_id)}
-                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#fef2f2", color: "#dc2626", padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 800, border: "1px solid #fecaca", cursor: "pointer" }}>
+                      <button
+                        onClick={() => rejectPayment(p.enrollment_id)}
+                        disabled={processingPayment === p.enrollment_id}
+                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#fef2f2", color: "#dc2626", padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 800, border: "1px solid #fecaca", cursor: processingPayment === p.enrollment_id ? "not-allowed" : "pointer" }}>
                         <XCircle size={15} /> Reject
                       </button>
                     </div>
