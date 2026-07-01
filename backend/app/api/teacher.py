@@ -190,6 +190,7 @@ def create_course(
         level=level,
         price=price,
         thumbnail_url=thumbnail_url or None,
+        is_published=True,
     )
     db.add(course)
     db.commit()
