@@ -566,6 +566,7 @@ Notes/Topic: ${aiNotes}`;
     { id: "fees", label: "Fee Payments", icon: DollarSign, color: "#059669" },
     { id: "paymethods", label: "Payment Methods", icon: CreditCard, color: "#7c3aed" },
     { id: "students", label: "Students", icon: Users, color: "#d97706" },
+    { id: "reviews", label: "My Reviews", icon: Star, color: "#f59e0b" },
     { id: "create", label: "Create Course", icon: Plus, color: "#f4c44e" },
   ];
 
@@ -734,6 +735,7 @@ Notes/Topic: ${aiNotes}`;
                 {tab === "fees" && "Approve student fee payments"}
                 {tab === "paymethods" && "Your JazzCash, Easypaisa and Bank details"}
                 {tab === "students" && "View enrolled students and progress"}
+                {tab === "reviews" && "Student reviews on your profile — report inappropriate ones"}
                 {tab === "create" && "Create a new test-prep course with fee"}
               </p>
             </div>
@@ -1772,6 +1774,13 @@ Notes/Topic: ${aiNotes}`;
         {tab === "paymethods" && (
           <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", padding: "28px" }}>
             <TeacherPaymentMethods />
+          </div>
+        )}
+
+        {/* REVIEWS */}
+        {tab === "reviews" && (
+          <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", padding: "28px" }}>
+            <TeacherReviewManagement />
           </div>
         )}
 
