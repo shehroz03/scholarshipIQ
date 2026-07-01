@@ -56,7 +56,17 @@ export function DataPipeline() {
 
     const formatDate = (ds: string) => {
         if (!ds) return "Never";
-        return new Date(ds).toLocaleString();
+        const d = new Date(ds);
+        if (isNaN(d.getTime())) return "Never";
+        return d.toLocaleString();
+    };
+
+    const getNextRun = () => {
+        const now = new Date();
+        const next = new Date();
+        next.setHours(3, 0, 0, 0);
+        if (now.getHours() >= 3) next.setDate(next.getDate() + 1);
+        return next.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + " at 03:00 AM";
     };
 
     if (loading) {
@@ -207,7 +217,7 @@ export function DataPipeline() {
                             <RefreshCcw className="w-5 h-5 text-blue-400" />
                         </div>
                         <p className="text-lg font-black text-blue-900 mt-2">
-                            {formatDate(status?.next_run)}
+                            {(status?.next_run && !isNaN(new Date(status.next_run).getTime())) ? formatDate(status.next_run) : getNextRun()}
                         </p>
                         <p className="text-sm font-bold text-blue-600 mt-1">
                             Daily Schedule (03:00 AM)
