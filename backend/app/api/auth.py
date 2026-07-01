@@ -246,6 +246,14 @@ def verify_otp(
     user.otp_expires_at = None
     db.commit()
 
+    # Teachers must wait for admin approval before receiving a token
+    teacher = db.query(models.TeacherProfile).filter(models.TeacherProfile.user_id == user.id).first()
+    if teacher and teacher.approval_status == "pending":
+        return {
+            "requires_admin_approval": True,
+            "message": "Email verified! Your teacher application is now under admin review. You will receive an email once approved.",
+        }
+
     token = security.create_access_token(user.id)
     return {"access_token": token, "token_type": "bearer", "message": "Email verified successfully!"}
 

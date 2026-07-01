@@ -50,6 +50,8 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
     const [isMounted, setIsMounted] = useState(false);
     const [userLoggedIn, setUserLoggedIn] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
+    const [showTeacherPending, setShowTeacherPending] = useState(false);
+    const [pendingRole, setPendingRole] = useState<"student" | "teacher">("student");
     const [otpValue, setOtpValue] = useState("");
     const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
     const [pendingEmail, setPendingEmail] = useState("");
@@ -112,13 +114,13 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                 target_degree: formData.target_degree
             }, role, role === "teacher" ? teacherData : undefined);
 
+            // Both teacher and student: show OTP screen to verify email
+            setPendingEmail(formData.email);
+            setPendingRole(role);
+            setShowOtp(true);
             if (role === "teacher") {
-                toast.success("Teacher application submitted! 🎓\nAdmin approval required. You'll receive an email when approved.");
-                onNavigate('login');
+                toast.success("Application submitted! Check your email for a 6-digit OTP to verify your email.");
             } else {
-                // Show OTP verification screen
-                setPendingEmail(formData.email);
-                setShowOtp(true);
                 toast.success("Account created! Check your email for the 6-digit OTP.");
             }
         } catch (err: any) {
@@ -134,6 +136,13 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
         setOtpLoading(true);
         try {
             const res = await api.auth.verifyOtp(pendingEmail, code);
+            if (res.requires_admin_approval) {
+                // Teacher email verified but needs admin approval before login
+                setShowOtp(false);
+                setShowTeacherPending(true);
+                toast.success("Email verified! Your application is now under review.");
+                return;
+            }
             localStorage.setItem("token", res.access_token);
             toast.success("Email verified! Welcome to ScholarIQ 🎉");
             onNavigate('dashboard', { autoSearch: true, filters: { level: formData.target_degree, country: formData.target_country, field: formData.major } });
@@ -206,6 +215,74 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
         });
     };
 
+    // Teacher Pending Approval Screen
+    if (showTeacherPending) {
+        return (
+            <div style={{ minHeight: "100vh", backgroundColor: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+                <div style={{ width: "100%", maxWidth: 500, textAlign: "center" }}>
+                    {/* Logo */}
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #065f46, #059669)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <GraduationCap size={24} color="#fff" />
+                        </div>
+                        <span style={{ fontSize: 24, fontWeight: 800, color: isDark ? "#f1f5f9" : "#0f172a" }}>ScholarIQ</span>
+                    </div>
+
+                    <div style={{ backgroundColor: theme.bgSecondary, borderRadius: 24, padding: "44px 40px", border: `1px solid ${theme.border}`, boxShadow: isDark ? "0 25px 50px rgba(0,0,0,0.4)" : "0 25px 50px rgba(0,0,0,0.08)" }}>
+                        {/* Success icon */}
+                        <div style={{ width: 80, height: 80, borderRadius: "50%", background: isDark ? "rgba(16,185,129,0.15)" : "#ecfdf5", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 24, border: "2px solid #10b981" }}>
+                            <Check size={38} color="#10b981" strokeWidth={2.5} />
+                        </div>
+
+                        <h2 style={{ fontSize: 26, fontWeight: 800, color: isDark ? "#f1f5f9" : "#0f172a", margin: "0 0 12px" }}>
+                            Email Verified!
+                        </h2>
+                        <p style={{ color: theme.textSecondary, fontSize: 15, margin: "0 0 20px", lineHeight: 1.6 }}>
+                            Your email <strong style={{ color: "#10b981" }}>{pendingEmail}</strong> has been verified.
+                        </p>
+
+                        {/* Status card */}
+                        <div style={{ background: isDark ? "rgba(245,158,11,0.1)" : "#fffbeb", border: "1px solid #f59e0b", borderRadius: 14, padding: "18px 20px", marginBottom: 28, textAlign: "left" }}>
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                                <div style={{ fontSize: 22, flexShrink: 0, marginTop: 2 }}>⏳</div>
+                                <div>
+                                    <p style={{ fontWeight: 700, color: isDark ? "#fcd34d" : "#92400e", fontSize: 15, margin: "0 0 4px" }}>
+                                        Pending Admin Approval
+                                    </p>
+                                    <p style={{ color: isDark ? "#fde68a" : "#78350f", fontSize: 13, margin: 0, lineHeight: 1.5 }}>
+                                        Your teacher application is under review. Admin will approve or reject your application, and you will receive an email notification at <strong>{pendingEmail}</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* What happens next */}
+                        <div style={{ textAlign: "left", marginBottom: 28 }}>
+                            <p style={{ fontWeight: 700, color: isDark ? "#94a3b8" : "#475569", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 12px" }}>What happens next?</p>
+                            {[
+                                { icon: "📧", text: "Admin reviews your application and CV" },
+                                { icon: "✅", text: "You receive an approval or rejection email" },
+                                { icon: "🔑", text: "If approved, login via Teacher Login" },
+                            ].map((step, i) => (
+                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                                    <span style={{ fontSize: 18 }}>{step.icon}</span>
+                                    <span style={{ color: theme.textSecondary, fontSize: 14 }}>{step.text}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={() => onNavigate("teacher-login")}
+                            style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", fontWeight: 700, fontSize: 15, background: "linear-gradient(135deg, #065f46, #059669)", color: "#fff", cursor: "pointer", boxShadow: "0 8px 20px rgba(5,150,105,0.3)" }}
+                        >
+                            Go to Teacher Login →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     // OTP Verification Screen
     if (showOtp) {
         const otpComplete = otpDigits.every(d => d !== "");
@@ -230,9 +307,13 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                             <div style={{ width: 72, height: 72, borderRadius: "50%", background: isDark ? "rgba(59,130,246,0.15)" : "#eff6ff", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 16, border: `2px solid ${isDark ? "rgba(59,130,246,0.3)" : "#bfdbfe"}` }}>
                                 <Mail size={32} color="#3b82f6" />
                             </div>
-                            <h2 style={{ fontSize: 24, fontWeight: 800, color: isDark ? "#f1f5f9" : "#0f172a", margin: "0 0 8px" }}>Check your inbox</h2>
+                            <h2 style={{ fontSize: 24, fontWeight: 800, color: isDark ? "#f1f5f9" : "#0f172a", margin: "0 0 8px" }}>
+                                {pendingRole === "teacher" ? "Verify Your Email" : "Check your inbox"}
+                            </h2>
                             <p style={{ color: theme.textSecondary, fontSize: 14, margin: 0 }}>
-                                We sent a 6-digit verification code to
+                                {pendingRole === "teacher"
+                                    ? "Enter the 6-digit code sent to your email to verify your identity before admin review."
+                                    : "We sent a 6-digit verification code to"}
                             </p>
                             <p style={{ color: "#3b82f6", fontSize: 14, fontWeight: 700, margin: "4px 0 0" }}>{pendingEmail}</p>
                         </div>
@@ -278,6 +359,8 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
                         >
                             {otpLoading ? (
                                 <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Verifying...</>
+                            ) : pendingRole === "teacher" ? (
+                                <><ShieldCheck size={18} /> Verify Email & Submit Application</>
                             ) : (
                                 <><ShieldCheck size={18} /> Verify & Continue</>
                             )}
