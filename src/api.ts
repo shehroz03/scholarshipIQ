@@ -111,6 +111,18 @@ const apiBase = {
       });
     },
 
+    async verifyOtp(email: string, otp: string) {
+      return apiBase.request("/auth/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, otp }),
+      });
+    },
+    async resendOtp(email: string) {
+      return apiBase.request("/auth/resend-otp", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+    },
     logout() {
       localStorage.removeItem("token");
     }

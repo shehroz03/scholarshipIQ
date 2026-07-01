@@ -32,6 +32,9 @@ class User(Base):
     nationality: Mapped[Optional[str]] = mapped_column(String)
     role: Mapped[str] = mapped_column(String, default="student")  # student, teacher, admin
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    otp_code: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    otp_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
     last_login: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
     is_suspicious: Mapped[bool] = mapped_column(Boolean, default=False)

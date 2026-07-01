@@ -9,6 +9,9 @@ import re
 import os
 import uuid
 import shutil
+import random
+import string
+from datetime import datetime, timedelta
 from app.core.limiter import limiter
 
 router = APIRouter()
@@ -179,9 +182,24 @@ def register(
         cgpa=user_in.cgpa,
         degree_level=current_degree,
     )
+    # Generate 6-digit OTP
+    otp = "".join(random.choices(string.digits, k=6))
+    db_user.otp_code = otp
+    db_user.otp_expires_at = datetime.utcnow() + timedelta(minutes=15)
+    db_user.email_verified = False
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+
+    # Send OTP email (async — run in background so signup doesn't block)
+    import asyncio
+    from app.services.email import send_otp_email
+    try:
+        asyncio.create_task(send_otp_email(email, otp, db_user.full_name or ""))
+    except RuntimeError:
+        import threading
+        threading.Thread(target=lambda: asyncio.run(send_otp_email(email, otp, db_user.full_name or "")), daemon=True).start()
 
     # Create teacher profile if role is teacher
     if role == "teacher" and teacher_data:
@@ -201,6 +219,63 @@ def register(
         db.commit()
 
     return db_user
+
+
+@router.post("/verify-otp")
+def verify_otp(
+    body: dict = Body(...),
+    db: Session = Depends(get_db)
+):
+    email = body.get("email", "").lower().strip()
+    otp = body.get("otp", "").strip()
+
+    user = db.query(models.User).filter(func.lower(models.User.email) == email).first()
+    if not user:
+        raise HTTPException(400, "User not found")
+    if user.email_verified:
+        # Already verified — just return token
+        token = security.create_access_token(user.id)
+        return {"access_token": token, "token_type": "bearer", "already_verified": True}
+    if not user.otp_code or user.otp_code != otp:
+        raise HTTPException(400, "Invalid OTP code")
+    if not user.otp_expires_at or datetime.utcnow() > user.otp_expires_at:
+        raise HTTPException(400, "OTP has expired. Please request a new one.")
+
+    user.email_verified = True
+    user.otp_code = None
+    user.otp_expires_at = None
+    db.commit()
+
+    token = security.create_access_token(user.id)
+    return {"access_token": token, "token_type": "bearer", "message": "Email verified successfully!"}
+
+
+@router.post("/resend-otp")
+def resend_otp(
+    body: dict = Body(...),
+    db: Session = Depends(get_db)
+):
+    email = body.get("email", "").lower().strip()
+    user = db.query(models.User).filter(func.lower(models.User.email) == email).first()
+    if not user:
+        raise HTTPException(400, "User not found")
+    if user.email_verified:
+        raise HTTPException(400, "Email already verified")
+
+    otp = "".join(random.choices(string.digits, k=6))
+    user.otp_code = otp
+    user.otp_expires_at = datetime.utcnow() + timedelta(minutes=15)
+    db.commit()
+
+    import asyncio
+    from app.services.email import send_otp_email
+    try:
+        asyncio.create_task(send_otp_email(email, otp, user.full_name or ""))
+    except RuntimeError:
+        import threading
+        threading.Thread(target=lambda: asyncio.run(send_otp_email(email, otp, user.full_name or "")), daemon=True).start()
+
+    return {"message": "New OTP sent to your email"}
 
 
 @router.post("/login", response_model=schemas.Token)
@@ -241,6 +316,12 @@ def login(
         print(f"Login failed: Account {email} is inactive")
         raise HTTPException(
             status_code=400, detail="Inactive user"
+        )
+
+    if not user.email_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="EMAIL_NOT_VERIFIED"
         )
 
     # Check if user has a teacher profile

@@ -40,7 +40,11 @@ export function LoginPage({ onNavigate }: { onNavigate: (page: string, params?: 
       }
       onNavigate('dashboard');
     } catch (err: any) {
-      setError(err.message || "Invalid credentials");
+      if (err.message?.includes("EMAIL_NOT_VERIFIED")) {
+        setError("Please verify your email first. Check your inbox for the OTP code.");
+      } else {
+        setError(err.message || "Invalid credentials");
+      }
     } finally {
       setIsLoading(false);
     }

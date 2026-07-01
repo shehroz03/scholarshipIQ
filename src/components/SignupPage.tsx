@@ -49,6 +49,10 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
     const [error, setError] = useState("");
     const [isMounted, setIsMounted] = useState(false);
     const [userLoggedIn, setUserLoggedIn] = useState(false);
+    const [showOtp, setShowOtp] = useState(false);
+    const [otpValue, setOtpValue] = useState("");
+    const [pendingEmail, setPendingEmail] = useState("");
+    const [otpLoading, setOtpLoading] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
@@ -106,29 +110,42 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
             }, role, role === "teacher" ? teacherData : undefined);
 
             if (role === "teacher") {
-                // Teachers need admin approval - don't auto-login
                 toast.success("Teacher application submitted! 🎓\nAdmin approval required. You'll receive an email when approved.");
                 onNavigate('login');
             } else {
-                // Students auto-login
-                const loginFormData = new FormData();
-                loginFormData.append('username', formData.email);
-                loginFormData.append('password', formData.password);
-                await api.auth.login(loginFormData);
-                toast.success("Account created successfully!");
-                onNavigate('dashboard', {
-                    autoSearch: true,
-                    filters: {
-                        level: formData.target_degree,
-                        country: formData.target_country,
-                        field: formData.major
-                    }
-                });
+                // Show OTP verification screen
+                setPendingEmail(formData.email);
+                setShowOtp(true);
+                toast.success("Account created! Check your email for the 6-digit OTP.");
             }
         } catch (err: any) {
             setError(err.message || "Registration failed");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        if (otpValue.length !== 6) { toast.error("Enter 6-digit OTP"); return; }
+        setOtpLoading(true);
+        try {
+            const res = await api.auth.verifyOtp(pendingEmail, otpValue);
+            localStorage.setItem("token", res.access_token);
+            toast.success("Email verified! Welcome to ScholarIQ 🎉");
+            onNavigate('dashboard', { autoSearch: true, filters: { level: formData.target_degree, country: formData.target_country, field: formData.major } });
+        } catch (err: any) {
+            toast.error(err.message || "Invalid OTP");
+        } finally {
+            setOtpLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        try {
+            await api.auth.resendOtp(pendingEmail);
+            toast.success("New OTP sent to your email!");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to resend OTP");
         }
     };
 
@@ -145,6 +162,48 @@ export function SignupPage({ onNavigate }: { onNavigate: (page: string, params?:
             return next;
         });
     };
+
+    // OTP Verification Screen
+    if (showOtp) {
+        return (
+            <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ background: "#1e293b", borderRadius: 20, padding: "40px 36px", width: 360, textAlign: "center", border: "1px solid #334155" }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>📧</div>
+                    <h2 style={{ color: "#f4c44e", fontSize: 22, fontWeight: 800, margin: "0 0 8px" }}>Verify Your Email</h2>
+                    <p style={{ color: "#94a3b8", fontSize: 13, margin: "0 0 6px" }}>We sent a 6-digit code to:</p>
+                    <p style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 700, margin: "0 0 24px" }}>{pendingEmail}</p>
+
+                    <input
+                        type="text"
+                        maxLength={6}
+                        value={otpValue}
+                        onChange={e => setOtpValue(e.target.value.replace(/\D/g, ""))}
+                        placeholder="Enter 6-digit OTP"
+                        style={{ width: "100%", padding: "14px", fontSize: 24, fontWeight: 800, letterSpacing: 10, textAlign: "center", background: "#0f172a", border: "2px solid #6366f1", borderRadius: 12, color: "#fff", outline: "none", marginBottom: 16 }}
+                    />
+
+                    <button
+                        onClick={handleVerifyOtp}
+                        disabled={otpLoading || otpValue.length !== 6}
+                        style={{ width: "100%", padding: "14px", background: otpValue.length === 6 ? "linear-gradient(135deg,#f4c44e,#d4a017)" : "#334155", color: otpValue.length === 6 ? "#0f172a" : "#64748b", border: "none", borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: otpValue.length === 6 ? "pointer" : "not-allowed", marginBottom: 14 }}
+                    >
+                        {otpLoading ? "Verifying..." : "✅ Verify & Enter ScholarIQ"}
+                    </button>
+
+                    <button
+                        onClick={handleResendOtp}
+                        style={{ background: "none", border: "none", color: "#6366f1", fontSize: 13, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
+                    >
+                        Resend OTP
+                    </button>
+
+                    <p style={{ color: "#475569", fontSize: 11, marginTop: 16 }}>
+                        Code expires in 15 minutes. Check spam folder if not received.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={`min-h-screen transition-opacity duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'} relative`} style={{ backgroundColor: theme.bg, color: theme.text }}>

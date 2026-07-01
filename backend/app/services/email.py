@@ -17,6 +17,43 @@ conf = ConnectionConfig(
     VALIDATE_CERTS=True
 )
 
+async def send_otp_email(email: str, otp: str, name: str = ""):
+    html = f"""
+    <div style="font-family:sans-serif;max-width:500px;margin:auto;padding:30px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
+        <div style="text-align:center;margin-bottom:20px;">
+            <h2 style="color:#1e3a8a;margin:0;">ScholarIQ</h2>
+            <p style="color:#64748b;font-size:13px;margin-top:4px;">Email Verification</p>
+        </div>
+        <p style="color:#374151;">Hello <strong>{name or email}</strong>,</p>
+        <p style="color:#374151;">Your verification code is:</p>
+        <div style="text-align:center;margin:24px 0;">
+            <div style="display:inline-block;background:#f0f4ff;border:2px solid #6366f1;border-radius:12px;padding:16px 40px;">
+                <span style="font-size:36px;font-weight:900;letter-spacing:10px;color:#4338ca;">{otp}</span>
+            </div>
+        </div>
+        <p style="color:#374151;">Enter this code on ScholarIQ to verify your email. This code expires in <strong>15 minutes</strong>.</p>
+        <p style="color:#ef4444;font-size:12px;">⚠️ Do not share this code with anyone.</p>
+        <p style="color:#6b7280;font-size:12px;border-top:1px solid #f1f5f9;padding-top:16px;margin-top:20px;">
+            If you did not create a ScholarIQ account, ignore this email.<br>
+            <strong>The ScholarIQ Team</strong>
+        </p>
+    </div>
+    """
+    try:
+        message = MessageSchema(
+            subject="🔐 Your ScholarIQ Verification Code",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html
+        )
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        print(f"[EmailService] OTP sent to {email}")
+    except Exception as e:
+        print(f"[EmailService] Failed to send OTP to {email}: {e}")
+        raise
+
+
 async def send_teacher_approved_email(teacher_email: str, teacher_name: str):
     """Send approval notification email to teacher."""
     html = f"""
