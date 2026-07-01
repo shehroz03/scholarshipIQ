@@ -62,6 +62,21 @@ def get_levels(db: Session = Depends(get_db)):
     levels = db.query(func.distinct(models.Scholarship.degree_level)).all()
     return sorted(list(set(l[0] for l in levels if l[0])))
 
+@router.get("/filters/countries")
+def get_countries(db: Session = Depends(get_db)):
+    rows = db.query(func.distinct(models.Scholarship.country)).filter(
+        models.Scholarship.country != None,
+        models.Scholarship.country != "",
+        models.Scholarship.is_active == True,
+        models.Scholarship.is_archived == False,
+    ).all()
+    # Normalize USA → United States
+    normalized = set()
+    for (c,) in rows:
+        if c:
+            normalized.add("United States" if c.strip() == "USA" else c.strip())
+    return sorted(normalized)
+
 @router.get("/smart-search")
 def get_smart_search(
     q: str,

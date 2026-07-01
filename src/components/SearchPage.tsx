@@ -105,7 +105,12 @@ export function SearchPage({
   const [savingId, setSavingId] = useState<number | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [isDemoData, setIsDemoData] = useState(false);
-  
+  const [countryOptions, setCountryOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.scholarships.getCountries().then((list: string[]) => setCountryOptions(list)).catch(() => {});
+  }, []);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(15);
   const [totalResults, setTotalResults] = useState(0);
@@ -587,11 +592,9 @@ export function SearchPage({
                       style={{ width: "100%", padding: "12px 36px 12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(244,196,78,0.2)", borderRadius: 10, color: "#e2e8f0", fontSize: 13, appearance: "none", cursor: "pointer", outline: "none" }}
                     >
                       <option value="all" style={{ background: "#0a0f2e" }}>🌍 Global (All)</option>
-                      <option value="United States" style={{ background: "#0a0f2e" }}>�� United States</option>
-                      <option value="United Kingdom" style={{ background: "#0a0f2e" }}>�� United Kingdom</option>
-                      <option value="Canada" style={{ background: "#0a0f2e" }}>�� Canada</option>
-                      <option value="Australia" style={{ background: "#0a0f2e" }}>�� Australia</option>
-                      <option value="Germany" style={{ background: "#0a0f2e" }}>� Germany</option>
+                      {countryOptions.map(c => (
+                        <option key={c} value={c} style={{ background: "#0a0f2e" }}>{c}</option>
+                      ))}
                     </select>
                     <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "rgba(129,140,248,0.5)" }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
