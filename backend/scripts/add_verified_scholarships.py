@@ -246,6 +246,17 @@ def main():
     skipped = 0
     now = datetime.utcnow().isoformat()
 
+    # Get or create a generic university entry for scholarships without a specific university
+    c.execute("SELECT id FROM universities WHERE name = 'International Programs' LIMIT 1")
+    row = c.fetchone()
+    if row:
+        generic_uni_id = row[0]
+    else:
+        c.execute("INSERT INTO universities (name, country) VALUES ('International Programs', 'Multiple Countries')")
+        generic_uni_id = c.lastrowid
+        conn.commit()
+        print(f"  Created generic university with id={generic_uni_id}")
+
     for s in scholarships:
         # Skip if already exists (same title + country)
         c.execute("SELECT id FROM scholarships WHERE title = ? AND country = ?", (s["title"], s["country"]))
@@ -256,7 +267,7 @@ def main():
 
         c.execute("""
             INSERT INTO scholarships (
-                title, university_name, country, city,
+                title, university_id, university_name, country, city,
                 funding_type, amount, degree_level, field_of_study,
                 description, eligibility, scholarship_url,
                 approval_status, is_active, is_archived, is_suspicious,
@@ -264,7 +275,7 @@ def main():
                 has_separate_form, application_type, button_label,
                 scholarship_verified, tuition_verified, created_at
             ) VALUES (
-                ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
                 ?, ?, ?, ?,
                 ?, ?, ?,
                 'approved', 1, 0, 0,
@@ -273,7 +284,7 @@ def main():
                 'verified', 'not_verified', ?
             )
         """, (
-            s["title"], s["university_name"], s["country"], s["city"],
+            s["title"], generic_uni_id, s["university_name"], s["country"], s["city"],
             s["funding_type"], s["amount"], s["degree_level"], s["field_of_study"],
             s["description"], s["eligibility"], s["scholarship_url"],
             now
