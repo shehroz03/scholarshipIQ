@@ -54,7 +54,7 @@ async def check_deadlines_and_notify():
                     <p><strong>Deadline:</strong> {target_date.strftime('%d %B, %Y')}</p>
                     <p>Don't miss this opportunity! Make sure to complete and submit your application on time.</p>
                     <div style="margin-top: 30px;">
-                        <a href="http://localhost:5173/#detail?id={scholarship.id}" 
+                        <a href="https://scholarship.broadsolutiontech.com/detail/{scholarship.id}"
                            style="background-color: #1e3a8a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
                            View Scholarship Details
                         </a>
@@ -367,7 +367,7 @@ async def notify_new_matching_scholarships():
                         "amount": s.scholarship_amount_value or s.amount or s.funding_type or "Varies",
                         "deadline": deadline,
                         "match_score": result["score"],
-                        "detail_url": f"http://localhost:3001/detail/{s.id}",
+                        "detail_url": f"https://scholarship.broadsolutiontech.com/detail/{s.id}",
                     })
                     # In-app notification too
                     NotificationService.create_notification(

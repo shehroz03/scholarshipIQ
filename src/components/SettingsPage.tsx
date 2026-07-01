@@ -642,61 +642,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
             </CardContent>
           </Card>
 
-          {/* 7. Document Readiness */}
-          <Card className="border-none rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative group" style={{ 
-            background: isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)' : '#ffffff',
-            border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
-            backdropFilter: isDark ? 'blur(24px)' : 'none',
-            WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
-            boxShadow: isDark ? '0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(0,0,0,0.03)' : '0 10px 30px -10px rgba(0,0,0,0.05)'
-          }}>
-            <CardHeader className="p-8 border-b" style={{ backgroundColor: isDark ? 'rgba(34, 197, 94, 0.05)' : '#f0fdf4', borderColor: theme.border }}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg shadow-green-600/20">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl font-black" style={{ color: theme.text }}>7. Document Readiness</CardTitle>
-                  <CardDescription style={{ color: theme.textSecondary }}>Are you ready to apply today?</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="flex items-center gap-4 p-4 rounded-2xl border" style={{ borderColor: theme.border }}>
-                    <Switch checked={profile.passport_valid} onCheckedChange={(v) => setProfile({...profile, passport_valid: v})} />
-                    <Label className="text-sm font-bold">Valid Passport</Label>
-                </div>
-                <div className="flex items-center gap-4 p-4 rounded-2xl border" style={{ borderColor: theme.border }}>
-                    <Switch checked={profile.transcripts_ready} onCheckedChange={(v) => setProfile({...profile, transcripts_ready: v})} />
-                    <Label className="text-sm font-bold">Official Transcripts</Label>
-                </div>
-                <div className="flex items-center gap-4 p-4 rounded-2xl border" style={{ borderColor: theme.border }}>
-                    <Switch checked={profile.cv_ready} onCheckedChange={(v) => setProfile({...profile, cv_ready: v})} />
-                    <Label className="text-sm font-bold">Modern CV / Resume</Label>
-                </div>
-                <div className="space-y-2">
-                    <Label className="text-xs font-bold opacity-60">SOP Status</Label>
-                    <Select value={profile.sop_ready} onValueChange={(v) => setProfile({...profile, sop_ready: v})}>
-                        <SelectTrigger className="h-10 rounded-lg" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}>
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }}>
-                            <SelectItem value="No">Not Started</SelectItem>
-                            <SelectItem value="Draft">Draft Ready</SelectItem>
-                            <SelectItem value="Yes">Finalized</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label className="text-xs font-bold opacity-60">Reference Letters</Label>
-                    <Input type="number" className="h-10 rounded-lg" style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }} value={profile.references_count} onChange={(e) => setProfile({...profile, references_count: parseInt(e.target.value)})} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 8. Preferences */}
+          {/* 7. Preferences */}
           <Card className="border-none rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative group" style={{ 
             background: isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)' : '#ffffff',
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(226, 232, 240, 0.8)',
@@ -710,7 +656,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (page: string, params
                   <Bell className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-black" style={{ color: theme.text }}>8. Preferences</CardTitle>
+                  <CardTitle className="text-2xl font-black" style={{ color: theme.text }}>7. Preferences</CardTitle>
                   <CardDescription style={{ color: theme.textSecondary }}>Manage your experience and notifications</CardDescription>
                 </div>
               </div>
