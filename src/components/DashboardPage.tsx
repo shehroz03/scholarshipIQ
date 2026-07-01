@@ -441,21 +441,27 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
                         <div style={{ padding: '14px 20px' }}>
 
                           {/* ── Row 2: Meta chips ── */}
-                          <div className="flex items-center gap-2 flex-wrap mb-4">
-                            <span className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-[11px] text-gray-600 font-medium">
-                              <GraduationCap size={12} className="shrink-0" style={{ color: "#1e3a7a" }} />
-                              <span className="truncate max-w-[120px]">{s.university_name}</span>
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-[11px] text-gray-600 font-medium">
-                              <MapPin size={11} className="text-rose-400 shrink-0" />
-                              {s.country}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold" style={{ background: 'rgba(244,196,78,0.12)', border: '1px solid rgba(244,196,78,0.25)', color: '#f4c44e' }}>
-                              {s.degree_level}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold" style={{ background: 'rgba(232,180,58,0.12)', border: '1px solid rgba(232,180,58,0.25)', color: '#e8b43a' }}>
-                              {s.funding_type}
-                            </span>
+                          <div className="flex flex-col gap-2 mb-4">
+                            {/* Line 1: University + Country */}
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-[11px] text-gray-600 font-medium min-w-0 flex-1" style={{ overflow: 'hidden' }}>
+                                <GraduationCap size={12} className="shrink-0" style={{ color: "#1e3a7a" }} />
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.university_name}</span>
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-[11px] text-gray-600 font-medium shrink-0">
+                                <MapPin size={11} className="text-rose-400 shrink-0" />
+                                {s.country}
+                              </span>
+                            </div>
+                            {/* Line 2: Degree + Funding */}
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold" style={{ background: 'rgba(244,196,78,0.12)', border: '1px solid rgba(244,196,78,0.25)', color: '#d97706' }}>
+                                {s.degree_level}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold" style={{ background: 'rgba(232,180,58,0.12)', border: '1px solid rgba(232,180,58,0.25)', color: '#b45309' }}>
+                                {s.funding_type}
+                              </span>
+                            </div>
                           </div>
 
                           {/* ── Row 3: AI Insight ── */}
