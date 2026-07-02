@@ -134,12 +134,71 @@ def list_users(db: Session = Depends(get_db)):
 
 @router.delete("/users/{user_id}", dependencies=[Depends(get_current_admin)])
 def delete_user(user_id: int, db: Session = Depends(get_db)):
+    import traceback
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    db.delete(user)
-    db.commit()
-    return {"message": f"User {user_id} deleted successfully"}
+    try:
+        # 1. Many-to-many saved_scholarships
+        db.execute(text("DELETE FROM saved_scholarships WHERE user_id = :uid"), {"uid": user_id})
+
+        # 2. Chat messages → chat sessions
+        session_ids = [r[0] for r in db.execute(text("SELECT id FROM chat_sessions WHERE user_id = :uid"), {"uid": user_id}).fetchall()]
+        if session_ids:
+            db.execute(text(f"DELETE FROM chat_messages WHERE session_id IN ({','.join(str(i) for i in session_ids)})"))
+        db.execute(text("DELETE FROM chat_messages WHERE user_id = :uid"), {"uid": user_id})
+        db.execute(text("DELETE FROM chat_sessions WHERE user_id = :uid"), {"uid": user_id})
+
+        # 3. Consultant messages
+        db.execute(text("DELETE FROM consultant_messages WHERE user_id = :uid"), {"uid": user_id})
+
+        # 4. Notifications
+        db.execute(text("DELETE FROM notifications WHERE user_id = :uid"), {"uid": user_id})
+
+        # 5. Scholarship interactions
+        db.execute(text("DELETE FROM user_scholarship_interactions WHERE user_id = :uid"), {"uid": user_id})
+
+        # 6. Applications
+        db.execute(text("DELETE FROM applications WHERE user_id = :uid"), {"uid": user_id})
+
+        # 7. Visa records (items → checklist → profile → ai sessions)
+        db.execute(text("DELETE FROM visa_checklist_items WHERE checklist_id IN (SELECT id FROM visa_checklists WHERE user_id = :uid)"), {"uid": user_id})
+        db.execute(text("DELETE FROM visa_checklists WHERE user_id = :uid"), {"uid": user_id})
+        db.execute(text("DELETE FROM visa_profiles WHERE user_id = :uid"), {"uid": user_id})
+        db.execute(text("DELETE FROM visa_ai_sessions WHERE user_id = :uid"), {"uid": user_id})
+
+        # 8. Teacher reviews (as student reviewer)
+        db.execute(text("DELETE FROM teacher_reviews WHERE student_id = :uid"), {"uid": user_id})
+
+        # 9. Quiz attempts + enrollments (as student)
+        db.execute(text("DELETE FROM quiz_attempts WHERE user_id = :uid"), {"uid": user_id})
+        db.execute(text("DELETE FROM enrollments WHERE user_id = :uid"), {"uid": user_id})
+
+        # 10. If teacher: delete courses + children first
+        teacher = db.query(models.TeacherProfile).filter(models.TeacherProfile.user_id == user_id).first()
+        if teacher:
+            course_ids = [r[0] for r in db.execute(text("SELECT id FROM courses WHERE teacher_id = :tid"), {"tid": teacher.id}).fetchall()]
+            if course_ids:
+                cids = ','.join(str(i) for i in course_ids)
+                db.execute(text(f"DELETE FROM enrollments WHERE course_id IN ({cids})"))
+                db.execute(text(f"DELETE FROM quiz_attempts WHERE quiz_id IN (SELECT id FROM quizzes WHERE course_id IN ({cids}))"))
+                db.execute(text(f"DELETE FROM quiz_questions WHERE quiz_id IN (SELECT id FROM quizzes WHERE course_id IN ({cids}))"))
+                db.execute(text(f"DELETE FROM quizzes WHERE course_id IN ({cids})"))
+                db.execute(text(f"DELETE FROM lessons WHERE course_id IN ({cids})"))
+                db.execute(text(f"DELETE FROM live_classes WHERE course_id IN ({cids})"))
+                db.execute(text(f"DELETE FROM meeting_links WHERE course_id IN ({cids})"))
+                db.execute(text(f"DELETE FROM courses WHERE id IN ({cids})"))
+            db.execute(text("DELETE FROM teacher_payment_methods WHERE teacher_id = :tid"), {"tid": teacher.id})
+            db.execute(text("DELETE FROM teacher_profiles WHERE user_id = :uid"), {"uid": user_id})
+
+        # 11. Delete user
+        db.delete(user)
+        db.commit()
+        return {"message": f"User {user_id} deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- Scholarship Management ---
 @router.get("/scholarships", dependencies=[Depends(get_current_admin)])
