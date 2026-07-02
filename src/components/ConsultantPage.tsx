@@ -1060,16 +1060,7 @@ export function ConsultantPage() {
                     </div>
                 )}
                 <div style={{ backgroundColor: theme.bgSecondary, border: `1px solid ${theme.border}`, borderRadius: '16px', display: 'flex', alignItems: 'center', padding: '12px 16px', gap: '12px', maxWidth: '850px', margin: '0 auto', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                    <button 
-                        type="button" 
-                        title="Voice Input (AI Supported)"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', color: '#f4c44e', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s' }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                        <Mic size={20} />
-                    </button>
-                    <textarea 
+                    <textarea
                         value={input} 
                         onChange={e => setInput(e.target.value)} 
                         onKeyDown={handleKeyDown} 
