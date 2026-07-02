@@ -247,9 +247,6 @@ export const api = {
     async getLevels() {
       return apiBase.request(`/scholarships/filters/levels`);
     },
-    async getCountries() {
-      return apiBase.request(`/scholarships/filters/countries`);
-    },
     async getStats() {
       return apiBase.request(`/scholarships/stats`);
     },

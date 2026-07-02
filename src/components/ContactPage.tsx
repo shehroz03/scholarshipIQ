@@ -73,7 +73,7 @@ export function ContactPage({ onNavigate }: { onNavigate: (page: string) => void
       </div>
 
       <div style={{ maxWidth: 1000, margin: "0 auto", padding: "64px 40px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 40, maxWidth: 600, margin: "0 auto" }}>
 
           {/* Contact Info */}
           <div>
@@ -108,60 +108,6 @@ export function ContactPage({ onNavigate }: { onNavigate: (page: string) => void
             </a>
           </div>
 
-          {/* Contact Form */}
-          <div style={{ backgroundColor: theme.bgSecondary, borderRadius: 20, padding: 32, border: `1px solid ${theme.border}` }}>
-            {submitted ? (
-              <div style={{ textAlign: "center", padding: "40px 0" }}>
-                <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#10b981,#059669)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <Send size={28} color="#fff" />
-                </div>
-                <h3 style={{ fontSize: 22, fontWeight: 800, color: theme.text, marginBottom: 10 }}>Message Sent!</h3>
-                <p style={{ color: theme.textSecondary, fontSize: 15, lineHeight: 1.6 }}>
-                  Thanks for reaching out. We'll get back to you at <strong>{form.email}</strong> within 24 hours.
-                </p>
-                <button onClick={() => setSubmitted(false)} style={{ marginTop: 24, background: "none", border: `1px solid ${theme.border}`, borderRadius: 10, padding: "10px 20px", color: theme.textSecondary, fontSize: 14, cursor: "pointer" }}>
-                  Send Another Message
-                </button>
-              </div>
-            ) : (
-              <>
-                <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 24, color: theme.text }}>Send a Message</h3>
-                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {[
-                    { label: "Your Name", key: "name", type: "text", placeholder: "Muhammad Ali" },
-                    { label: "Email Address", key: "email", type: "email", placeholder: "you@example.com" },
-                    { label: "Subject", key: "subject", type: "text", placeholder: "Question about scholarships..." },
-                  ].map(f => (
-                    <div key={f.key}>
-                      <label style={{ fontSize: 13, fontWeight: 600, color: theme.textSecondary, display: "block", marginBottom: 6 }}>{f.label}</label>
-                      <input
-                        type={f.type}
-                        placeholder={f.placeholder}
-                        required
-                        value={(form as any)[f.key]}
-                        onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                        style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, fontSize: 14, outline: "none", boxSizing: "border-box" }}
-                      />
-                    </div>
-                  ))}
-                  <div>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: theme.textSecondary, display: "block", marginBottom: 6 }}>Message</label>
-                    <textarea
-                      rows={4}
-                      placeholder="Tell us how we can help..."
-                      required
-                      value={form.message}
-                      onChange={e => setForm(prev => ({ ...prev, message: e.target.value }))}
-                      style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, fontSize: 14, outline: "none", resize: "none", boxSizing: "border-box" }}
-                    />
-                  </div>
-                  <button type="submit" style={{ background: "linear-gradient(135deg,#1e3a8a,#3b82f6)", color: "#fff", border: "none", borderRadius: 12, padding: "14px", fontWeight: 700, fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 6px 20px rgba(30,58,138,0.25)" }}>
-                    <Send size={16} /> Send Message
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
         </div>
       </div>
 

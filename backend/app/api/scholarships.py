@@ -40,30 +40,6 @@ def get_stats(db: Session = Depends(get_db)):
 
 @router.get("/filters/countries")
 def get_countries(db: Session = Depends(get_db)):
-    countries = db.query(func.distinct(models.University.country)).all()
-    return [c[0] for c in countries if c[0]]
-
-@router.get("/filters/cities")
-def get_cities(country: Optional[str] = None, db: Session = Depends(get_db)):
-    query = db.query(func.distinct(models.University.city))
-    if country:
-        query = query.filter(models.University.country.ilike(f"%{country}%"))
-    cities = query.all()
-    return [c[0] for c in cities if c[0]]
-
-@router.get("/filters/fields")
-def get_fields(db: Session = Depends(get_db)):
-    fields = db.query(func.distinct(models.Scholarship.field_of_study)).all()
-    # Flatten and split by pipe if needed, or just return as is
-    return sorted(list(set(f[0] for f in fields if f[0])))
-
-@router.get("/filters/levels")
-def get_levels(db: Session = Depends(get_db)):
-    levels = db.query(func.distinct(models.Scholarship.degree_level)).all()
-    return sorted(list(set(l[0] for l in levels if l[0])))
-
-@router.get("/filters/countries")
-def get_countries(db: Session = Depends(get_db)):
     rows = db.query(func.distinct(models.Scholarship.country)).filter(
         models.Scholarship.country != None,
         models.Scholarship.country != "",
@@ -202,29 +178,6 @@ def list_scholarships(
         "total_pages": total_pages
     }
 
-@router.get("/filters/countries")
-def get_countries_filter(
-    db: Session = Depends(get_db)
-):
-    """Returns a list of unique countries from Universities."""
-    countries = db.query(models.University.country).distinct().order_by(models.University.country).all()
-    return [c[0] for c in countries if c[0]]
-
-@router.get("/filters/fields")
-def get_fields_filter(
-    db: Session = Depends(get_db)
-):
-    """Returns a list of unique fields of study."""
-    fields = db.query(models.Scholarship.field_of_study).distinct().order_by(models.Scholarship.field_of_study).all()
-    return [f[0] for f in fields if f[0]]
-
-@router.get("/filters/levels")
-def get_levels_filter(
-    db: Session = Depends(get_db)
-):
-    """Returns a list of unique degree levels."""
-    levels = db.query(models.Scholarship.degree_level).distinct().order_by(models.Scholarship.degree_level).all()
-    return [l[0] for l in levels if l[0]]
 
 @router.get("/stats")
 def get_scholarship_stats(
