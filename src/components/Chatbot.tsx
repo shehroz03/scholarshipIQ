@@ -236,12 +236,19 @@ export function Chatbot() {
     };
   }, [isOpen]);
 
-  const quickPrompts = [
-    "IELTS requirement",
-    "Fully funded scholarships",
-    "Deadlines info",
-    "Analyze my document"
-  ];
+  const quickPrompts = role === "teacher"
+    ? [
+        "How to guide students to fully funded scholarships",
+        "How to write a strong recommendation letter",
+        "How to review a student's SOP",
+        "Analyze a student document"
+      ]
+    : [
+        "IELTS requirement",
+        "Fully funded scholarships",
+        "Deadlines info",
+        "Analyze my document"
+      ];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
