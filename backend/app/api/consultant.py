@@ -308,13 +308,13 @@ STRICT RESPONSE CONTRACT (Return valid JSON only):
     "total_yearly": X
   }},
   
-  "one_time_costs": {
-    "visa_fee": {"amount": X, "note": "Processing + Biometrics"},
-    "flight": {"amount": X, "note": "One-way from Pakistan"},
-    "health_insurance": {"amount": X, "note": "IHS / Student Health Cover"},
-    "setup_costs": {"amount": X, "note": "Housing deposit + Essentials"},
-    "total": {"amount": X}
-  },
+  "one_time_costs": {{
+    "visa_fee": {{"amount": X, "note": "Processing + Biometrics"}},
+    "flight": {{"amount": X, "note": "One-way from Pakistan"}},
+    "health_insurance": {{"amount": X, "note": "IHS / Student Health Cover"}},
+    "setup_costs": {{"amount": X, "note": "Housing deposit + Essentials"}},
+    "total": {{"amount": X}}
+  }},
   
   "grand_total_budget": {{
     "without_scholarship": X,
