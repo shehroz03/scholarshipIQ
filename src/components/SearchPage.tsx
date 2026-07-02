@@ -44,7 +44,6 @@ import { AIScholarshipButton } from "./AIScholarshipButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { Sidebar } from "./Sidebar";
 import { useCurrency } from "../context/CurrencyContext";
-import { CurrencySelector } from "./CurrencySelector";
 
 
 const POPULAR_SEARCHES = [
@@ -383,7 +382,6 @@ export function SearchPage({
             </div>
 
             <ThemeToggle />
-            <CurrencySelector />
 
             {/* Back to Portal button */}
             <button
