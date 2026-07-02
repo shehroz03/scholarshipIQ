@@ -595,7 +595,7 @@ const VisaProfileFormPage: React.FC = () => {
                             backgroundColor: '#f8fafc',
                             border: `1px solid ${theme.border}`,
                             padding: '20px',
-                            color: '#fff',
+                            color: '#1e293b',
                             fontSize: '15px',
                             outline: 'none',
                             resize: 'none',
@@ -612,10 +612,10 @@ const VisaProfileFormPage: React.FC = () => {
                           <span className="text-xs font-black uppercase tracking-widest text-amber-500">AI Pre-Flight Scan Summary</span>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                          <div className="text-slate-400">🎯 Target: <div className="text-white font-black text-base mt-1">{countryDisplay}</div></div>
-                          <div className="text-slate-400">📅 Intake: <div className="text-white font-black text-base mt-1">{formData.intake_term}</div></div>
-                          <div className="text-slate-400">🎓 Admission: <div className="text-white font-black text-base mt-1 capitalize">{formData.admission_status.replace('_', ' ')}</div></div>
-                          <div className="text-slate-400">💰 Funding: <div className="text-white font-black text-base mt-1 capitalize">{formData.funding_source}</div></div>
+                          <div className="text-slate-600">🎯 Target: <div className="text-slate-900 font-black text-base mt-1">{countryDisplay}</div></div>
+                          <div className="text-slate-600">📅 Intake: <div className="text-slate-900 font-black text-base mt-1">{formData.intake_term}</div></div>
+                          <div className="text-slate-600">🎓 Admission: <div className="text-slate-900 font-black text-base mt-1 capitalize">{formData.admission_status.replace('_', ' ')}</div></div>
+                          <div className="text-slate-600">💰 Funding: <div className="text-slate-900 font-black text-base mt-1 capitalize">{formData.funding_source}</div></div>
                         </div>
                       </div>
                     </div>

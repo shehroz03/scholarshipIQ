@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from app.db.models import VisaProfile, VisaRequirementTemplate, VisaChecklist, VisaChecklistItem
 from datetime import datetime
 import json
