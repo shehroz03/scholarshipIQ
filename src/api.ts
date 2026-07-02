@@ -95,6 +95,9 @@ const apiBase = {
       const data = await response.json();
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("userRole", data.role || "student");
+      // Clear any stale admin session flag from a previous admin login in this
+      // browser so a student/teacher isn't mis-detected as admin.
+      if ((data.role || "student") !== "admin") localStorage.removeItem("admin_logged_in");
       if (data.user_id || data.id) localStorage.setItem("userId", String(data.user_id ?? data.id));
       if (data.full_name || data.name) localStorage.setItem("userName", data.full_name ?? data.name);
       return data;

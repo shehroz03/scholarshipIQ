@@ -53,6 +53,10 @@ export function Chatbot() {
     const userRole = localStorage.getItem("userRole");
     const adminLoggedIn = localStorage.getItem("admin_logged_in");
     if (userRole === "teacher") return "teacher";
+    // Trust an explicit logged-in student role over a stale admin flag left
+    // in storage from a previous admin session in the same browser — otherwise
+    // the student sees no chatbot bubble (admin mode renders null).
+    if (userRole === "student") return "student";
     if (adminLoggedIn === "true") return "admin";
     return "student";
   };
