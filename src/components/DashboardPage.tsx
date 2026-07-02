@@ -490,7 +490,7 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: string, param
                                 degree_level: s.degree_level,
                                 funding_type: s.funding_type,
                               }}
-                              variant="dark"
+                              variant="light"
                             />
                           </div>
 
