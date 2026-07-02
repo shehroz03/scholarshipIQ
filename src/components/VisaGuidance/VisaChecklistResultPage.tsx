@@ -66,39 +66,38 @@ const VisaChecklistResultPage: React.FC = () => {
     fetchChecklist();
   }, [id]);
 
-  const glassCardStyle = { 
-    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backdropFilter: 'blur(30px)',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+  const glassCardStyle = {
+    background: '#ffffff',
+    borderColor: '#e2e8f0',
+    boxShadow: '0 4px 24px rgba(15, 23, 42, 0.06)'
   };
 
   const getStatusIcon = (status: string) => {
     switch(status) {
-      case 'ready': return <CheckCircle2 className="text-emerald-400" size={20} />;
-      case 'missing': return <XCircle className="text-red-400" size={20} />;
-      case 'verify': return <AlertTriangle className="text-amber-400" size={20} />;
-      default: return <Info className="text-slate-400" size={20} />;
+      case 'ready': return <CheckCircle2 className="text-emerald-600" size={20} />;
+      case 'missing': return <XCircle className="text-red-600" size={20} />;
+      case 'verify': return <AlertTriangle className="text-amber-600" size={20} />;
+      default: return <Info className="text-slate-500" size={20} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'ready': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      case 'missing': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      case 'verify': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      default: return 'bg-slate-500/10 text-slate-400 border-white/10';
+      case 'ready': return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20';
+      case 'missing': return 'bg-red-500/10 text-red-700 border-red-500/20';
+      case 'verify': return 'bg-amber-500/10 text-amber-700 border-amber-500/20';
+      default: return 'bg-slate-500/10 text-slate-600 border-slate-200';
     }
   };
 
   if (loadingUser || loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#020617]">
+    <div className="min-h-screen flex items-center justify-center bg-[#f0f4ff]">
       <div className="flex flex-col items-center gap-6">
         <div className="relative">
           <div className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-          <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-400 animate-pulse" />
+          <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500 animate-pulse" />
         </div>
-        <p className="text-indigo-400 font-black uppercase tracking-[0.3em] text-xs">Analyzing Strategy</p>
+        <p className="text-indigo-600 font-black uppercase tracking-[0.3em] text-xs">Analyzing Strategy</p>
       </div>
     </div>
   );
@@ -106,7 +105,7 @@ const VisaChecklistResultPage: React.FC = () => {
   if (!data) return null;
 
   return (
-    <div className="min-h-screen flex w-full overflow-hidden bg-[#020617] text-white">
+    <div className="min-h-screen flex w-full overflow-hidden bg-[#f0f4ff] text-slate-900">
       {/* Sidebar Wrapper */}
       <div className="hidden lg:block shrink-0 relative z-50" style={{ width: '260px' }}>
         <Sidebar onNavigate={(p) => navigate(`/${p}`)} currentPage="visa" />
@@ -114,27 +113,27 @@ const VisaChecklistResultPage: React.FC = () => {
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Elite Header */}
-        <header className="h-20 border-b flex items-center justify-between px-10 backdrop-blur-2xl shrink-0 z-40" style={{ 
-          backgroundColor: 'rgba(2, 6, 23, 0.8)',
-          borderColor: 'rgba(255, 255, 255, 0.08)' 
+        <header className="h-20 border-b flex items-center justify-between px-10 backdrop-blur-2xl shrink-0 z-40" style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          borderColor: '#e2e8f0'
         }}>
           <div className="flex items-center gap-5">
-            <button onClick={() => navigate('/visa')} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all text-slate-400 hover:text-white">
+            <button onClick={() => navigate('/visa')} className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center hover:bg-slate-200 transition-all text-slate-500 hover:text-slate-900">
               <ArrowLeft size={18} />
             </button>
             <div className="space-y-0.5">
-              <h2 className="text-xl font-black tracking-tighter text-white uppercase italic leading-none">
-                AI <span className="text-indigo-500">Strategy</span> Report
+              <h2 className="text-xl font-black tracking-tighter text-slate-900 uppercase italic leading-none">
+                AI <span className="text-indigo-600">Strategy</span> Report
               </h2>
               <div className="flex items-center gap-2">
                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em]">Report ID: {data.id}</span>
                 <div className="w-1 h-1 rounded-full bg-indigo-500/50" />
-                <span className="text-[8px] font-black text-indigo-500/50 uppercase tracking-[0.4em]">Verified</span>
+                <span className="text-[8px] font-black text-indigo-500 uppercase tracking-[0.4em]">Verified</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-4">
-             <Button variant="outline" onClick={() => window.print()} className="rounded-2xl border-white/10 bg-white/5 font-black text-[10px] uppercase tracking-widest px-6 hover:bg-white/10 gap-2">
+             <Button variant="outline" onClick={() => window.print()} className="rounded-2xl border-slate-200 bg-slate-100 text-slate-700 font-black text-[10px] uppercase tracking-widest px-6 hover:bg-slate-200 gap-2">
                <Printer size={14} /> Print Report
              </Button>
           </div>
@@ -154,11 +153,11 @@ const VisaChecklistResultPage: React.FC = () => {
             >
               <Card className="lg:col-span-2 rounded-[3rem] p-10 flex flex-col md:flex-row items-center gap-12 border-none relative overflow-hidden" style={glassCardStyle}>
                  <div className="absolute top-0 right-0 p-8 opacity-10">
-                   <Sparkles size={120} className="text-indigo-400" />
+                   <Sparkles size={120} className="text-indigo-500" />
                  </div>
                  <div className="relative w-44 h-44 shrink-0">
                     <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="88" cy="88" r="80" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                      <circle cx="88" cy="88" r="80" fill="none" stroke="rgba(15,23,42,0.06)" strokeWidth="12" />
                       <motion.circle 
                         initial={{ strokeDashoffset: 502 }}
                         animate={{ strokeDashoffset: 502 - (502 * data.readiness_score) / 100 }}
@@ -175,18 +174,18 @@ const VisaChecklistResultPage: React.FC = () => {
                       </defs>
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-4xl font-black text-white italic leading-none">{data.readiness_score}%</span>
-                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-1">Ready</span>
+                      <span className="text-4xl font-black text-slate-900 italic leading-none">{data.readiness_score}%</span>
+                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">Ready</span>
                     </div>
                  </div>
                  <div className="space-y-4">
-                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest">
+                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 text-[10px] font-black uppercase tracking-widest">
                      AI Insights Active
                    </div>
-                   <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic leading-none">
-                     Readiness <span className="text-indigo-500">Analysis</span>
+                   <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase italic leading-none">
+                     Readiness <span className="text-indigo-600">Analysis</span>
                    </h1>
-                   <p className="text-slate-400 font-bold text-lg leading-relaxed max-w-md">
+                   <p className="text-slate-500 font-bold text-lg leading-relaxed max-w-md">
                      {data.status_summary}
                    </p>
                  </div>
@@ -195,15 +194,15 @@ const VisaChecklistResultPage: React.FC = () => {
               <Card className="rounded-[3rem] p-10 border-none flex flex-col justify-between relative overflow-hidden" style={glassCardStyle}>
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <Clock className="text-indigo-400" size={24} />
+                    <Clock className="text-indigo-500" size={24} />
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Next Deadline</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-3xl font-black text-white">45 Days</p>
-                    <p className="text-xs font-bold text-slate-400">Estimated submission window</p>
+                    <p className="text-3xl font-black text-slate-900">45 Days</p>
+                    <p className="text-xs font-bold text-slate-500">Estimated submission window</p>
                   </div>
                 </div>
-                <Button className="w-full h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black uppercase text-[10px] tracking-widest gap-2">
+                <Button className="w-full h-14 rounded-2xl bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 font-black uppercase text-[10px] tracking-widest gap-2">
                   <Calendar size={16} /> Add to Calendar
                 </Button>
               </Card>
@@ -213,8 +212,8 @@ const VisaChecklistResultPage: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between px-4">
                 <div className="flex items-center gap-3">
-                  <FileText className="text-indigo-400" size={24} />
-                  <h3 className="text-xl font-black uppercase tracking-widest text-white italic">Strategic Checklist</h3>
+                  <FileText className="text-indigo-500" size={24} />
+                  <h3 className="text-xl font-black uppercase tracking-widest text-slate-900 italic">Strategic Checklist</h3>
                 </div>
                 <div className="flex items-center gap-2">
                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sort by Status</span>
@@ -229,30 +228,30 @@ const VisaChecklistResultPage: React.FC = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className="rounded-[2rem] p-8 border-none flex flex-col md:flex-row items-start md:items-center gap-8 group hover:bg-white/[0.05] transition-all" style={glassCardStyle}>
+                    <Card className="rounded-[2rem] p-8 border flex flex-col md:flex-row items-start md:items-center gap-8 group hover:bg-slate-50 transition-all" style={glassCardStyle}>
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border ${getStatusColor(item.status)}`}>
                         {getStatusIcon(item.status)}
                       </div>
-                      
+
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center gap-3">
-                           <h4 className="text-lg font-black text-white">{item.title}</h4>
+                           <h4 className="text-lg font-black text-slate-900">{item.title}</h4>
                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider border ${getStatusColor(item.status)}`}>
                              {item.status}
                            </span>
                         </div>
-                        <p className="text-sm font-bold text-slate-400 leading-relaxed italic">
+                        <p className="text-sm font-bold text-slate-500 leading-relaxed italic">
                           "{item.reason}"
                         </p>
                         {item.action_hint && (
                           <div className="flex items-center gap-2 pt-1">
-                            <Sparkles size={12} className="text-indigo-400" />
-                            <span className="text-xs font-black text-indigo-400 uppercase tracking-widest">AI Tip: {item.action_hint}</span>
+                            <Sparkles size={12} className="text-indigo-500" />
+                            <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">AI Tip: {item.action_hint}</span>
                           </div>
                         )}
                       </div>
 
-                      <Button variant="ghost" className="h-12 px-6 rounded-xl bg-white/5 hover:bg-indigo-500/20 text-slate-300 hover:text-indigo-400 font-black uppercase text-[10px] tracking-widest gap-2">
+                      <Button variant="ghost" className="h-12 px-6 rounded-xl bg-slate-100 hover:bg-indigo-500/10 text-slate-600 hover:text-indigo-600 font-black uppercase text-[10px] tracking-widest gap-2">
                          Fix Issue <ChevronRight size={14} />
                       </Button>
                     </Card>
